@@ -7,16 +7,19 @@ class UserModel {
   String? image;
   String? companyId;
   bool? isEmailVerified;
+  String? userType;
+
 
   UserModel({
-    this.firstName,
-    this.lastName,
-    this.email,
+    required this.firstName,
+    required this.lastName,
+    required this.email,
     this.phone,
     this.uId,
     this.image,
     this.companyId,
     this.isEmailVerified,
+    this.userType,
   });
 
   UserModel.fromJson(Map<String, dynamic> json)
@@ -29,6 +32,7 @@ class UserModel {
     image = json['image'];
     companyId = json['companyId'];
     isEmailVerified = json['isEmailVerified'];
+    userType = json['userType'];
   }
 
   Map<String, dynamic> toMap()
@@ -42,6 +46,7 @@ class UserModel {
       'image':image,
       'companyId':companyId,
       'isEmailVerified':isEmailVerified,
+      'userType':userType,
     };
   }
 }

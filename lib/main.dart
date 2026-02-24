@@ -1,6 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/shared/bloc_observer.dart';
+import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
+import 'package:pulsera/shared/cubit/auth_cubit.dart';
+import 'package:pulsera/shared/cubit/profile_cubit.dart';
+import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/network/remote/attendance_repository.dart';
@@ -16,19 +21,45 @@ void main() async {
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await CacheHelper.init();
-  runApp(Pulsera());
+  late var uId = CacheHelper.getData(key: 'uId');
+  late Widget widget;
+
+
+  if(uId != null)
+  {
+    widget = HomeLayout();
+  } else
+  {
+    widget = SplashScreen();
+  }
+
+  runApp(Pulsera(
+      startWidget: widget));
 }
 
 class Pulsera extends StatelessWidget {
+  final Widget startWidget;
+  const Pulsera({super.key, required this.startWidget});
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AttendanceCubit(AttendanceRepository()),
-      child: MaterialApp(
-        debugShowCheckedModeBanner: false,
-        theme: appTheme,
-        home: SplashScreen(),
-      ),
-    );
+    return
+    
+      MultiBlocProvider(
+        providers: [
+          BlocProvider(create: (context) => RegisterCubit()),
+          BlocProvider(create: (context) => AuthCubit()),
+          BlocProvider(create: (context) => AppCubit()..getUserData()),
+          BlocProvider(create: (context) => AttendanceCubit(AttendanceRepository()),),
+          BlocProvider(create: (context) => ProfileCubit()),
+        ],
+          child: BlocConsumer<AppCubit, AppStates>(
+          listener: (context, state) {},
+          builder: (context, state) => MaterialApp(
+              debugShowCheckedModeBanner: false,
+              theme: appTheme,
+              home: startWidget,
+            ),
+          ),
+      );
   }
 }

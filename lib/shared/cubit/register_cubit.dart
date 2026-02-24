@@ -4,7 +4,9 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import '../../models/company_model.dart';
 import '../../models/user_model.dart';
+import '../components/helper_functions.dart';
 
 
 class RegisterCubit extends Cubit<RegisterStates> {
@@ -18,7 +20,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
 
   IconData suffix = Icons.visibility_off_outlined;
   bool isPassword = true;
-  String? selectedUserType;
+  String selectedUserType = 'Employee';
 
   //userRegister and userCreate
 
@@ -58,20 +60,20 @@ class RegisterCubit extends Cubit<RegisterStates> {
 
   void createUserInFirestore(User user) {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    UserModel googleModel = UserModel(
+      uId: user.uid,
+      firstName: user.displayName?.split(' ').first ?? '',
+      lastName: user.displayName?.split(' ').last ?? '',
+      email: user.email ?? '',
+      phone: user.phoneNumber ?? '',
+      userType: selectedUserType,
+      isEmailVerified: true,
+    );
 
     userDoc.get().then((doc) {
       if (!doc.exists) {
-        userDoc.set({
-          'uId': user.uid,
-          'firstName': user.displayName?.split(' ').first ?? '',
-          'lastName': user.displayName?.split(' ').last ?? '',
-          'email': user.email ?? '',
-          'phone': user.phoneNumber ?? '',
-          'uType': selectedUserType,
-          'isEmailVerified': true,
-          'provider': 'google',
-          'createdAt': FieldValue.serverTimestamp(),
-        }).then((value) {
+        userDoc.set(googleModel.toMap())
+            .then((value) {
           emit(CreateUserSuccessState());
         }).catchError((error) {
           emit(CreateUserErrorState(error.toString()));
@@ -103,6 +105,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required String email,
     required String password,
     required String phone,
+    required String userType,
   }) {
     emit(RegisterLoadingState());
 
@@ -118,6 +121,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
         email: email,
         firstName: firstName,
         lastName: lastName,
+        userType: selectedUserType,
       );
     }).catchError((error) {
       emit(RegisterErrorState(error.toString()));
@@ -130,6 +134,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required String email,
     required String phone,
     required String uId,
+    required String userType,
   }) {
     UserModel model = UserModel(
       firstName: firstName,
@@ -138,6 +143,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       phone: phone,
       uId: uId,
       isEmailVerified: false,
+      userType: selectedUserType,
     );
 
     FirebaseFirestore.instance
@@ -150,6 +156,37 @@ class RegisterCubit extends Cubit<RegisterStates> {
         .catchError((error) {
       print(error.toString());
       emit(CreateUserErrorState(error.toString()));
+    });
+  }
+  void registerCompany({
+    required String orgName,
+    required String paidLeave,
+    required String sickLeave,
+    required String wfhDays,
+    required TimeOfDay? startTime,
+    required TimeOfDay? endTime,
+    required String ownerId,
+  }) {
+    emit(RegisterLoadingState());
+
+    CompanyModel model = CompanyModel(
+      ownerId: ownerId,
+      organizationName: orgName,
+      paidLeavePerMonth: int.parse(paidLeave),
+      sickLeavePerMonth: int.parse(sickLeave),
+      wfhPerMonth: int.parse(wfhDays),
+      startTime: formatTimeOfDay(startTime!),
+      endTime: formatTimeOfDay(endTime!),
+    );
+
+    FirebaseFirestore.instance
+        .collection('companies')
+        .doc(ownerId) // Or use .add() for a random ID
+        .set(model.toMap())
+        .then((value) {
+      emit(CreateCompanySuccessState());
+    }).catchError((error) {
+      emit(CreateCompanyErrorState(error.toString()));
     });
   }
 }
