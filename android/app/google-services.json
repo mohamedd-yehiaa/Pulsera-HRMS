@@ -1,0 +1,54 @@
+{
+  "project_info": {
+    "project_number": "419097121301",
+    "project_id": "pulsera-hrms",
+    "storage_bucket": "pulsera-hrms.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:419097121301:android:a320971ae1133c8920741c",
+        "android_client_info": {
+          "package_name": "com.pulsera.hrms"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "419097121301-t9ictg98oci7r5mac5bieebh6vh3vbm9.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.pulsera.hrms",
+            "certificate_hash": "27b1603fe332188b93796663615eda5dea51547d"
+          }
+        },
+        {
+          "client_id": "419097121301-q2ve2cvvs3tbgo7t4u1314i96rh3rc4n.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCz2MTZnqUWY4hG6JF3pGKlgV6f6UQiF5I"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "419097121301-q2ve2cvvs3tbgo7t4u1314i96rh3rc4n.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "419097121301-23s6r4563v1i5p5ure5hrpslf8pbslq6.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.pulsera.hrms.pulsera"
+              }
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
