@@ -1,5 +1,5 @@
 class CompanyModel {
-  String? uId;
+  String? companyId;
   String? ownerId;
   String? organizationName;
   int? paidLeavePerMonth;
@@ -8,9 +8,11 @@ class CompanyModel {
   String? startTime;
   String? endTime;
   String? companyEmail;
+  List<String>? workingDays;
+
 
   CompanyModel({
-    this.uId,
+    this.companyId,
     this.ownerId,
     this.organizationName,
     this.paidLeavePerMonth,
@@ -19,11 +21,12 @@ class CompanyModel {
     this.startTime,
     this.endTime,
     this.companyEmail,
+    this.workingDays,
   });
 
   // Receiving data from Firebase (Map -> Model)
   CompanyModel.fromJson(Map<String, dynamic>? json) {
-    uId = json?['uId'];
+    companyId = json?['companyId'];
     ownerId = json?['ownerId'];
     organizationName = json?['organizationName'];
     paidLeavePerMonth = json?['paidLeavePerMonth'];
@@ -32,12 +35,13 @@ class CompanyModel {
     startTime = json?['startTime'];
     endTime = json?['endTime'];
     companyEmail = json?['companyEmail'];
+    workingDays = json?['workingDays'];
   }
 
   // Sending data to Firebase (Model -> Map)
   Map<String, dynamic> toMap() {
     return {
-      'uId': uId,
+      'companyId': companyId,
       'ownerId': ownerId,
       'organizationName': organizationName,
       'paidLeavePerMonth': paidLeavePerMonth,
@@ -46,6 +50,7 @@ class CompanyModel {
       'startTime': startTime,
       'endTime': endTime,
       'companyEmail': companyEmail,
+      'workingDays': workingDays,
     };
   }
 }

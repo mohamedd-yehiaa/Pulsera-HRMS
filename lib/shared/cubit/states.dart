@@ -9,9 +9,16 @@ class GetUserErrorState extends AppStates {
   final String error;
   GetUserErrorState(this.error);
 }
+class GetCompanyLoadingState extends AppStates {}
+class GetCompanySuccessState extends AppStates {}
+class GetCompanyErrorState extends AppStates {
+  final String error;
+  GetCompanyErrorState(this.error);
+}
 
 
-
+// -----------------------------------------------------------------------------
+// Attendance States
 abstract class AttendanceStates {}
 
 class AttendanceInitialState extends AttendanceStates {}
@@ -23,7 +30,8 @@ class AttendanceErrorState extends AttendanceStates {
 }
 class AttendanceSuccessState extends AttendanceStates {}
 
-
+// -----------------------------------------------------------------------------
+// Auth States
 abstract class AuthStates {}
 
 class AuthInitialState extends AuthStates {}
@@ -35,7 +43,8 @@ class AuthErrorState extends AuthStates {
 class AuthLoadingState extends AuthStates {}
 class AuthChangePasswordVisibilityState extends AuthStates {}
 
-
+// -----------------------------------------------------------------------------
+// Register States
 abstract class RegisterStates {}
 
 class RegisterInitialState extends RegisterStates {}
@@ -58,13 +67,23 @@ class CreateUserErrorState extends RegisterStates {
   CreateUserErrorState(this.error);
 }
 class RegisterChangePasswordVisibilityState extends RegisterStates {}
+class CreateCompanyLoadingState extends RegisterStates {}
 class CreateCompanySuccessState extends RegisterStates {}
 class CreateCompanyErrorState extends RegisterStates {
   final String error;
   CreateCompanyErrorState(this.error);
 }
+class UpdateCompanyLoadingState extends RegisterStates {}
+class UpdateCompanySuccessState extends RegisterStates {}
+class UpdateCompanyErrorState extends RegisterStates {
+  final String error;
+  UpdateCompanyErrorState(this.error);
+}
 
 
+
+// -----------------------------------------------------------------------------
+// Profile States
 abstract class ProfileStates {}
 
 class ProfileInitialState extends ProfileStates{}
@@ -74,6 +93,11 @@ class ProfileErrorState extends ProfileStates {
   final String error;
   ProfileErrorState(this.error);
 }
+class ProfileUpdateLoadingState extends ProfileStates{}
+class ProfileUpdateSuccessState extends ProfileStates{}
+class ProfileUpdateErrorState extends ProfileStates {
+  final String error;
+  ProfileUpdateErrorState(this.error);
+}
 class ProfileUpdateWorkingDaysState extends ProfileStates{}
 class ProfileTimeChangedState extends ProfileStates{}
-class ProfileDataLoadedState extends ProfileStates{}

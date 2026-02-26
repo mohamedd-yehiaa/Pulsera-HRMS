@@ -1,9 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:pulsera/shared/styles/icon_broken.dart';
 import '../app_extension.dart';
 import '../styles/colors.dart';
-import '../styles/icon_broken.dart';
 import '../styles/theme.dart';
 
 class DefaultFormField extends StatelessWidget {
@@ -17,7 +17,6 @@ class DefaultFormField extends StatelessWidget {
   final String? Function(String?)? validator;
   final ValueChanged<String>? onFieldSubmitted;
   final List<TextInputFormatter>? inputFormatters;
-
 
   const DefaultFormField({
     super.key,
@@ -72,7 +71,6 @@ class ActivityCard extends StatelessWidget {
   final String title;
   final DateTime dateTime;
   final String description;
-
 
   const ActivityCard({
     super.key,
@@ -215,16 +213,14 @@ class AppButton {
     required String label,
     Widget? child,
   }) {
-    return ElevatedButton(
-      onPressed: onPressed,
-      child: child ?? Text(label),
-    );
+    return ElevatedButton(onPressed: onPressed, child: child ?? Text(label));
   }
 
   static Widget appOulineButtonRow({
     required void Function()? onPressed,
     required String label,
     required BuildContext context,
+    String? value,
     EdgeInsetsGeometry? padding,
     Widget? prefixIcon,
     Widget? suffixIcon,
@@ -232,6 +228,13 @@ class AppButton {
     return Padding(
       padding: padding ?? EdgeInsets.zero,
       child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          side: BorderSide.none,
+          backgroundColor: AppColors.grey100,
+        ),
         onPressed: onPressed,
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -239,10 +242,11 @@ class AppButton {
             if (prefixIcon != null) ...{prefixIcon},
             Text(
               label,
-              style: Theme
-                  .of(context)
-                  .textTheme
-                  .titleMedium,
+              style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             if (suffixIcon != null) ...{suffixIcon},
           ],
@@ -252,22 +256,92 @@ class AppButton {
   }
 }
 
-void navigateTo(context, widget) => Navigator.push(  context,
-  MaterialPageRoute(
-    builder: (context) => widget,
+void navigateTo(context, widget) =>
+    Navigator.push(context, MaterialPageRoute(builder: (context) => widget));
+
+void navigateAndFinish(context, widget) => Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(builder: (context) => widget),
+  (route) {
+    return false;
+  },
+);
+// UI Implementation snippet
+void showForgotPasswordSheet(BuildContext context) => showModalBottomSheet(
+  context: context,
+  isScrollControlled: true, // Allows keyboard to push the sheet up
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  ),
+  builder: (context) => Padding(
+    padding: EdgeInsets.only(
+      bottom:
+          MediaQuery.of(context).viewInsets.bottom +
+          20, // Avoids keyboard overlap
+      left: 20,
+      right: 20,
+      top: 20,
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Forgot Password?",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Enter your email address and we'll send you a link to reset your password.",
+          style: TextStyle(color: Colors.grey),
+        ),
+        const SizedBox(height: 25),
+        DefaultFormField(
+          controller: TextEditingController(),
+          type: TextInputType.emailAddress,
+          label: Text(
+            'Email Address',),
+          prefix: IconBroken.Message,
+          validator: (String? value) {
+            if (value == null || value.isEmpty) {
+              return 'please enter your email address';
+            }
+            return null;
+          },
+
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: () {
+              FirebaseAuth.instance.sendPasswordResetEmail(
+                email: TextEditingController().text,
+              );
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
+              ),
+            ),
+            child: const Text("Send Reset Link"),
+          ),
+        ),
+      ],
+    ),
   ),
 );
 
-void navigateAndFinish(
-    context,
-    widget,
-    ) =>
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(
-        builder: (context) => widget,
-      ),
-          (route) {
-        return false;
-      },
-    );
+Widget title(BuildContext context, String name, IconData iconData) {
+  return Row(
+    children: [
+      Text(name, style: Theme.of(context).textTheme.titleLarge),
+      const SizedBox(width: 10),
+      Icon(iconData, size: 20, color: AppColors.blue600),
+    ],
+  );
+}
+
+

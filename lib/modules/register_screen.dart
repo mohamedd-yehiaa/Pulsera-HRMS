@@ -6,6 +6,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/login_screen.dart';
 import '../shared/components/components.dart';
+import '../shared/cubit/app_cubit.dart';
 import '../shared/cubit/register_cubit.dart';
 import '../shared/cubit/states.dart';
 import '../shared/network/local/cache_helper.dart';
@@ -38,6 +39,7 @@ class RegisterScreen extends StatelessWidget {
               value: FirebaseAuth.instance.currentUser!.uid,
             ).then((value) {
               navigateAndFinish(context, HomeLayout());
+              AppCubit.get(context).getUserData();
             });
           }
         },

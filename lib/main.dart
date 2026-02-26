@@ -4,7 +4,7 @@ import 'package:pulsera/shared/bloc_observer.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
-import 'package:pulsera/shared/cubit/profile_cubit.dart';
+import 'package:pulsera/shared/cubit/settings_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
@@ -48,7 +48,7 @@ class Pulsera extends StatelessWidget {
         providers: [
           BlocProvider(create: (context) => RegisterCubit()),
           BlocProvider(create: (context) => AuthCubit()),
-          BlocProvider(create: (context) => AppCubit()..getUserData()),
+          BlocProvider(create: (context) => AppCubit()..getUserData()..getCompanyData()),
           BlocProvider(create: (context) => AttendanceCubit(AttendanceRepository()),),
           BlocProvider(create: (context) => ProfileCubit()),
         ],

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
+import '../../models/working_days_model.dart';
+
 
 
 void showSuccessSnack(String msg) {
@@ -35,24 +37,24 @@ void closeDialogs(BuildContext context) {
   }
 }
 
-// --- Logic functions remain mostly the same (no Get dependencies) ---
-
 final workingDaysMapping = <String, int>{
-  "MONDAY": 1,
-  "TUESDAY": 2,
-  "WEDNESDAY": 3,
-  "THURSDAY": 4,
-  "FRIDAY": 5,
-  "SATURDAY": 6,
-  "SUNDAY": 7,
+  "FRIDAY": 1,
+  "SATURDAY": 2,
+  "SUNDAY": 3,
+  "MONDAY": 4,
+  "TUESDAY": 5,
+  "WEDNESDAY": 6,
+  "THURSDAY": 7,
+
 };
 
-List<int> workingDays(List<String> days) {
-  return days
-      .where((day) => workingDaysMapping.containsKey(day))
-      .map((day) => workingDaysMapping[day]!)
-      .toList();
-}
+List<WorkingDaysModel> workingDaysList = [
+  "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
+].map((e) => WorkingDaysModel(
+  label: e,
+  code: e.toUpperCase(),
+  isSelected: false,
+)).toList();
 
 String secondsToTime(int seconds) {
   int hours = seconds ~/ 3600;

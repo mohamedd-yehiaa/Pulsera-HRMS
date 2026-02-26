@@ -7,6 +7,7 @@ import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/register_screen.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 import '../shared/components/components.dart';
+import '../shared/cubit/app_cubit.dart';
 import '../shared/cubit/auth_cubit.dart';
 import '../shared/cubit/register_cubit.dart';
 import '../shared/cubit/states.dart';
@@ -32,27 +33,10 @@ class LoginScreen extends StatelessWidget {
                 key: 'uId',
                 value: FirebaseAuth.instance.currentUser!.uid,
               ).then((value) {
-                navigateAndFinish(context, HomeLayout());
+                AppCubit.get(context).getUserData();
+                AppCubit.get(context).getCompanyData();
               });
-            }
-          },
-        ),
-        BlocListener<AuthCubit, AuthStates>(
-          listener: (context, state) {
-            if (state is AuthErrorState) {
-              Fluttertoast.showToast(msg: state.error);
-            }
-            if (state is AuthSuccessState) {
-              CacheHelper.saveData(
-                key: 'uId',
-                value: FirebaseAuth.instance.currentUser!.uid,
-              ).then((value) {
-                Navigator.pushAndRemoveUntil(
-                  context,
-                  MaterialPageRoute(builder: (context) => HomeLayout()),
-                  (route) => false,
-                );
-              });
+              navigateAndFinish(context, HomeLayout());
             }
           },
         ),
@@ -67,6 +51,8 @@ class LoginScreen extends StatelessWidget {
               key: 'uId',
               value: FirebaseAuth.instance.currentUser!.uid,
             ).then((value) {
+              AppCubit.get(context).getUserData();
+              AppCubit.get(context).getCompanyData();
               navigateAndFinish(context, HomeLayout());
             });
           }
@@ -180,7 +166,7 @@ class LoginScreen extends StatelessWidget {
                             alignment: AlignmentDirectional.centerEnd,
                             child: TextButton(
                               onPressed: () {
-                                // showForgotPasswordSheet(context);
+                                showForgotPasswordSheet(context);
                               },
                               child: Text(
                                 'Forget Password?',

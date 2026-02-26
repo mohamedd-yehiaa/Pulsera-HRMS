@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
+import '../../models/company_model.dart';
 import '../../models/user_model.dart';
 import '../../modules/home_screen.dart';
 import '../../modules/leave_screen.dart';
@@ -17,6 +18,7 @@ class AppCubit extends Cubit<AppStates> {
 
   static AppCubit get(context) => BlocProvider.of(context);
   UserModel? userModel;
+  CompanyModel? companyModel;
   int currentIndex = 0;
 
   List<Widget> screens = [
@@ -113,5 +115,22 @@ class AppCubit extends Cubit<AppStates> {
           print(error.toString());
           emit(GetUserErrorState(error.toString()));
         });
+  }
+  void getCompanyData() {
+    var companyID = CacheHelper.getData(key: 'companyId');
+    emit(GetCompanyLoadingState());
+
+    FirebaseFirestore.instance
+        .collection('companies')
+        .doc(companyID)
+        .get()
+        .then((value) {
+      companyModel = CompanyModel.fromJson(value.data()!);
+      emit(GetCompanySuccessState());
+    })
+        .catchError((error) {
+      print(error.toString());
+      emit(GetCompanyErrorState(error.toString()));
+    });
   }
 }

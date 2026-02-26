@@ -17,13 +17,11 @@ class RegisterCubit extends Cubit<RegisterStates> {
   // Class Properties
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-
   IconData suffix = Icons.visibility_off_outlined;
   bool isPassword = true;
-  String selectedUserType = 'Employee';
+  String selectedUserType = "Employee";
 
   //userRegister and userCreate
-
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
@@ -85,7 +83,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       emit(CreateUserErrorState(error.toString()));
     });
   }
-
+// ================================================================================
   // UI Support Methods
   void changePasswordVisibility() {
     isPassword = !isPassword;
@@ -158,6 +156,15 @@ class RegisterCubit extends Cubit<RegisterStates> {
       emit(CreateUserErrorState(error.toString()));
     });
   }
+
+  // ---------------------------------------------------------------------------
+
+  // 1. Filter the list to get only selected codes
+  List<String> selectedDayCodes = workingDaysList
+      .where((day) => day.isSelected)
+      .map((day) => day.code)
+      .toList();
+
   void registerCompany({
     required String orgName,
     required String paidLeave,
@@ -167,9 +174,16 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required TimeOfDay? endTime,
     required String ownerId,
   }) {
-    emit(RegisterLoadingState());
 
-    CompanyModel model = CompanyModel(
+    if (selectedDayCodes.isEmpty) {
+      emit(CreateCompanyErrorState("Please select at least one working day."));
+      return;
+    }
+
+    emit(CreateCompanyLoadingState());
+    var companyDocRef = FirebaseFirestore.instance.collection('companies').doc();
+    CompanyModel comModel = CompanyModel(
+      companyId: companyDocRef.id,
       ownerId: ownerId,
       organizationName: orgName,
       paidLeavePerMonth: int.parse(paidLeave),
@@ -177,13 +191,17 @@ class RegisterCubit extends Cubit<RegisterStates> {
       wfhPerMonth: int.parse(wfhDays),
       startTime: formatTimeOfDay(startTime!),
       endTime: formatTimeOfDay(endTime!),
+      workingDays: selectedDayCodes,
+
     );
 
-    FirebaseFirestore.instance
-        .collection('companies')
-        .doc(ownerId) // Or use .add() for a random ID
-        .set(model.toMap())
+    companyDocRef
+        .set(comModel.toMap())
         .then((value) {
+       FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId)
+          .update({'companyId': companyDocRef.id});
       emit(CreateCompanySuccessState());
     }).catchError((error) {
       emit(CreateCompanyErrorState(error.toString()));

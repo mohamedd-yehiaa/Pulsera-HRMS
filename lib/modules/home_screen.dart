@@ -1,5 +1,3 @@
-import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -26,60 +24,117 @@ class HomeScreen extends StatelessWidget {
         if (state is AttendanceErrorState) {
           Fluttertoast.showToast(msg: state.error);
         }
+        if (state is AttendanceLoadingState) {
+          Center(child: CircularProgressIndicator());
+        }
       },
+
       builder: (context, state) {
         AttendanceCubit cubit = AttendanceCubit.get(context);
-
-        if (state is AttendanceLoadingState) {
-          return const Center(child: CircularProgressIndicator());
-        }
-
-        return ConditionalBuilder(
-          condition: user?.companyId != null,
-          builder: (BuildContext context) {
-            return SafeArea(
-              child: ListView(
-                padding: const EdgeInsets.symmetric(vertical: 16),
+        if (user?.companyId == null && user?.userType == "Company Owner") {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  _buildDatePicker(cubit, user?.uId),
-                  const SizedBox(height: 28),
-
-                  _buildSectionHeader("Today Attendance", state),
-                  const SizedBox(height: 16),
-                  _buildCheckInOutGrid(cubit),
-                  const SizedBox(height: 12),
-                  _buildStatsGrid(cubit),
-
-                  if (cubit.workingTime != "00:00:00")
-                    _buildWorkingTimeCard(cubit),
-
-                  const SizedBox(height: 28),
-                  _buildSectionHeader("Your Activity", null),
-                  const SizedBox(height: 16),
-
-                  _buildSwipeButton(cubit, user?.uId),
-                  const SizedBox(height: 20),
-
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: UserActivityView(userActivityModel: cubit.activity),
+                  Text(
+                    "Plaese Register your Company Details!",
+                    style: Theme.of(
+                      context,
+                    ).textTheme.titleLarge!.copyWith(fontFamily: "Jannah"),
+                  ),
+                  SizedBox(height: 50),
+                  ElevatedButton(
+                    onPressed: () =>
+                        navigateTo(context, RegisterCompanyScreen()),
+                    style: Theme.of(context).elevatedButtonTheme.style,
+                    child: Text(
+                      "Create Company",
+                      style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                    ),
                   ),
                 ],
               ),
-            );
-          },
-          fallback: (BuildContext context) {
-/*            if (user?.userType == "Company Owner" && user?.companyId == null) {
-              navigateTo(context, RegisterCompanyScreen());
-            }*/
-            return SafeArea(
-              child: Container(
-                alignment: Alignment.center,
-                color: AppColors.white,
-                child: Text("Please join a company to track attendance."),
+            ),
+          );
+        }
+        if (user?.companyId == null && user?.userType == "Employee") {
+          return SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Center(
+                child: Expanded(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        "Please join a company to continue!",
+                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontFamily: "Jannah",
+                          fontSize: 22,
+                        ),
+                      ),Text(
+                        "Give your Id to the company",
+                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontFamily: "Jannah",
+                          fontSize: 22,
+                        ),
+                      ),
+                      SizedBox(height: 50),
+                  
+                      SelectableText(
+                        "${user?.uId}",
+                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                          fontFamily: "Jannah",
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.primary,
+                          backgroundColor: AppColors.grey100,
+
+                        ),
+                        showCursor: true,
+                        cursorColor: AppColors.primary,
+                        enableInteractiveSelection: true,
+                      ),
+                    ],
+                  ),
+                ),
               ),
-            );
-          },
+            ),
+          );
+        }
+        return SafeArea(
+          child: ListView(
+            padding: const EdgeInsets.symmetric(vertical: 16),
+            children: [
+              _buildDatePicker(cubit, user?.uId),
+              const SizedBox(height: 28),
+
+              _buildSectionHeader("Today Attendance", state),
+              const SizedBox(height: 16),
+              _buildCheckInOutGrid(cubit),
+              const SizedBox(height: 12),
+              _buildStatsGrid(cubit),
+
+              if (cubit.workingTime != "00:00:00") _buildWorkingTimeCard(cubit),
+
+              const SizedBox(height: 28),
+              _buildSectionHeader("Your Activity", null),
+              const SizedBox(height: 16),
+
+              _buildSwipeButton(cubit, user?.uId),
+              const SizedBox(height: 20),
+
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16),
+                child: UserActivityView(userActivityModel: cubit.activity),
+              ),
+            ],
+          ),
         );
       },
     );

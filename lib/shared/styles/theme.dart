@@ -26,11 +26,16 @@ TextStyle get btnTextStyle => const TextStyle(
       color: AppColors.black900,
     );
 final appTheme = ThemeData(
+
+  progressIndicatorTheme: ProgressIndicatorThemeData(color: AppColors.primary,strokeWidth: 6,refreshBackgroundColor: AppColors.grey300),
   primaryColor: AppColors.primary,
   fontFamily: "Jannah",
   appBarTheme: AppBarTheme(
     backgroundColor: AppColors.white,
     elevation: 0,
+  ),
+  tabBarTheme: TabBarThemeData(
+    indicatorColor: AppColors.primary,
   ),
 
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
