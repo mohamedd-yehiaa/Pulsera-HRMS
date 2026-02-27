@@ -69,16 +69,13 @@ class CreateUserErrorState extends RegisterStates {
 class RegisterChangePasswordVisibilityState extends RegisterStates {}
 class CreateCompanyLoadingState extends RegisterStates {}
 class CreateCompanySuccessState extends RegisterStates {}
+class CreateCompanyChangeWorkingDaysState extends RegisterStates {}
+class CreateCompanyTimeChangedState extends  RegisterStates {}
 class CreateCompanyErrorState extends RegisterStates {
   final String error;
   CreateCompanyErrorState(this.error);
 }
-class UpdateCompanyLoadingState extends RegisterStates {}
-class UpdateCompanySuccessState extends RegisterStates {}
-class UpdateCompanyErrorState extends RegisterStates {
-  final String error;
-  UpdateCompanyErrorState(this.error);
-}
+
 
 
 
@@ -99,5 +96,9 @@ class ProfileUpdateErrorState extends ProfileStates {
   final String error;
   ProfileUpdateErrorState(this.error);
 }
-class ProfileUpdateWorkingDaysState extends ProfileStates{}
-class ProfileTimeChangedState extends ProfileStates{}
+class UpdateCompanyLoadingState extends ProfileStates {}
+class UpdateCompanySuccessState extends ProfileStates {}
+class UpdateCompanyErrorState extends ProfileStates {
+  final String error;
+  UpdateCompanyErrorState(this.error);
+}

@@ -229,6 +229,10 @@ class AppButton {
       padding: padding ?? EdgeInsets.zero,
       child: OutlinedButton(
         style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
+
+          // 2. Ensures the button doesn't shrink smaller than the text field
+          minimumSize: const Size(double.infinity, 65),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(16),
           ),
@@ -337,9 +341,13 @@ void showForgotPasswordSheet(BuildContext context) => showModalBottomSheet(
 Widget title(BuildContext context, String name, IconData iconData) {
   return Row(
     children: [
-      Text(name, style: Theme.of(context).textTheme.titleLarge),
+      Text(name, style: Theme.of(context).textTheme.titleLarge!.copyWith(
+        fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
+        fontSize: 19,
+      )),
       const SizedBox(width: 10),
-      Icon(iconData, size: 20, color: AppColors.blue600),
+      Icon(iconData, size: 24, color: AppColors.blue600),
     ],
   );
 }

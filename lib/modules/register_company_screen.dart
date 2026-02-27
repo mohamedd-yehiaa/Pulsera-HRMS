@@ -5,14 +5,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
-import '../shared/components/components.dart';
-import '../shared/cubit/app_cubit.dart';
-import '../shared/cubit/settings_cubit.dart';
-import '../shared/cubit/register_cubit.dart';
-import '../shared/cubit/states.dart';
-import '../shared/styles/colors.dart';
-import '../shared/styles/icon_broken.dart';
+import 'package:pulsera/shared/cubit/app_cubit.dart';
+import 'package:pulsera/shared/cubit/register_cubit.dart';
+import 'package:pulsera/shared/cubit/profile_cubit.dart';
+import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/styles/colors.dart';
+import 'package:pulsera/shared/styles/icon_broken.dart';
 
 class RegisterCompanyScreen extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
@@ -39,8 +39,6 @@ class RegisterCompanyScreen extends StatelessWidget {
             backgroundColor: Colors.green,
             textColor: Colors.white,
           );
-
-          // 2. Navigate and clear the stack to prevent going back to registration
           navigateAndFinish(context, HomeLayout());
         }
 
@@ -53,7 +51,7 @@ class RegisterCompanyScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        RegisterCubit cubit = RegisterCubit.get(context);
+        RegisterCubit registerCubit = RegisterCubit.get(context);
         ProfileCubit profileCubit = ProfileCubit.get(context);
 
         return Scaffold(
@@ -69,7 +67,7 @@ class RegisterCompanyScreen extends StatelessWidget {
           ),
           body: SingleChildScrollView(
             child: Padding(
-              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              padding: const EdgeInsets.all(20.0),
               child: Form(
                 key: formKey,
                 child: Column(
@@ -89,7 +87,7 @@ class RegisterCompanyScreen extends StatelessWidget {
                         ),
                       ],
                     ),
-                    const SizedBox(height: 40.0),
+                    const SizedBox(height: 20.0),
 
                     // Organization Name
                     DefaultFormField(
@@ -139,74 +137,76 @@ class RegisterCompanyScreen extends StatelessWidget {
                     // Start Time Picker Button
                     AppButton.appOulineButtonRow(
                       context: context,
-                      onPressed: () => profileCubit.openTimePicker(
+                      onPressed: () => registerCubit.openTimePicker(
                         isStart: true,
                         context: context,
                       ),
 
-                      label: profileCubit.startTime == null
+                      label: registerCubit.startTime == null
                           ? "Select start time"
-                          : formatTimeOfDay(profileCubit.startTime!),
+                          : formatTimeOfDay(registerCubit.startTime!),
                       suffixIcon: const Icon(
                         IconBroken.Time_Circle,
                         size: 22,
                         color: AppColors.primary,
                       ),
-                      value: startTimeTC.text,
+                      value: profileCubit.startTimeTC.text,
                     ),
                     const SizedBox(height: 16.0),
 
                     // End Time Picker Button
                     AppButton.appOulineButtonRow(
-                      onPressed: () => profileCubit.openTimePicker(
+                      onPressed: () => registerCubit.openTimePicker(
                         isStart: false,
                         context: context,
                       ),
-                      label: profileCubit.endTime == null
+                      label: registerCubit.endTime == null
                           ? "Select end time"
-                          : formatTimeOfDay(profileCubit.endTime!),
+                          : formatTimeOfDay(registerCubit.endTime!),
                       suffixIcon: const Icon(
                         IconBroken.Time_Circle,
                         size: 22,
                         color: AppColors.primary,
                       ),
                       context: context,
-                      value: endTimeTC.text,
+                      value: profileCubit.endTimeTC.text,
                     ),
-                    const SizedBox(height: 30.0),
+                    const SizedBox(height: 20.0),
                     Container(
                       width: double.maxFinite,
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        color: Colors.grey[100],
+                        color: AppColors.grey100,
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Wrap(
                         spacing: 10,
                         runSpacing: 15,
                         children: List.generate(
-                          workingDaysList.length,
+                          registerCubit.workingDaysList.length,
                           (index) => ChoiceChip(
                             label: Text(
-                              workingDaysList[index].label,
+                              registerCubit.workingDaysList[index].label,
                               style: TextStyle(
-                                color: workingDaysList[index].isSelected
+                                color:
+                                    registerCubit
+                                        .workingDaysList[index]
+                                        .isSelected
                                     ? Colors.white
                                     : Colors.black,
                               ),
                             ),
-                            selected: workingDaysList[index].isSelected,
-                            selectedColor: AppColors
-                                .blue600, // Ensure this color exists in your theme
+                            selected:
+                                registerCubit.workingDaysList[index].isSelected,
+                            selectedColor: AppColors.blue600,
                             onSelected: (selected) {
-                              ProfileCubit.get(
-                                context,
-                              ).onWorkingDaysChange(index);
+                              registerCubit.onWorkingDaysChange(index);
                             },
                           ),
                         ),
                       ),
                     ),
+                    const SizedBox(height: 16.0),
 
                     // Final Registration Button
                     ConditionalBuilder(
@@ -217,20 +217,21 @@ class RegisterCompanyScreen extends StatelessWidget {
                         child: ElevatedButton(
                           onPressed: () {
                             if (formKey.currentState!.validate()) {
-                              if (profileCubit.startTime == null ||
-                                  profileCubit.endTime == null) {
+                              if (registerCubit.startTime == null ||
+                                  registerCubit.endTime == null) {
                                 Fluttertoast.showToast(
                                   msg: "Please select working hours",
                                 );
                                 return;
                               }
-                              cubit.registerCompany(
+                              registerCubit.registerCompany(
                                 orgName: organizationTC.text,
                                 paidLeave: paidLeaveTC.text,
                                 sickLeave: casualSickTC.text,
                                 wfhDays: wfhTC.text,
-                                startTime: profileCubit.startTime,
-                                endTime: profileCubit.endTime,
+                                startTime: registerCubit.startTime,
+                                endTime: registerCubit.endTime,
+                                workingDaysList: registerCubit.workingDaysList,
                                 ownerId: FirebaseAuth.instance.currentUser!.uid,
                               );
                             }

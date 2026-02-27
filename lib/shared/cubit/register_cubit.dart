@@ -3,10 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/models/company_model.dart';
+import 'package:pulsera/models/user_model.dart';
+import 'package:pulsera/models/working_days_model.dart';
+import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
-import '../../models/company_model.dart';
-import '../../models/user_model.dart';
-import '../components/helper_functions.dart';
+
 
 
 class RegisterCubit extends Cubit<RegisterStates> {
@@ -20,6 +22,11 @@ class RegisterCubit extends Cubit<RegisterStates> {
   IconData suffix = Icons.visibility_off_outlined;
   bool isPassword = true;
   String selectedUserType = "Employee";
+  TimeOfDay? startTime;
+  TimeOfDay? endTime;
+  final organizationTC = TextEditingController();
+  final startTimeTC = TextEditingController();
+  final endTimeTC = TextEditingController();
 
   //userRegister and userCreate
   void signInWithGoogle() {
@@ -157,13 +164,50 @@ class RegisterCubit extends Cubit<RegisterStates> {
     });
   }
 
-  // ---------------------------------------------------------------------------
+  final workingDaysMapping = <String, int>{
+    "FRIDAY": 1,
+    "SATURDAY": 2,
+    "SUNDAY": 3,
+    "MONDAY": 4,
+    "TUESDAY": 5,
+    "WEDNESDAY": 6,
+    "THURSDAY": 7,
+  };
 
-  // 1. Filter the list to get only selected codes
-  List<String> selectedDayCodes = workingDaysList
+  List<WorkingDaysModel> workingDaysList =
+  [
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+  ]
+      .map(
+        (day) => WorkingDaysModel(
+      label: day,
+      code: day.toUpperCase(),
+      isSelected: false,
+    ),
+  )
+      .toList();
+
+  // 1. Get the uppercase codes of selected days
+  late List<String> selectedDayCodes = workingDaysList
       .where((day) => day.isSelected)
       .map((day) => day.code)
       .toList();
+  // 2. Map those codes to their integer values using your mapping
+  late List<int> selectedDayValues = selectedDayCodes
+      .map((code) => workingDaysMapping[code]!)
+      .toList();
+
+  void onWorkingDaysChange(int index) {
+    workingDaysList[index].isSelected = !workingDaysList[index].isSelected;
+    emit(CreateCompanyChangeWorkingDaysState());
+  }
+
 
   void registerCompany({
     required String orgName,
@@ -173,14 +217,21 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required TimeOfDay? startTime,
     required TimeOfDay? endTime,
     required String ownerId,
+    required List<WorkingDaysModel> workingDaysList,
   }) {
 
-    if (selectedDayCodes.isEmpty) {
+    // Convert the List of Objects into a List of Strings
+    List<String> selectedDayValues = workingDaysList
+        .where((day) => day.isSelected)
+        .map((day) => day.code)
+        .toList();
+
+    if (selectedDayValues.isEmpty) {
       emit(CreateCompanyErrorState("Please select at least one working day."));
       return;
     }
-
     emit(CreateCompanyLoadingState());
+
     var companyDocRef = FirebaseFirestore.instance.collection('companies').doc();
     CompanyModel comModel = CompanyModel(
       companyId: companyDocRef.id,
@@ -191,7 +242,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       wfhPerMonth: int.parse(wfhDays),
       startTime: formatTimeOfDay(startTime!),
       endTime: formatTimeOfDay(endTime!),
-      workingDays: selectedDayCodes,
+      workingDays:selectedDayValues,
 
     );
 
@@ -206,5 +257,29 @@ class RegisterCubit extends Cubit<RegisterStates> {
     }).catchError((error) {
       emit(CreateCompanyErrorState(error.toString()));
     });
+  }
+
+  Future<void> openTimePicker({
+    required bool isStart,
+    required BuildContext context,
+  }) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+
+      initialTime: isStart
+          ? (startTime ?? TimeOfDay.now())
+          : (endTime ?? TimeOfDay.now()),
+    );
+
+    if (selectedTime != null) {
+      if (isStart) {
+        startTime = selectedTime;
+        startTimeTC.text = formatTimeOfDay(selectedTime).toString();
+      } else {
+        endTime = selectedTime;
+        endTimeTC.text = formatTimeOfDay(selectedTime).toString();
+      }
+      emit(CreateCompanyTimeChangedState());
+    }
   }
 }

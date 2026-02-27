@@ -36,7 +36,11 @@ final appTheme = ThemeData(
   ),
   tabBarTheme: TabBarThemeData(
     indicatorColor: AppColors.primary,
+    labelColor: AppColors.primary,
+    unselectedLabelColor: AppColors.grey800,
   ),
+  // timePickerTheme: TimePickerThemeData(),
+  // datePickerTheme: DatePickerThemeData(),
 
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: AppColors.white,

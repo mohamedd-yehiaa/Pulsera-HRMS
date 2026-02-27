@@ -1,10 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 
-import '../../models/working_days_model.dart';
-
-
-
 void showSuccessSnack(String msg) {
   Fluttertoast.showToast(
     msg: msg,
@@ -37,25 +33,6 @@ void closeDialogs(BuildContext context) {
   }
 }
 
-final workingDaysMapping = <String, int>{
-  "FRIDAY": 1,
-  "SATURDAY": 2,
-  "SUNDAY": 3,
-  "MONDAY": 4,
-  "TUESDAY": 5,
-  "WEDNESDAY": 6,
-  "THURSDAY": 7,
-
-};
-
-List<WorkingDaysModel> workingDaysList = [
-  "Friday", "Saturday", "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday",
-].map((e) => WorkingDaysModel(
-  label: e,
-  code: e.toUpperCase(),
-  isSelected: false,
-)).toList();
-
 String secondsToTime(int seconds) {
   int hours = seconds ~/ 3600;
   int minutes = (seconds % 3600) ~/ 60;
@@ -79,4 +56,23 @@ List<String> mergeBreakInBreakOutTimes(List<String> inTimes, List<String> outTim
     if (i < outTimes.length) mergedTimes.add(outTimes[i]);
   }
   return mergedTimes;
+}
+
+TimeOfDay parseTimeOfDay(String timeString) {
+  // Assuming format is "HH:mm" or "HH:mm AM/PM"
+  // This example handles "14:30" or "02:30 PM" style
+  final format = RegExp(r'(\d+):(\d+)');
+  final match = format.firstMatch(timeString);
+
+  if (match != null) {
+    int hour = int.parse(match.group(1)!);
+    int minute = int.parse(match.group(2)!);
+
+    // Handle PM if your string contains it
+    if (timeString.toLowerCase().contains('pm') && hour < 12) hour += 12;
+    if (timeString.toLowerCase().contains('am') && hour == 12) hour = 0;
+
+    return TimeOfDay(hour: hour, minute: minute);
+  }
+  return const TimeOfDay(hour: 9, minute: 0); // Default fallback
 }

@@ -10,7 +10,6 @@ class CompanyModel {
   String? companyEmail;
   List<String>? workingDays;
 
-
   CompanyModel({
     this.companyId,
     this.ownerId,
@@ -35,7 +34,10 @@ class CompanyModel {
     startTime = json?['startTime'];
     endTime = json?['endTime'];
     companyEmail = json?['companyEmail'];
-    workingDays = json?['workingDays'];
+    // Safe casting for the List
+    if (json?['workingDays'] != null) {
+      workingDays = List<String>.from(json?['workingDays']);
+    }
   }
 
   // Sending data to Firebase (Model -> Map)

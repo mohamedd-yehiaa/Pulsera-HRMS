@@ -4,7 +4,7 @@ import 'package:pulsera/shared/bloc_observer.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
-import 'package:pulsera/shared/cubit/settings_cubit.dart';
+import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
