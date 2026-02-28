@@ -7,6 +7,7 @@ import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/register_screen.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 import '../shared/components/components.dart';
+import '../shared/cubit/app_cubit.dart';
 import '../shared/cubit/auth_cubit.dart';
 import '../shared/cubit/register_cubit.dart';
 import '../shared/cubit/states.dart';
@@ -20,10 +21,25 @@ class LoginScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return MultiBlocProvider(
-      providers: [
-        BlocProvider(create: (context) => AuthCubit()),
-        BlocProvider(create: (context) => RegisterCubit()),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<RegisterCubit, RegisterStates>(
+          listener: (context, state) {
+            if (state is CreateUserErrorState) {
+              Fluttertoast.showToast(msg: state.error);
+            }
+            if (state is CreateUserSuccessState) {
+              CacheHelper.saveData(
+                key: 'uId',
+                value: FirebaseAuth.instance.currentUser!.uid,
+              ).then((value) {
+                AppCubit.get(context).getUserData();
+                AppCubit.get(context).getCompanyData();
+              });
+              navigateAndFinish(context, HomeLayout());
+            }
+          },
+        ),
       ],
       child: BlocConsumer<AuthCubit, AuthStates>(
         listener: (context, state) {
@@ -31,17 +47,14 @@ class LoginScreen extends StatelessWidget {
             Fluttertoast.showToast(msg: state.error);
           }
           if (state is AuthSuccessState) {
-              CacheHelper.saveData(
-                key: 'uId',
-                value: FirebaseAuth.instance.currentUser!.uid,
-              ).then((value) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => HomeLayout()),
-              (route) => false,
-            );
-
-              });
+            CacheHelper.saveData(
+              key: 'uId',
+              value: FirebaseAuth.instance.currentUser!.uid,
+            ).then((value) {
+              AppCubit.get(context).getUserData();
+              AppCubit.get(context).getCompanyData();
+              navigateAndFinish(context, HomeLayout());
+            });
           }
         },
         builder: (context, state) {
@@ -152,7 +165,9 @@ class LoginScreen extends StatelessWidget {
                           Container(
                             alignment: AlignmentDirectional.centerEnd,
                             child: TextButton(
-                              onPressed: () {showForgotPasswordSheet(context);},
+                              onPressed: () {
+                                showForgotPasswordSheet(context);
+                              },
                               child: Text(
                                 'Forget Password?',
                                 style: Theme.of(context).textTheme.titleMedium!

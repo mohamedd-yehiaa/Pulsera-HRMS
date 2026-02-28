@@ -1,43 +1,74 @@
+import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/shared/cubit/auth_cubit.dart';
+import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 import '../shared/cubit/app_cubit.dart';
 import '../shared/cubit/states.dart';
-import '../shared/styles/colors.dart';
 
 class HomeLayout extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (BuildContext context) => AppCubit(),
+    return MultiBlocListener(
+      listeners: [
+        BlocListener<RegisterCubit, RegisterStates>(
+          listener: (context, state) {
+            if (state is CreateUserSuccessState) {
+              AppCubit.get(context).getUserData();
+              AppCubit.get(context).getCompanyData();
+            }
+          },
+        ),
+        BlocListener<AuthCubit, AuthStates>(
+          listener: (context, state) {
+            if (state is AuthSuccessState) {
+              AppCubit.get(context).getUserData();
+              AppCubit.get(context).getCompanyData();
+            }
+          },
+        ),
+      ],
+
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (BuildContext context, AppStates state) {},
         builder: (BuildContext context, AppStates state) {
           AppCubit cubit = AppCubit.get(context);
 
-          return Scaffold(
-            appBar: cubit.appBars[cubit.currentIndex],
-            body: cubit.screens[cubit.currentIndex],
-            bottomNavigationBar: BottomNavigationBar(
-              currentIndex: cubit.currentIndex,
-              onTap: (index) {
-                cubit.changeIndex(index);
-              },
-              items: [
-                BottomNavigationBarItem(
-                  icon: Icon(IconBroken.Home),
-                  label: 'Home',
+          return ConditionalBuilder(
+            condition: cubit.userModel != null,
+            builder: (BuildContext context) {
+              return Scaffold(
+                appBar: cubit.appBars[cubit.currentIndex],
+                body: cubit.screens[cubit.currentIndex],
+                bottomNavigationBar: BottomNavigationBar(
+                  currentIndex: cubit.currentIndex,
+                  onTap: (index) {
+                    cubit.changeIndex(index);
+                  },
+                  items: [
+                    BottomNavigationBarItem(
+                      icon: Icon(IconBroken.Home),
+                      label: 'Home',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(IconBroken.Calendar),
+                      label: 'Leave',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(IconBroken.Wallet),
+                      label: 'Payroll',
+                    ),
+                    BottomNavigationBarItem(
+                      icon: Icon(IconBroken.Setting),
+                      label: 'Settings',
+                    ),
+                  ],
                 ),
-                BottomNavigationBarItem(
-                  icon: Icon(IconBroken.Calendar),
-                  label: 'Leave',
-                ),
-                BottomNavigationBarItem(
-                  icon: Icon(IconBroken.Wallet),
-                  label: 'Payroll',
-                ),
-              ],
-            ),
+              );
+            },
+            fallback: (BuildContext context) =>
+                Center(child: CircularProgressIndicator()),
           );
         },
       ),

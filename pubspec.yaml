@@ -43,7 +43,6 @@ dependencies:
   conditional_builder_null_safety: ^0.0.6
   google_sign_in: ^7.2.0
   fluttertoast: ^9.0.0
-  flutter_native_splash: ^2.4.7
   shared_preferences: ^2.5.4
 
 dev_dependencies:

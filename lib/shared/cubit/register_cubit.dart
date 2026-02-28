@@ -3,8 +3,12 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/models/company_model.dart';
+import 'package:pulsera/models/user_model.dart';
+import 'package:pulsera/models/working_days_model.dart';
+import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
-import '../../models/user_model.dart';
+
 
 
 class RegisterCubit extends Cubit<RegisterStates> {
@@ -15,13 +19,16 @@ class RegisterCubit extends Cubit<RegisterStates> {
   // Class Properties
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-
   IconData suffix = Icons.visibility_off_outlined;
   bool isPassword = true;
-  String? selectedUserType;
+  String selectedUserType = "Employee";
+  TimeOfDay? startTime;
+  TimeOfDay? endTime;
+  final organizationTC = TextEditingController();
+  final startTimeTC = TextEditingController();
+  final endTimeTC = TextEditingController();
 
   //userRegister and userCreate
-
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
@@ -58,20 +65,20 @@ class RegisterCubit extends Cubit<RegisterStates> {
 
   void createUserInFirestore(User user) {
     final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    UserModel googleModel = UserModel(
+      uId: user.uid,
+      firstName: user.displayName?.split(' ').first ?? '',
+      lastName: user.displayName?.split(' ').last ?? '',
+      email: user.email ?? '',
+      phone: user.phoneNumber ?? '',
+      userType: selectedUserType,
+      isEmailVerified: true,
+    );
 
     userDoc.get().then((doc) {
       if (!doc.exists) {
-        userDoc.set({
-          'uId': user.uid,
-          'firstName': user.displayName?.split(' ').first ?? '',
-          'lastName': user.displayName?.split(' ').last ?? '',
-          'email': user.email ?? '',
-          'phone': user.phoneNumber ?? '',
-          'uType': selectedUserType,
-          'isEmailVerified': true,
-          'provider': 'google',
-          'createdAt': FieldValue.serverTimestamp(),
-        }).then((value) {
+        userDoc.set(googleModel.toMap())
+            .then((value) {
           emit(CreateUserSuccessState());
         }).catchError((error) {
           emit(CreateUserErrorState(error.toString()));
@@ -83,7 +90,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       emit(CreateUserErrorState(error.toString()));
     });
   }
-
+// ================================================================================
   // UI Support Methods
   void changePasswordVisibility() {
     isPassword = !isPassword;
@@ -103,6 +110,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required String email,
     required String password,
     required String phone,
+    required String userType,
   }) {
     emit(RegisterLoadingState());
 
@@ -118,6 +126,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
         email: email,
         firstName: firstName,
         lastName: lastName,
+        userType: selectedUserType,
       );
     }).catchError((error) {
       emit(RegisterErrorState(error.toString()));
@@ -130,6 +139,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required String email,
     required String phone,
     required String uId,
+    required String userType,
   }) {
     UserModel model = UserModel(
       firstName: firstName,
@@ -138,6 +148,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       phone: phone,
       uId: uId,
       isEmailVerified: false,
+      userType: selectedUserType,
     );
 
     FirebaseFirestore.instance
@@ -151,5 +162,124 @@ class RegisterCubit extends Cubit<RegisterStates> {
       print(error.toString());
       emit(CreateUserErrorState(error.toString()));
     });
+  }
+
+  final workingDaysMapping = <String, int>{
+    "FRIDAY": 1,
+    "SATURDAY": 2,
+    "SUNDAY": 3,
+    "MONDAY": 4,
+    "TUESDAY": 5,
+    "WEDNESDAY": 6,
+    "THURSDAY": 7,
+  };
+
+  List<WorkingDaysModel> workingDaysList =
+  [
+    "Friday",
+    "Saturday",
+    "Sunday",
+    "Monday",
+    "Tuesday",
+    "Wednesday",
+    "Thursday",
+  ]
+      .map(
+        (day) => WorkingDaysModel(
+      label: day,
+      code: day.toUpperCase(),
+      isSelected: false,
+    ),
+  )
+      .toList();
+
+  // 1. Get the uppercase codes of selected days
+  late List<String> selectedDayCodes = workingDaysList
+      .where((day) => day.isSelected)
+      .map((day) => day.code)
+      .toList();
+  // 2. Map those codes to their integer values using your mapping
+  late List<int> selectedDayValues = selectedDayCodes
+      .map((code) => workingDaysMapping[code]!)
+      .toList();
+
+  void onWorkingDaysChange(int index) {
+    workingDaysList[index].isSelected = !workingDaysList[index].isSelected;
+    emit(CreateCompanyChangeWorkingDaysState());
+  }
+
+
+  void registerCompany({
+    required String orgName,
+    required String paidLeave,
+    required String sickLeave,
+    required String wfhDays,
+    required TimeOfDay? startTime,
+    required TimeOfDay? endTime,
+    required String ownerId,
+    required List<WorkingDaysModel> workingDaysList,
+  }) {
+
+    // Convert the List of Objects into a List of Strings
+    List<String> selectedDayValues = workingDaysList
+        .where((day) => day.isSelected)
+        .map((day) => day.code)
+        .toList();
+
+    if (selectedDayValues.isEmpty) {
+      emit(CreateCompanyErrorState("Please select at least one working day."));
+      return;
+    }
+    emit(CreateCompanyLoadingState());
+
+    var companyDocRef = FirebaseFirestore.instance.collection('companies').doc();
+    CompanyModel comModel = CompanyModel(
+      companyId: companyDocRef.id,
+      ownerId: ownerId,
+      organizationName: orgName,
+      paidLeavePerMonth: int.parse(paidLeave),
+      sickLeavePerMonth: int.parse(sickLeave),
+      wfhPerMonth: int.parse(wfhDays),
+      startTime: formatTimeOfDay(startTime!),
+      endTime: formatTimeOfDay(endTime!),
+      workingDays:selectedDayValues,
+
+    );
+
+    companyDocRef
+        .set(comModel.toMap())
+        .then((value) {
+       FirebaseFirestore.instance
+          .collection('users')
+          .doc(ownerId)
+          .update({'companyId': companyDocRef.id});
+      emit(CreateCompanySuccessState());
+    }).catchError((error) {
+      emit(CreateCompanyErrorState(error.toString()));
+    });
+  }
+
+  Future<void> openTimePicker({
+    required bool isStart,
+    required BuildContext context,
+  }) async {
+    final TimeOfDay? selectedTime = await showTimePicker(
+      context: context,
+
+      initialTime: isStart
+          ? (startTime ?? TimeOfDay.now())
+          : (endTime ?? TimeOfDay.now()),
+    );
+
+    if (selectedTime != null) {
+      if (isStart) {
+        startTime = selectedTime;
+        startTimeTC.text = formatTimeOfDay(selectedTime).toString();
+      } else {
+        endTime = selectedTime;
+        endTimeTC.text = formatTimeOfDay(selectedTime).toString();
+      }
+      emit(CreateCompanyTimeChangedState());
+    }
   }
 }

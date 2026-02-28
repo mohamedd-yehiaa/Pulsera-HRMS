@@ -1,8 +1,9 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import 'package:pulsera/shared/styles/icon_broken.dart';
 import '../app_extension.dart';
 import '../styles/colors.dart';
-import '../styles/icon_broken.dart';
 import '../styles/theme.dart';
 
 class DefaultFormField extends StatelessWidget {
@@ -15,6 +16,7 @@ class DefaultFormField extends StatelessWidget {
   final VoidCallback? suffixPressed;
   final String? Function(String?)? validator;
   final ValueChanged<String>? onFieldSubmitted;
+  final List<TextInputFormatter>? inputFormatters;
 
   const DefaultFormField({
     super.key,
@@ -27,6 +29,7 @@ class DefaultFormField extends StatelessWidget {
     this.suffixPressed,
     this.validator,
     this.onFieldSubmitted,
+    this.inputFormatters,
   });
 
   @override
@@ -36,6 +39,7 @@ class DefaultFormField extends StatelessWidget {
       keyboardType: type,
       obscureText: isPassword,
       onFieldSubmitted: onFieldSubmitted,
+      inputFormatters: inputFormatters,
       validator: validator,
       decoration: InputDecoration(
         contentPadding: const EdgeInsets.symmetric(
@@ -67,7 +71,6 @@ class ActivityCard extends StatelessWidget {
   final String title;
   final DateTime dateTime;
   final String description;
-
 
   const ActivityCard({
     super.key,
@@ -204,117 +207,148 @@ class HorizontalDate extends StatelessWidget {
   }
 }
 
-void showForgotPasswordSheet(BuildContext context) {
-  final TextEditingController emailController = TextEditingController();
+class AppButton {
+  static Widget appButton({
+    required void Function()? onPressed,
+    required String label,
+    Widget? child,
+  }) {
+    return ElevatedButton(onPressed: onPressed, child: child ?? Text(label));
+  }
 
-  showModalBottomSheet(
-    context: context,
-    isScrollControlled: true, // Allows the modal to move up with the keyboard
-    backgroundColor: Colors.transparent,
-    builder: (context) {
-      return Padding(
-        // This padding prevents the keyboard from covering the text field
-        padding: EdgeInsets.only(
-          bottom: MediaQuery.of(context).viewInsets.bottom,
-        ),
-        child: Container(
-          decoration: BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(25)),
+  static Widget appOulineButtonRow({
+    required void Function()? onPressed,
+    required String label,
+    required BuildContext context,
+    String? value,
+    EdgeInsetsGeometry? padding,
+    Widget? prefixIcon,
+    Widget? suffixIcon,
+  }) {
+    return Padding(
+      padding: padding ?? EdgeInsets.zero,
+      child: OutlinedButton(
+        style: OutlinedButton.styleFrom(
+          padding: const EdgeInsets.symmetric(vertical: 20.0, horizontal: 10.0),
+
+          // 2. Ensures the button doesn't shrink smaller than the text field
+          minimumSize: const Size(double.infinity, 65),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
           ),
-          padding: EdgeInsets.fromLTRB(24, 12, 24, 32),
-          child: Column(
-            mainAxisSize: MainAxisSize.min, // Takes up only half the screen
-            children: [
-              // Grey Handle Bar
-              Container(
-                width: 40,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey[300],
-                  borderRadius: BorderRadius.circular(10),
-                ),
+          side: BorderSide.none,
+          backgroundColor: AppColors.grey100,
+        ),
+        onPressed: onPressed,
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            if (prefixIcon != null) ...{prefixIcon},
+            Text(
+              label,
+              style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
               ),
-              SizedBox(height: 25),
+            ),
+            if (suffixIcon != null) ...{suffixIcon},
+          ],
+        ),
+      ),
+    );
+  }
+}
 
-              Text(
-                "Forgot Password",
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+void navigateTo(context, widget) =>
+    Navigator.push(context, MaterialPageRoute(builder: (context) => widget));
+
+void navigateAndFinish(context, widget) => Navigator.pushAndRemoveUntil(
+  context,
+  MaterialPageRoute(builder: (context) => widget),
+  (route) {
+    return false;
+  },
+);
+// UI Implementation snippet
+void showForgotPasswordSheet(BuildContext context) => showModalBottomSheet(
+  context: context,
+  isScrollControlled: true, // Allows keyboard to push the sheet up
+  shape: const RoundedRectangleBorder(
+    borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+  ),
+  builder: (context) => Padding(
+    padding: EdgeInsets.only(
+      bottom:
+          MediaQuery.of(context).viewInsets.bottom +
+          20, // Avoids keyboard overlap
+      left: 20,
+      right: 20,
+      top: 20,
+    ),
+    child: Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "Forgot Password?",
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: 10),
+        const Text(
+          "Enter your email address and we'll send you a link to reset your password.",
+          style: TextStyle(color: Colors.grey),
+        ),
+        const SizedBox(height: 25),
+        DefaultFormField(
+          controller: TextEditingController(),
+          type: TextInputType.emailAddress,
+          label: Text(
+            'Email Address',),
+          prefix: IconBroken.Message,
+          validator: (String? value) {
+            if (value == null || value.isEmpty) {
+              return 'please enter your email address';
+            }
+            return null;
+          },
+
+        ),
+        const SizedBox(height: 20),
+        SizedBox(
+          width: double.infinity,
+          height: 50,
+          child: ElevatedButton(
+            onPressed: () {
+              FirebaseAuth.instance.sendPasswordResetEmail(
+                email: TextEditingController().text,
+              );
+              Navigator.pop(context);
+            },
+            style: ElevatedButton.styleFrom(
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(12),
               ),
-              SizedBox(height: 10),
-              Text(
-                "Enter your email to receive a reset link",
-                style: TextStyle(color: Colors.grey[600]),
-              ),
-              SizedBox(height: 25),
-              DefaultFormField(
-                controller: emailController,
-                type: TextInputType.emailAddress,
-                label: Text(
-                  "Email Address",
-                  style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
-                ),
-                validator: (String? value) {
-                  if (value == null || value.isEmpty) {
-                    return 'please enter your email address';
-                  }
-                  return null;
-                },
-                prefix: IconBroken.Message,
-              ),
-
-              SizedBox(height: 25),
-
-              // Confirm Button
-              SizedBox(
-                width: double.infinity,
-                height: 55,
-                child: ElevatedButton(
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.blueAccent,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                    onPressed: () async {
-                      try {
-                        // 1. Send the email
-                        await FirebaseAuth.instance.sendPasswordResetEmail(
-                          email: emailController.text.trim(),
-                        );
-
-                        // 2. Close the current "Email Input" BottomSheet
-                        Navigator.pop(context);
-                      } on FirebaseAuthException catch (e) {
-
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(
-                            content: Text(e.message ?? "An error occurred"),
-                            backgroundColor: Colors.red,
-                          ),
-                        );
-                      }
-                    },
-                  child: Text(
-                    "Confirm",
-                    style: Theme.of(context).textTheme.titleLarge!
-                      .copyWith(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textWhite,
-                  ),
-                  ),
-                ),
-              ),
-            ],
+            ),
+            child: const Text("Send Reset Link"),
           ),
         ),
-      );
-    },
+      ],
+    ),
+  ),
+);
+
+Widget title(BuildContext context, String name, IconData iconData) {
+  return Row(
+    children: [
+      Text(name, style: Theme.of(context).textTheme.titleLarge!.copyWith(
+        fontWeight: FontWeight.bold,
+        color: AppColors.textPrimary,
+        fontSize: 19,
+      )),
+      const SizedBox(width: 10),
+      Icon(iconData, size: 24, color: AppColors.blue600),
+    ],
   );
 }
 

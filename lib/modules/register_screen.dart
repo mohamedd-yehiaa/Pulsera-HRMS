@@ -1,3 +1,4 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
@@ -5,8 +6,10 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/login_screen.dart';
 import '../shared/components/components.dart';
+import '../shared/cubit/app_cubit.dart';
 import '../shared/cubit/register_cubit.dart';
 import '../shared/cubit/states.dart';
+import '../shared/network/local/cache_helper.dart';
 import '../shared/styles/colors.dart';
 import '../shared/styles/icon_broken.dart';
 
@@ -27,12 +30,17 @@ class RegisterScreen extends StatelessWidget {
           if (state is CreateUserErrorState) {
             Fluttertoast.showToast(msg: state.error);
           }
+          if (state is RegisterErrorState) {
+            Fluttertoast.showToast(msg: state.error);
+          }
           if (state is CreateUserSuccessState) {
-            Navigator.pushAndRemoveUntil(
-              context,
-              MaterialPageRoute(builder: (context) => HomeLayout()),
-              (route) => false,
-            );
+            CacheHelper.saveData(
+              key: 'uId',
+              value: FirebaseAuth.instance.currentUser!.uid,
+            ).then((value) {
+              navigateAndFinish(context, HomeLayout());
+              AppCubit.get(context).getUserData();
+            });
           }
         },
         builder: (context, state) {
@@ -142,8 +150,8 @@ class RegisterScreen extends StatelessWidget {
                           items: ['Company Owner', 'Employee']
                               .map(
                                 (label) => DropdownMenuItem(
-                                  child: Text(label),
                                   value: label,
+                                  child: Text(label),
                                 ),
                               )
                               .toList(),
@@ -239,6 +247,7 @@ class RegisterScreen extends StatelessWidget {
                                     email: emailController.text,
                                     password: passwordController.text,
                                     phone: phoneController.text,
+                                    userType: cubit.selectedUserType,
                                   );
                                 }
                               },
