@@ -29,17 +29,17 @@ class MemberModel {
 }
 
 class MembersData {
-  String? id;
+  String? uId;
   String? userName;
   String? fullName;
   String? createdAt;
   String? roleType;
 
   MembersData(
-      {this.id, this.userName, this.fullName, this.createdAt, this.roleType});
+      {this.uId, this.userName, this.fullName, this.createdAt, this.roleType});
 
   MembersData.fromJson(Map<String, dynamic> json) {
-    id = json['id'];
+    uId = json['uId'];
     userName = json['userName'];
     fullName = json['fullName'];
     createdAt = json['createdAt'];
@@ -48,7 +48,7 @@ class MembersData {
 
   Map<String, dynamic> toJson() {
     final Map<String, dynamic> data = <String, dynamic>{};
-    data['id'] = id;
+    data['uId'] = uId;
     data['userName'] = userName;
     data['fullName'] = fullName;
     data['createdAt'] = createdAt;

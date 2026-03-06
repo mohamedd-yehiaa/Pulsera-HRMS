@@ -7,6 +7,7 @@ import 'package:pulsera/modules/home_screen.dart';
 import 'package:pulsera/modules/leave_screen.dart';
 import 'package:pulsera/modules/payroll_screen.dart';
 import 'package:pulsera/modules/settings_screen.dart';
+import 'package:pulsera/modules/team_members_screen.dart';
 import 'package:pulsera/shared/components/constants.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
@@ -27,6 +28,7 @@ class AppCubit extends Cubit<AppStates> {
   List<Widget> screens = [
     HomeScreen(),
     LeaveScreen(),
+    TeamMembersScreen(),
     PayrollScreen(),
     SettingsScreen(),
   ];
@@ -84,6 +86,10 @@ class AppCubit extends Cubit<AppStates> {
       elevation: 0,
     ),
     AppBar(
+      title: const Text("All Leaves", style: TextStyle(color: Colors.black)),
+      backgroundColor: Colors.white,
+      elevation: 0,),
+    AppBar(
       title: const Text(
         "Payroll History",
         style: TextStyle(color: Colors.black),
@@ -125,23 +131,6 @@ class AppCubit extends Cubit<AppStates> {
         });
   }
   //----------------------------------------------------------------------------
-  // void getCompanyData() {
-  //   var companyID = CacheHelper.getData(key: 'companyId') ?? userModel?.companyId;
-  //   emit(GetCompanyLoadingState());
-  //
-  //   FirebaseFirestore.instance
-  //       .collection('companies')
-  //       .doc(companyID)
-  //       .get()
-  //       .then((value) {
-  //     companyModel = CompanyModel.fromJson(value.data()!);
-  //     emit(GetCompanySuccessState());
-  //   })
-  //       .catchError((error) {
-  //     print(error.toString());
-  //     emit(GetCompanyErrorState(error.toString()));
-  //   });
-  // }
   void getCompanyData() {
     String? userCompanyId = userModel?.companyId ?? CacheHelper.getData(key: 'companyId');
 

@@ -8,6 +8,10 @@ class UserModel {
   String? companyId;
   bool? isEmailVerified;
   String? userType;
+  String? managerId;
+  double? monthlySalary;
+  int? annualVacationDays;
+  int? remainingVacationDays;
 
 
   UserModel({
@@ -20,6 +24,10 @@ class UserModel {
     this.companyId,
     this.isEmailVerified,
     this.userType,
+    this.managerId,
+    this.monthlySalary,
+    this.annualVacationDays,
+    this.remainingVacationDays,
   });
 
   UserModel.fromJson(Map<String, dynamic> json)
@@ -33,6 +41,10 @@ class UserModel {
     companyId = json['companyId'];
     isEmailVerified = json['isEmailVerified'];
     userType = json['userType'];
+    managerId = json['managerId'];
+    monthlySalary = (json['monthlySalary'] as num?)?.toDouble();
+    annualVacationDays = json['annualVacationDays'];
+    remainingVacationDays = json['remainingVacationDays'];
   }
 
   Map<String, dynamic> toMap()
@@ -47,6 +59,10 @@ class UserModel {
       'companyId':companyId,
       'isEmailVerified':isEmailVerified,
       'userType':userType,
+      'managerId':managerId,
+      'monthlySalary':monthlySalary,
+      'annualVacationDays':annualVacationDays,
+      'remainingVacationDays':remainingVacationDays,
     };
   }
 }

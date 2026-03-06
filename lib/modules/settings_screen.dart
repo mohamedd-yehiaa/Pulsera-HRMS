@@ -20,12 +20,8 @@ class SettingsScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    UserModel? user = AppCubit
-        .get(context)
-        .userModel;
-    final CompanyModel? company = AppCubit
-        .get(context)
-        .companyModel;
+    UserModel? user = AppCubit.get(context).userModel;
+    CompanyModel? company = AppCubit.get(context).companyModel;
 
     ProfileCubit profileCubit = ProfileCubit.get(context);
     RegisterCubit registerCubit = RegisterCubit.get(context);
@@ -41,7 +37,13 @@ class SettingsScreen extends StatelessWidget {
         }
         if (state is ProfileUpdateSuccessState) {
           AppCubit.get(context).getUserData();
-          AppCubit.get(context).getCompanyData();
+          var updatedUser = AppCubit.get(context).userModel;
+          if (updatedUser != null) {
+            profileCubit.userNameTC.text =
+                '${updatedUser.firstName} ${updatedUser.lastName}';
+            profileCubit.emailTC.text = updatedUser.email ?? '';
+            profileCubit.phoneTC.text = updatedUser.phone?.toString() ?? '';
+          }
           Fluttertoast.showToast(
             msg: "Profile Updated Successfully",
             backgroundColor: Colors.green,
@@ -52,10 +54,11 @@ class SettingsScreen extends StatelessWidget {
         }
       },
       builder: (context, state) {
-        profileCubit.userNameTC.text = '${user.firstName} ${user.lastName}';
-        profileCubit.emailTC.text = user.email!;
-        profileCubit.phoneTC.text = user.phone?.toString() ?? '';
-
+        if (profileCubit.userNameTC.text.isEmpty) {
+          profileCubit.userNameTC.text = '${user.firstName} ${user.lastName}';
+          profileCubit.emailTC.text = user.email ?? '';
+          profileCubit.phoneTC.text = user.phone?.toString() ?? '';
+        }
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
@@ -103,39 +106,40 @@ class SettingsScreen extends StatelessWidget {
             const SizedBox(height: 16),
             ConditionalBuilder(
               condition: state is! ProfileLoadingState,
-              builder: (context) =>
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        profileCubit.updateProfile(user.uId);
-                      },
-                      child: const Text(
-                        "Update Profile",
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+              builder: (context) => SizedBox(
+                width: double.infinity,
+                height: 50,
+                child: ElevatedButton(
+                  onPressed: () {
+                    profileCubit.updateProfile(user.uId);
+                  },
+                  child: const Text(
+                    "Update Profile",
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.white,
                     ),
                   ),
+                ),
+              ),
               fallback: (context) =>
-              const Center(child: CircularProgressIndicator()),
+                  const Center(child: CircularProgressIndicator()),
             ),
 
             const SizedBox(height: 16),
             FilledButton(
               onPressed: () {
                 CacheHelper.removeData(key: 'uId').then((value) {
-                  AppCubit
-                      .get(context)
-                      .userModel = null;
-                  AppCubit
-                      .get(context)
-                      .companyModel = null;
+                  AppCubit.get(context).userModel = null;
+                  AppCubit.get(context).companyModel = null;
                   AppCubit.get(context).changeIndex(0);
+                  profileCubit.userNameTC.text = '';
+                  profileCubit.emailTC.text = '';
+                  profileCubit.phoneTC.text = '';
+                  profileCubit.organizationTC.text = '';
+                  registerCubit.startTime = null;
+                  registerCubit.endTime = null;
                 });
                 navigateAndFinish(context, LoginScreen());
               },
@@ -156,28 +160,59 @@ class SettingsScreen extends StatelessWidget {
               ),
             ),
 
-            // organizationDetails----------------------------------------------
             if (user.userType == 'Company Owner') ...[
-              const SizedBox(height: 36),
-              BlocConsumer<RegisterCubit, RegisterStates>(
-                listener: (context, state) {
-
-                },
-                builder: (context, state) {
-                  if (company?.startTime != null) {
-                    registerCubit.startTime = parseTimeOfDay(company!.startTime!);
-                    registerCubit.startTimeTC.text = company.startTime!;
-                  }
-
-                  if (company?.endTime != null) {
-                    registerCubit.endTime = parseTimeOfDay(company!.endTime!);
-                    registerCubit.endTimeTC.text = company.endTime!;
-                  }
-
-                  profileCubit.organizationTC.text = company?.organizationName ?? '';
-
-                  return Expanded(
-                    child: Column(
+              const SizedBox(height: 32),
+              MultiBlocListener(
+                listeners: [
+                  BlocListener<ProfileCubit, ProfileStates>(
+                    listener: (context, state) {
+                      if (state is UpdateCompanySuccessState) {
+                        AppCubit.get(
+                          context,
+                        ).getCompanyData(); // Sync local data
+                        Fluttertoast.showToast(
+                          msg: "Organization Details Updated",
+                          backgroundColor: Colors.green,
+                        );
+                      }
+                      if (state is UpdateCompanyErrorState) {
+                        Fluttertoast.showToast(
+                          msg: state.error,
+                          backgroundColor: Colors.red,
+                        );
+                      }
+                    },
+                  ),
+                  BlocListener<RegisterCubit, RegisterStates>(
+                    listener: (context, state) {},
+                  ),
+                ],
+                child: BlocBuilder<RegisterCubit, RegisterStates>(
+                  builder: (context, state) {
+                    // Initialization Logic: Only runs if the field is empty to allow typing
+                    if (profileCubit.organizationTC.text.isEmpty &&
+                        company != null) {
+                      profileCubit.organizationTC.text =
+                          company.organizationName ?? '';
+                      if (company.startTime != null) {
+                        registerCubit.startTime = parseTimeOfDay(
+                          company.startTime!,
+                        );
+                      }
+                      if (company.endTime != null) {
+                        registerCubit.endTime = parseTimeOfDay(
+                          company.endTime!,
+                        );
+                      }
+                      if (company.workingDays != null) {
+                        for (var day in registerCubit.workingDaysList) {
+                          day.isSelected = company.workingDays!.contains(
+                            day.code,
+                          );
+                        }
+                      }
+                    }
+                    return Column(
                       children: [
                         title(
                           context,
@@ -189,16 +224,16 @@ class SettingsScreen extends StatelessWidget {
                           type: TextInputType.name,
                           label: const Text("Organization Name"),
                           prefix: IconBroken.User1,
-                          controller: registerCubit.organizationTC,
+                          controller: profileCubit.organizationTC,
                         ),
                         const SizedBox(height: 16),
+                        // Start Time Button
                         AppButton.appOulineButtonRow(
                           context: context,
-                          onPressed: () =>
-                              registerCubit.openTimePicker(
-                                isStart: false,
-                                context: context,
-                              ),
+                          onPressed: () => registerCubit.openTimePicker(
+                            isStart: true,
+                            context: context,
+                          ),
                           label: registerCubit.startTime == null
                               ? "Select start time"
                               : formatTimeOfDay(registerCubit.startTime!),
@@ -209,13 +244,13 @@ class SettingsScreen extends StatelessWidget {
                           ),
                         ),
                         const SizedBox(height: 16),
+                        // End Time Button
                         AppButton.appOulineButtonRow(
                           context: context,
-                          onPressed: () =>
-                              registerCubit.openTimePicker(
-                                isStart: true,
-                                context: context,
-                              ),
+                          onPressed: () => registerCubit.openTimePicker(
+                            isStart: false,
+                            context: context,
+                          ),
                           label: registerCubit.endTime == null
                               ? "Select end time"
                               : formatTimeOfDay(registerCubit.endTime!),
@@ -238,41 +273,60 @@ class SettingsScreen extends StatelessWidget {
                             runSpacing: 15,
                             children: List.generate(
                               registerCubit.workingDaysList.length,
-                                  (index) =>
-                                  ChoiceChip(
-                                    label: Text(
-                                      registerCubit.workingDaysList[index]
-                                          .label,
-                                      style: TextStyle(
-                                        color:
+                              (index) => ChoiceChip(
+                                label: Text(
+                                  registerCubit.workingDaysList[index].label,
+                                  style: TextStyle(
+                                    color:
                                         registerCubit
                                             .workingDaysList[index]
                                             .isSelected
-                                            ? Colors.white
-                                            : Colors.black,
-                                      ),
-                                    ),
-                                    selected: registerCubit
-                                        .workingDaysList[index]
-                                        .isSelected,
-                                    selectedColor: AppColors.blue600,
-                                    onSelected: (value) =>
-                                        registerCubit.onWorkingDaysChange(
-                                            index),
+                                        ? Colors.white
+                                        : Colors.black,
                                   ),
+                                ),
+                                selected: registerCubit
+                                    .workingDaysList[index]
+                                    .isSelected,
+                                selectedColor: AppColors.blue600,
+                                onSelected: (value) =>
+                                    registerCubit.onWorkingDaysChange(index),
+                              ),
                             ),
                           ),
                         ),
                         const SizedBox(height: 24),
-                        ConditionalBuilder(
-                          condition: ProfileStates is! ProfileLoadingState,
-                          builder: (context) =>
-                              SizedBox(
+                        // We use another BlocBuilder here to listen to ProfileCubit Loading State
+                        BlocBuilder<ProfileCubit, ProfileStates>(
+                          builder: (context, profileState) {
+                            return ConditionalBuilder(
+                              condition:
+                                  profileState is! ProfileUpdateLoadingState,
+                              builder: (context) => SizedBox(
                                 width: double.infinity,
                                 height: 50,
                                 child: ElevatedButton(
                                   onPressed: () {
-                                    profileCubit.updateProfile(user.uId);
+                                    if (company?.companyId != null) {
+                                      List<String> selectedCodes = registerCubit
+                                          .workingDaysList
+                                          .where((e) => e.isSelected)
+                                          .map((e) => e.code)
+                                          .toList();
+
+                                      profileCubit.updateOrganization(
+                                        companyId: company!.companyId!,
+                                        orgName:
+                                            profileCubit.organizationTC.text,
+                                        startTime: registerCubit.startTime,
+                                        endTime: registerCubit.endTime,
+                                        workingDays: selectedCodes,
+                                      );
+                                    } else {
+                                      Fluttertoast.showToast(
+                                        msg: "Company ID not found",
+                                      );
+                                    }
                                   },
                                   child: const Text(
                                     "Update Organization Details",
@@ -284,13 +338,16 @@ class SettingsScreen extends StatelessWidget {
                                   ),
                                 ),
                               ),
-                          fallback: (context) =>
-                          const Center(child: CircularProgressIndicator()),
+                              fallback: (context) => const Center(
+                                child: CircularProgressIndicator(),
+                              ),
+                            );
+                          },
                         ),
                       ],
-                    ),
-                  );
-                },
+                    );
+                  },
+                ),
               ),
             ],
             const SizedBox(height: 50),

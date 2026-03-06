@@ -26,7 +26,7 @@ void showErrorSnack(String msg) {
   );
 }
 
-/// Replaces Get.back()
+
 void closeDialogs(BuildContext context) {
   if (Navigator.canPop(context)) {
     Navigator.pop(context);

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/modules/register_company_screen.dart';
@@ -78,7 +79,8 @@ class HomeScreen extends StatelessWidget {
                           fontFamily: "Jannah",
                           fontSize: 22,
                         ),
-                      ),Text(
+                      ),
+                      Text(
                         "Give your Id to the company",
                         style: Theme.of(context).textTheme.titleLarge!.copyWith(
                           fontFamily: "Jannah",
@@ -86,19 +88,37 @@ class HomeScreen extends StatelessWidget {
                         ),
                       ),
                       SizedBox(height: 50),
-                  
-                      SelectableText(
-                        "${user?.uId}",
-                        style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                          fontFamily: "Jannah",
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.primary,
-                          backgroundColor: AppColors.grey100,
 
-                        ),
-                        showCursor: true,
-                        cursorColor: AppColors.primary,
-                        enableInteractiveSelection: true,
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+
+                        children: [
+                          SelectableText(
+                            "${user?.uId}",
+                            style: Theme.of(context).textTheme.titleLarge!
+                                .copyWith(
+                                  fontFamily: "Jannah",
+                                  fontWeight: FontWeight.bold,
+                                  color: AppColors.primary,
+                                  fontSize: 17,
+                                ),
+                          ),
+                          SizedBox(width: 2),
+                          IconButton(
+                            onPressed: () {
+                              Clipboard.setData(
+                                new ClipboardData(text: "${user?.uId}"),
+                              ).then((_) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text('Copied to your clipboard !'),
+                                  ),
+                                );
+                              });
+                            },
+                            icon: Icon(IconBroken.Paper,size: 22,),
+                          ),
+                        ],
                       ),
                     ],
                   ),
