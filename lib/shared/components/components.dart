@@ -247,9 +247,9 @@ class AppButton {
             Text(
               label,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                color: AppColors.textSecondary,
-                fontWeight: FontWeight.w500,
-                fontSize: 16,
+                color: AppColors.textPrimary,
+                fontWeight: FontWeight.w300,
+                fontSize: 15,
               ),
             ),
             if (suffixIcon != null) ...{suffixIcon},

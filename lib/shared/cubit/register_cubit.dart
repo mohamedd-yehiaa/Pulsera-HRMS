@@ -24,7 +24,6 @@ class RegisterCubit extends Cubit<RegisterStates> {
   String selectedUserType = "Employee";
   TimeOfDay? startTime;
   TimeOfDay? endTime;
-  final organizationTC = TextEditingController();
   final startTimeTC = TextEditingController();
   final endTimeTC = TextEditingController();
 

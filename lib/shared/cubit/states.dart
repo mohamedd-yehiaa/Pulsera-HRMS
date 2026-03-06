@@ -23,24 +23,25 @@ abstract class AttendanceStates {}
 
 class AttendanceInitialState extends AttendanceStates {}
 class AttendanceChangeDateState extends AttendanceStates {}
+class AttendanceSuccessState extends AttendanceStates {}
 class AttendanceLoadingState extends AttendanceStates {}
 class AttendanceErrorState extends AttendanceStates {
   final String error;
   AttendanceErrorState(this.error);
 }
-class AttendanceSuccessState extends AttendanceStates {}
+
 
 // -----------------------------------------------------------------------------
 // Auth States
 abstract class AuthStates {}
 
 class AuthInitialState extends AuthStates {}
+class AuthLoadingState extends AuthStates {}
 class AuthSuccessState extends AuthStates {}
 class AuthErrorState extends AuthStates {
   final String error;
   AuthErrorState(this.error);
 }
-class AuthLoadingState extends AuthStates {}
 class AuthChangePasswordVisibilityState extends AuthStates {}
 
 // -----------------------------------------------------------------------------
@@ -66,7 +67,6 @@ class CreateUserErrorState extends RegisterStates {
   final String error;
   CreateUserErrorState(this.error);
 }
-class RegisterChangePasswordVisibilityState extends RegisterStates {}
 class CreateCompanyLoadingState extends RegisterStates {}
 class CreateCompanySuccessState extends RegisterStates {}
 class CreateCompanyChangeWorkingDaysState extends RegisterStates {}
@@ -75,6 +75,7 @@ class CreateCompanyErrorState extends RegisterStates {
   final String error;
   CreateCompanyErrorState(this.error);
 }
+class RegisterChangePasswordVisibilityState extends RegisterStates {}
 
 
 
@@ -101,4 +102,82 @@ class UpdateCompanySuccessState extends ProfileStates {}
 class UpdateCompanyErrorState extends ProfileStates {
   final String error;
   UpdateCompanyErrorState(this.error);
+}
+// -----------------------------------------------------------------------------
+// Leave States
+abstract class LeaveStates {}
+
+class LeaveInitialState extends LeaveStates {}
+
+// Get Leaves States
+class GetLeavesLoadingState extends LeaveStates {}
+class GetLeavesSuccessState extends LeaveStates {}
+class GetLeavesErrorState extends LeaveStates {
+  final String error;
+  GetLeavesErrorState(this.error);
+}
+
+// Update Leave States (Approve/Reject)
+class UpdateLeaveLoadingState extends LeaveStates {}
+class UpdateLeaveSuccessState extends LeaveStates {}
+class UpdateLeaveErrorState extends LeaveStates {
+  final String error;
+  UpdateLeaveErrorState(this.error);
+}
+class GetLeavesTabChangedState extends LeaveStates {}
+class ChangeMyDataState extends LeaveStates {}
+
+// Team States
+class GetTeamsLoadingState extends LeaveStates {}
+class GetTeamsSuccessState extends LeaveStates {}
+
+// -----------------------------------------------------------------------------
+// Apply Leave States
+abstract class ApplyLeaveStates {}
+
+class ApplyLeaveInitialState extends ApplyLeaveStates {}
+class ApplyLeaveLoadingState extends ApplyLeaveStates {}
+class ApplyLeaveSuccessState extends ApplyLeaveStates {}
+class ApplyLeaveErrorState extends ApplyLeaveStates {
+  final String error;
+  ApplyLeaveErrorState(this.error);
+}
+class ApplyLeaveAdminsLoadedState extends ApplyLeaveStates {}
+class ApplyLeaveFieldChangedState extends ApplyLeaveStates {}
+class ApplyLeaveValidationErrorState extends ApplyLeaveStates {
+  final String error;
+  ApplyLeaveValidationErrorState(this.error);
+}
+
+// -----------------------------------------------------------------------------
+// Payroll States
+abstract class PayrollStates {}
+
+class PayrollInitialState extends PayrollStates {}
+class PayrollLoadingState extends PayrollStates {}
+class PayrollGeneratingState extends PayrollStates {}
+class PayrollGeneratedSuccessState extends PayrollStates {}
+class PayrollLoadedState extends PayrollStates {}
+class PayrollErrorState extends PayrollStates {
+  final String error;
+  PayrollErrorState(this.error);
+}
+class PayrollMonthChangedState extends PayrollStates {}
+
+// -----------------------------------------------------------------------------
+// Team States
+abstract class TeamStates {}
+
+class TeamInitialState extends TeamStates {}
+class TeamLoadingState extends TeamStates {}
+class TeamMembersLoadedState extends TeamStates {}
+class TeamMemberAddedState extends TeamStates {}
+class TeamUserValidatedState extends TeamStates {}
+class TeamUserValidationErrorState extends TeamStates {
+  final String error;
+  TeamUserValidationErrorState(this.error);
+}
+class TeamErrorState extends TeamStates {
+  final String error;
+  TeamErrorState(this.error);
 }
