@@ -5,10 +5,12 @@ import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/modules/home/home_screen.dart';
 import 'package:pulsera/modules/leave/leave_screen.dart';
+import 'package:pulsera/modules/notification/notifications_screen.dart';
 import 'package:pulsera/modules/payroll/payroll_screen.dart';
 import 'package:pulsera/modules/settings/settings_screen.dart';
 import 'package:pulsera/modules/team/team_members_screen.dart';
 import 'package:pulsera/shared/components/constants.dart';
+import 'package:pulsera/shared/cubit/leave_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
@@ -71,10 +73,48 @@ class AppCubit extends Cubit<AppStates> {
       actions: [
         Padding(
           padding: const EdgeInsetsDirectional.only(end: 8.0),
-          child: IconButton.outlined(
-            icon: Icon(IconBroken.Notification),
-            onPressed: () {
-              print("Notification");
+          child: Builder(
+            builder: (ctx) {
+              final leaveCubit = LeaveCubit.get(ctx);
+              return BlocBuilder<LeaveCubit, LeaveStates>(
+                builder: (context, state) {
+                  return Stack(
+                    children: [
+                      IconButton.outlined(
+                        icon: Icon(IconBroken.Notification),
+                        onPressed: () {
+                          Navigator.push(
+                            ctx,
+                            MaterialPageRoute(
+                              builder: (_) => const NotificationsScreen(),
+                            ),
+                          );
+                        },
+                      ),
+                      if (leaveCubit.unreadNotificationCount > 0)
+                        Positioned(
+                          right: 6,
+                          top: 6,
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(
+                              color: Colors.red,
+                              shape: BoxShape.circle,
+                            ),
+                            child: Text(
+                              '${leaveCubit.unreadNotificationCount}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ),
+                    ],
+                  );
+                },
+              );
             },
           ),
         ),
@@ -86,7 +126,7 @@ class AppCubit extends Cubit<AppStates> {
       elevation: 0,
     ),
     AppBar(
-      title: const Text("All Leaves", style: TextStyle(color: Colors.black)),
+      title: const Text("My Team", style: TextStyle(color: Colors.black)),
       backgroundColor: Colors.white,
       elevation: 0,),
     AppBar(
@@ -118,17 +158,17 @@ class AppCubit extends Cubit<AppStates> {
         .doc(uId)
         .get()
         .then((value) {
-          userModel = UserModel.fromJson(value.data()!);
+      userModel = UserModel.fromJson(value.data()!);
 
-          if (userModel?.companyId != null) {
-            getCompanyData();
-          }
-          emit(GetUserSuccessState());
-        })
+      if (userModel?.companyId != null) {
+        getCompanyData();
+      }
+      emit(GetUserSuccessState());
+    })
         .catchError((error) {
-          print(error.toString());
-          emit(GetUserErrorState(error.toString()));
-        });
+      print(error.toString());
+      emit(GetUserErrorState(error.toString()));
+    });
   }
   //----------------------------------------------------------------------------
   void getCompanyData() {
@@ -160,3 +200,4 @@ class AppCubit extends Cubit<AppStates> {
     });
   }
 }
+
