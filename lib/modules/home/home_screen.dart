@@ -2,16 +2,16 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:pulsera/modules/register_company_screen.dart';
+import 'package:pulsera/modules/register/register_company_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
-import '../models/user_model.dart';
-import '../shared/components/swipe_button.dart';
-import '../shared/components/user_activity_view.dart';
-import '../shared/cubit/app_cubit.dart';
-import '../shared/cubit/attendance_cubit.dart';
-import '../shared/cubit/states.dart';
-import '../shared/styles/colors.dart';
-import '../shared/styles/icon_broken.dart';
+import '../../models/user_model.dart';
+import '../../shared/components/swipe_button.dart';
+import '../../shared/components/user_activity_view.dart';
+import '../../shared/cubit/app_cubit.dart';
+import '../../shared/cubit/attendance_cubit.dart';
+import '../../shared/cubit/states.dart';
+import '../../shared/styles/colors.dart';
+import '../../shared/styles/icon_broken.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -91,19 +91,15 @@ class HomeScreen extends StatelessWidget {
 
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-
                         children: [
                           SelectableText(
                             "${user?.uId}",
-                            style: Theme.of(context).textTheme.titleLarge!
-                                .copyWith(
-                                  fontFamily: "Jannah",
-                                  fontWeight: FontWeight.bold,
-                                  color: AppColors.primary,
-                                  fontSize: 17,
-                                ),
+                            style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                              fontFamily: "Jannah",
+                              fontWeight: FontWeight.bold,
+                              color: AppColors.primary,
+                            ),
                           ),
-                          SizedBox(width: 2),
                           IconButton(
                             onPressed: () {
                               Clipboard.setData(
@@ -116,10 +112,11 @@ class HomeScreen extends StatelessWidget {
                                 );
                               });
                             },
-                            icon: Icon(IconBroken.Paper,size: 22,),
+                            icon: Icon(Icons.copy_outlined, color: AppColors.grey900),
                           ),
                         ],
                       ),
+
                     ],
                   ),
                 ),
@@ -146,7 +143,7 @@ class HomeScreen extends StatelessWidget {
               _buildSectionHeader("Your Activity", null),
               const SizedBox(height: 16),
 
-              _buildSwipeButton(cubit, user?.uId),
+              _buildSwipeButton(cubit, user?.uId, context),
               const SizedBox(height: 20),
 
               Padding(
@@ -208,11 +205,11 @@ Widget _buildStatsGrid(AttendanceCubit cubit) {
     child: Row(
       children: [
         Expanded(
-          child: _buildInfoCard("Break Time", "00:00", Icons.coffee_outlined),
+          child: _buildInfoCard("Break Time", cubit.breakTime, Icons.coffee_outlined),
         ),
         const SizedBox(width: 12),
         Expanded(
-          child: _buildInfoCard("Total Days", "21", IconBroken.Calendar),
+          child: _buildInfoCard("Total Days", "${cubit.monthWorkedDays}", IconBroken.Calendar),
         ),
       ],
     ),
@@ -231,10 +228,12 @@ Widget _buildWorkingTimeCard(AttendanceCubit cubit) {
 }
 
 // --- Swipe Button Logic ---
-Widget _buildSwipeButton(AttendanceCubit cubit, String? uid) {
+Widget _buildSwipeButton(AttendanceCubit cubit, String? uid, BuildContext context) {
   final isToday = DateUtils.isSameDay(cubit.selectedDate, DateTime.now());
 
   if (!isToday || cubit.activity?.outTime != null) return const SizedBox();
+
+  final companyId = AppCubit.get(context).userModel?.companyId ?? '';
 
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -248,7 +247,7 @@ Widget _buildSwipeButton(AttendanceCubit cubit, String? uid) {
       activeTrackColor: AppColors.primary.withAlpha(430),
       inactiveThumbColor: AppColors.grey300,
       onSwipe: () {
-        if (uid != null) cubit.performSwipeAction(uid, "COMPANY_ID_HERE");
+        if (uid != null) cubit.performSwipeAction(uid, companyId);
       },
       child: Text(
         cubit.activity?.nextAction.label ?? "Check In",

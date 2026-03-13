@@ -1,4 +1,3 @@
-
 class UserActivityModel {
   List<String>? breakOutTime;
   List<String>? breakInTime;
@@ -19,8 +18,8 @@ class UserActivityModel {
   UserPerformActivty get nextAction {
     // 1. If no check-in yet, user must check in
     if (checkIn == null) return UserPerformActivty.IN;
-    // 2. If already checked out, default to OUT or a 'Done' state
-    if (outTime != null) return UserPerformActivty.OUT;
+    // 2. If already checked out, day is done
+    if (outTime != null) return UserPerformActivty.DONE;
     // 3. Logic for Breaks
     int inCount = breakInTime?.length ?? 0;
     int outCount = breakOutTime?.length ?? 0;
@@ -40,6 +39,17 @@ class UserActivityModel {
 
     breakInTime = (json['breakInTime'] as List<dynamic>?)?.cast<String>();
     breakOutTime = (json['breakOutTime'] as List<dynamic>?)?.cast<String>();
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'activityID': activityID,
+      'date': createdAt,
+      if (checkIn != null) 'checkIn': checkIn!.toJson(),
+      if (outTime != null) 'outTime': outTime!.toJson(),
+      'breakInTime': breakInTime,
+      'breakOutTime': breakOutTime,
+    };
   }
 }
 
@@ -72,13 +82,21 @@ class OutTime {
     msg = json['msg'];
     outTime = json['outTime'];
   }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'msg': msg,
+      'outTime': outTime,
+    };
+  }
 }
 
 enum UserPerformActivty {
   IN,
   OUT,
   BREAKIN,
-  BREAKOUT;
+  BREAKOUT,
+  DONE;
 
   String get label {
     return switch (this) {
@@ -86,6 +104,7 @@ enum UserPerformActivty {
       UserPerformActivty.BREAKIN => "Swipe to Break in.",
       UserPerformActivty.BREAKOUT => "Swipe to Break out.",
       UserPerformActivty.OUT => "Swipe to Check out.",
+      UserPerformActivty.DONE => "Day Completed ✓",
     };
   }
 }

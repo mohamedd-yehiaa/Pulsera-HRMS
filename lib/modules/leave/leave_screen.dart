@@ -9,9 +9,7 @@ import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/leave_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
-import 'package:pulsera/shared/styles/icon_broken.dart';
-
-import '../shared/cubit/apply_leave_cubit.dart';
+import '../../shared/cubit/apply_leave_cubit.dart';
 import 'apply_leave_screen.dart';
 
 class LeaveScreen extends StatelessWidget {

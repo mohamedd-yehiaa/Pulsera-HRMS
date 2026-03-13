@@ -10,25 +10,14 @@ import 'package:pulsera/shared/styles/icon_broken.dart';
 
 class AddTeamMemberScreen extends StatelessWidget {
   AddTeamMemberScreen({super.key});
-
   final _formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return BlocConsumer<TeamCubit, TeamStates>(
       listener: (context, state) {
-        if (state is TeamMemberAddedState) {
-          Navigator.pop(context, true); // return true to signal refresh
-        }
+        if (state is TeamMemberAddedState) Navigator.pop(context, true);
         if (state is TeamUserValidationErrorState) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(state.error),
-              backgroundColor: AppColors.error,
-            ),
-          );
-        }
-        if (state is TeamErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(state.error),
@@ -41,89 +30,34 @@ class AddTeamMemberScreen extends StatelessWidget {
         var cubit = TeamCubit.get(context);
         var appCubit = AppCubit.get(context);
         bool isLoading = state is TeamLoadingState;
-        bool isValidated = cubit.validatedUser != null;
 
         return Scaffold(
-          appBar: AppBar(
-            title: const Text(
-              "Add Team Member",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
+          appBar: AppBar(title: const Text("Add Team Member")),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Form(
               key: _formKey,
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Section Header
-                  Text(
-                    "Find Employee",
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    "Enter the employee's UserID to validate and add them to your team.",
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodyMedium
-                        ?.copyWith(color: AppColors.grey500),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // UserID Input
                   DefaultFormField(
                     controller: cubit.userIdController,
                     type: TextInputType.text,
                     label: const Text('Employee UserID'),
                     prefix: IconBroken.User,
-                    validator: (value) {
-                      if (value == null || value.trim().isEmpty) {
-                        return 'Please enter a UserID';
-                      }
-                      return null;
-                    },
                   ),
-                  const SizedBox(height: 16),
-
-                  // Validate Button
+                  const SizedBox(height: 10),
                   SizedBox(
                     width: double.infinity,
-                    child:ElevatedButton.icon(
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppColors.primary,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
+                    child: ElevatedButton(
+                      onPressed: () => cubit.validateEmployee(
+                        userId: cubit.userIdController.text,
+                        currentManagerId: appCubit.userModel!.uId!,
                       ),
-                      onPressed: isLoading
-                          ? null
-                          : () {
-                              cubit.validateEmployee(
-                                userId: cubit.userIdController.text,
-                                currentManagerId:
-                                    appCubit.userModel?.uId ?? '',
-                              );
-                            },
-                      icon: isLoading
-                          ? const SizedBox(
-                              width: 18,
-                              height: 18,
-                              child: CircularProgressIndicator(strokeWidth: 2),
-                            )
-                          : const Icon(IconBroken.Search),
-                      label: Text( style: TextStyle(),
-                        isLoading ? "Validating..." : "Validate Employee",
-                      ),
+                      child: Text(isLoading ? "Validating..." : "Validate"),
                     ),
                   ),
                   const SizedBox(height: 20),
-
-                  // Validated User Preview Card
-                  if (isValidated) ...[
+                  if (cubit.validatedUser != null) ...[
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(16),
@@ -156,17 +90,13 @@ class AddTeamMemberScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   "${cubit.validatedUser?.firstName ?? ''} ${cubit.validatedUser?.lastName ?? ''}",
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .titleMedium
+                                  style: Theme.of(context).textTheme.titleMedium
                                       ?.copyWith(fontWeight: FontWeight.bold),
                                 ),
                                 const SizedBox(height: 4),
                                 Text(
                                   cubit.validatedUser?.email ?? '',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
+                                  style: Theme.of(context).textTheme.bodySmall
                                       ?.copyWith(color: AppColors.grey500),
                                 ),
                               ],
@@ -186,23 +116,41 @@ class AddTeamMemberScreen extends StatelessWidget {
                     Text(
                       "Contract Details",
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                            fontWeight: FontWeight.bold,
-                          ),
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       "Define the employee's salary and vacation allowance.",
-                      style: Theme.of(context)
-                          .textTheme
-                          .bodyMedium
-                          ?.copyWith(color: AppColors.grey500),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey500,
+                      ),
                     ),
                     const SizedBox(height: 20),
 
-                    // Monthly Salary Input
+                    // Role Dropdown
+                    DropdownButtonFormField<String>(
+                      initialValue: cubit.selectedRole,
+                      decoration: const InputDecoration(
+                        labelText: "Role Type",
+                        prefixIcon: Icon(IconBroken.Shield_Done),
+                      ),
+                      items: const [
+                        DropdownMenuItem(
+                          value: 'Employee',
+                          child: Text("Employee"),
+                        ),
+                        DropdownMenuItem(
+                          value: 'Hr admin',
+                          child: Text("HR Admin"),
+                        ),
+                      ],
+                      onChanged: (val) => cubit.selectedRole = val!,
+                    ),
+                    const SizedBox(height: 15),
                     DefaultFormField(
                       controller: cubit.salaryController,
-                      type: const TextInputType.numberWithOptions(decimal: true),
+                      type: TextInputType.numberWithOptions(decimal: true),
                       label: const Text('Monthly Salary'),
                       prefix: IconBroken.Wallet,
                       inputFormatters: [
@@ -221,13 +169,11 @@ class AddTeamMemberScreen extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 16),
-
-                    // Vacation Days Input
+                    const SizedBox(height: 15),
                     DefaultFormField(
                       controller: cubit.vacationDaysController,
                       type: TextInputType.number,
-                      label: const Text('Annual Vacation Days'),
+                      label: const Text('Monthly Vacation Days'),
                       prefix: IconBroken.Calendar,
                       inputFormatters: [
                         FilteringTextInputFormatter.digitsOnly,
@@ -243,55 +189,20 @@ class AddTeamMemberScreen extends StatelessWidget {
                         return null;
                       },
                     ),
-                    const SizedBox(height: 30),
-
-                    // Add to Team Button
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
-                      height: 55,
-                      child: ElevatedButton.icon(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppColors.primary,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                        ),
-                        onPressed: isLoading
-                            ? null
-                            : () {
-                                if (_formKey.currentState!.validate()) {
-                                  cubit.addEmployeeToTeam(
-                                    companyId: appCubit.userModel?.companyId ??
-                                        '',
-                                    managerId:
-                                        appCubit.userModel?.uId ?? '',
-                                    monthlySalary: double.parse(
-                                        cubit.salaryController.text),
-                                    annualVacationDays: int.parse(
-                                        cubit.vacationDaysController.text),
-                                  );
-                                }
-                              },
-                        icon: isLoading
-                            ? const SizedBox(
-                                width: 18,
-                                height: 18,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  color: Colors.white,
-                                ),
-                              )
-                            : const Icon(
-                                IconBroken.Add_User,
-                                color: Colors.white,
-                              ),
-                        label: Text(
-                          isLoading ? "Adding..." : "Add to Team",
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                          ),
-                        ),
+                      child: ElevatedButton(
+                        onPressed: () {
+                          if (_formKey.currentState!.validate()) {
+                            cubit.addEmployeeToTeam(
+                              managerId: appCubit.userModel!.uId!,
+                              companyId: appCubit.userModel!.companyId!,
+                              roleType: cubit.selectedRole,
+                            );
+                          }
+                        },
+                        child: const Text("Add to Team"),
                       ),
                     ),
                   ],
@@ -304,3 +215,4 @@ class AddTeamMemberScreen extends StatelessWidget {
     );
   }
 }
+

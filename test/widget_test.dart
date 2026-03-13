@@ -7,14 +7,13 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-
 import 'package:pulsera/main.dart';
-import 'package:pulsera/modules/splash_screen.dart';
+import 'package:pulsera/modules/login/login_screen.dart';
 
 void main() {
   testWidgets('Counter increments smoke test', (WidgetTester tester) async {
     // Build our app and trigger a frame.
-    await tester.pumpWidget(Pulsera(startWidget: SplashScreen()));
+    await tester.pumpWidget(Pulsera(startWidget: LoginScreen()));
 
     // Verify that our counter starts at 0.
     expect(find.text('0'), findsOneWidget);
