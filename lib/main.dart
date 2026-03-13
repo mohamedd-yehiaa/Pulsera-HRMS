@@ -4,16 +4,18 @@ import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/shared/bloc_observer.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
-import 'package:pulsera/shared/cubit/apply_leave_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
 import 'package:pulsera/shared/cubit/leave_cubit.dart';
+import 'package:pulsera/shared/cubit/payroll_cubit.dart';
+import 'package:pulsera/shared/cubit/payroll_config_cubit.dart';
+import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
-import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/network/remote/attendance_repository.dart';
+import 'package:pulsera/shared/network/remote/payroll_repository.dart';
 import 'package:pulsera/shared/network/remote/team_repository.dart';
 import 'package:pulsera/shared/styles/theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
@@ -53,9 +55,12 @@ class Pulsera extends StatelessWidget {
         ),
         BlocProvider(create: (context) => ProfileCubit()),
         BlocProvider(create: (context) => LeaveCubit()),
-        BlocProvider(create: (context) => ApplyLeaveCubit()),
-        BlocProvider(create: (context) => TeamCubit(TeamRepository())),
 
+        BlocProvider(create: (context) => PayrollCubit(PayrollRepository())),
+        BlocProvider(
+          create: (context) => PayrollConfigCubit(PayrollRepository()),
+        ),
+        BlocProvider(create: (context) => TeamCubit(TeamRepository())),
       ],
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (context, state) {},
