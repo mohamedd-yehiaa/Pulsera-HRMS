@@ -6,6 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/models/working_days_model.dart';
+import 'package:pulsera/shared/components/constants.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 
@@ -31,7 +32,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
-     serverClientId: '419097121301-q2ve2cvvs3tbgo7t4u1314i96rh3rc4n.apps.googleusercontent.com',
+     serverClientId: ServerClientId,
     ).then((_) {
 
       _googleSignIn.authenticate().then((googleAccount) {
