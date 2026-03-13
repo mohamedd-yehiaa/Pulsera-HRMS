@@ -4,14 +4,14 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
-import 'package:pulsera/modules/login_screen.dart';
-import '../shared/components/components.dart';
-import '../shared/cubit/app_cubit.dart';
-import '../shared/cubit/register_cubit.dart';
-import '../shared/cubit/states.dart';
-import '../shared/network/local/cache_helper.dart';
-import '../shared/styles/colors.dart';
-import '../shared/styles/icon_broken.dart';
+import 'package:pulsera/modules/login/login_screen.dart';
+import '../../shared/components/components.dart';
+import '../../shared/cubit/app_cubit.dart';
+import '../../shared/cubit/register_cubit.dart';
+import '../../shared/cubit/states.dart';
+import '../../shared/network/local/cache_helper.dart';
+import '../../shared/styles/colors.dart';
+import '../../shared/styles/icon_broken.dart';
 
 class RegisterScreen extends StatelessWidget {
   final formKey = GlobalKey<FormState>();

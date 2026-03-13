@@ -1,7 +1,7 @@
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pulsera/modules/team_members_screen.dart';
+import 'package:pulsera/modules/team/team_members_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';

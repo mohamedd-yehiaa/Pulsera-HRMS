@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:pulsera/layout/home_layout.dart';
-import 'package:pulsera/modules/login_screen.dart';
+import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/shared/bloc_observer.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/apply_leave_cubit.dart';

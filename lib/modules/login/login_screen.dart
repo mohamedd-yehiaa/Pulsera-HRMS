@@ -4,15 +4,15 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
-import 'package:pulsera/modules/register_screen.dart';
+import 'package:pulsera/modules/register/register_screen.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
-import '../shared/components/components.dart';
-import '../shared/cubit/app_cubit.dart';
-import '../shared/cubit/auth_cubit.dart';
-import '../shared/cubit/register_cubit.dart';
-import '../shared/cubit/states.dart';
-import '../shared/network/local/cache_helper.dart';
-import '../shared/styles/colors.dart';
+import '../../shared/components/components.dart';
+import '../../shared/cubit/app_cubit.dart';
+import '../../shared/cubit/auth_cubit.dart';
+import '../../shared/cubit/register_cubit.dart';
+import '../../shared/cubit/states.dart';
+import '../../shared/network/local/cache_helper.dart';
+import '../../shared/styles/colors.dart';
 
 class LoginScreen extends StatelessWidget {
   final emailController = TextEditingController();

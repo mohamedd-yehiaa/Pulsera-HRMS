@@ -29,6 +29,10 @@ class AttendanceErrorState extends AttendanceStates {
   final String error;
   AttendanceErrorState(this.error);
 }
+class AttendanceValidationErrorState extends AttendanceStates {
+  final String error;
+  AttendanceValidationErrorState(this.error);
+}
 
 
 // -----------------------------------------------------------------------------
@@ -127,9 +131,20 @@ class UpdateLeaveErrorState extends LeaveStates {
 class GetLeavesTabChangedState extends LeaveStates {}
 class ChangeMyDataState extends LeaveStates {}
 
-// Team States
-class GetTeamsLoadingState extends LeaveStates {}
-class GetTeamsSuccessState extends LeaveStates {}
+// Cancel Leave States
+class CancelLeaveLoadingState extends LeaveStates {}
+class CancelLeaveSuccessState extends LeaveStates {}
+class CancelLeaveErrorState extends LeaveStates {
+  final String error;
+  CancelLeaveErrorState(this.error);
+}
+
+// Vacation Balance
+class VacationBalanceLoadedState extends LeaveStates {}
+
+// Notification States
+class NotificationsLoadedState extends LeaveStates {}
+class NotificationMarkedReadState extends LeaveStates {}
 
 // -----------------------------------------------------------------------------
 // Apply Leave States
@@ -142,11 +157,15 @@ class ApplyLeaveErrorState extends ApplyLeaveStates {
   final String error;
   ApplyLeaveErrorState(this.error);
 }
-class ApplyLeaveAdminsLoadedState extends ApplyLeaveStates {}
+class ApplyLeaveTeamLoadedState extends ApplyLeaveStates {}
 class ApplyLeaveFieldChangedState extends ApplyLeaveStates {}
 class ApplyLeaveValidationErrorState extends ApplyLeaveStates {
   final String error;
   ApplyLeaveValidationErrorState(this.error);
+}
+class ApplyLeaveOverlapErrorState extends ApplyLeaveStates {
+  final String error;
+  ApplyLeaveOverlapErrorState(this.error);
 }
 
 // -----------------------------------------------------------------------------
@@ -163,6 +182,20 @@ class PayrollErrorState extends PayrollStates {
   PayrollErrorState(this.error);
 }
 class PayrollMonthChangedState extends PayrollStates {}
+class PayrollOverrideConfirmState extends PayrollStates {}
+
+// -----------------------------------------------------------------------------
+// Payroll Config States
+abstract class PayrollConfigStates {}
+
+class PayrollConfigInitialState extends PayrollConfigStates {}
+class PayrollConfigLoadingState extends PayrollConfigStates {}
+class PayrollConfigLoadedState extends PayrollConfigStates {}
+class PayrollConfigSavedState extends PayrollConfigStates {}
+class PayrollConfigErrorState extends PayrollConfigStates {
+  final String error;
+  PayrollConfigErrorState(this.error);
+}
 
 // -----------------------------------------------------------------------------
 // Team States

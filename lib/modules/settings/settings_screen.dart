@@ -4,16 +4,16 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
-import '../models/company_model.dart';
-import '../models/user_model.dart';
-import '../shared/components/components.dart';
-import '../shared/components/helper_functions.dart';
-import '../shared/cubit/profile_cubit.dart';
-import '../shared/cubit/states.dart';
-import '../shared/network/local/cache_helper.dart';
-import '../shared/styles/colors.dart';
-import '../shared/styles/icon_broken.dart';
-import 'login_screen.dart';
+import '../../models/company_model.dart';
+import '../../models/user_model.dart';
+import '../../shared/components/components.dart';
+import '../../shared/components/helper_functions.dart';
+import '../../shared/cubit/profile_cubit.dart';
+import '../../shared/cubit/states.dart';
+import '../../shared/network/local/cache_helper.dart';
+import '../../shared/styles/colors.dart';
+import '../../shared/styles/icon_broken.dart';
+import '../login/login_screen.dart';
 
 class SettingsScreen extends StatelessWidget {
   const SettingsScreen({super.key});
