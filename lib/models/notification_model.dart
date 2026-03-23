@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 
 class NotificationModel {
@@ -5,7 +6,9 @@ class NotificationModel {
   String? toUserId;
   String? fromUserName;
   String? message;
-  String? type; // leave_submitted, leave_approved, leave_rejected, leave_cancelled
+  // leave_submitted, leave_approved, leave_rejected, leave_cancelled,
+  // attendance_checkin, attendance_checkout
+  String? type;
   String? leaveId;
   DateTime? createdAt;
   bool isRead;
@@ -30,7 +33,12 @@ class NotificationModel {
     type = json['type'];
     leaveId = json['leaveId'];
     if (json['createdAt'] != null) {
-      createdAt = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(json['createdAt']);
+      final raw = json['createdAt'];
+      if (raw is Timestamp) {
+        createdAt = raw.toDate();
+      } else if (raw is String) {
+        createdAt = DateFormat("yyyy-MM-ddTHH:mm:ss").parse(raw);
+      }
     }
   }
 

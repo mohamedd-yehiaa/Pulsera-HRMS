@@ -1,9 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/leave_activity_model.dart';
-import 'package:pulsera/models/notification_model.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/remote/leave_repository.dart';
+import 'package:pulsera/shared/network/remote/notification_repository.dart';
 
 class LeaveCubit extends Cubit<LeaveStates> {
   LeaveCubit() : super(LeaveInitialState());
@@ -11,13 +12,16 @@ class LeaveCubit extends Cubit<LeaveStates> {
   static LeaveCubit get(context) => BlocProvider.of(context);
 
   final LeaveRepository _repository = LeaveRepository();
+  final NotificationRepository _notificationRepo = NotificationRepository();
+
+  StreamSubscription? _subscription;
 
   // Variables and Controllers
   List<LeaveActivityModel> mainList = [];
   List<LeaveActivityModel> filteredLeaves = [];
   var leaveReasonTC = TextEditingController();
 
-  bool myData = false;
+  bool myData = true;
   String selectedTab = 'pending';
 
   // Leave Balance Stats (computed from data)
@@ -29,12 +33,69 @@ class LeaveCubit extends Cubit<LeaveStates> {
   int? remainingVacationDays;
   String? managerId;
 
-  // Notifications
-  List<NotificationModel> notifications = [];
-  int unreadNotificationCount = 0;
+  // Track current stream to avoid duplicate setup
+  String? _currentUserId;
+  String? _currentCompanyId;
 
   // ===========================================================================
-  // 1. Get All Leaves for the Company
+  // 1. Init — Start real-time stream of leaves
+  // ===========================================================================
+  void init(String userId, String companyId, {bool isAdmin = false}) {
+    // Skip re-initialization if already streaming for this user+company
+    if (_currentUserId == userId &&
+        _currentCompanyId == companyId &&
+        _subscription != null) {
+      return;
+    }
+
+    _currentUserId = userId;
+    _currentCompanyId = companyId;
+
+    // Employees see their own leaves; admins/owners default to "Other" view
+    myData = !isAdmin;
+
+    emit(GetLeavesLoadingState());
+
+    _subscription?.cancel();
+    _subscription = _repository
+        .watchLeaves(companyId: companyId)
+        .listen((leaves) {
+      mainList = leaves;
+      _computeBalanceStats(userId);
+      filterAndEmit(userId);
+      emit(GetLeavesSuccessState());
+    }, onError: (error) {
+      print(error.toString());
+      emit(LeaveStreamErrorState(error.toString()));
+    });
+
+    // Also load vacation balance (triggers monthly reset check)
+    loadVacationBalance(userId: userId);
+  }
+
+  // ===========================================================================
+  // 2. Refresh — One-shot re-fetch for pull-to-refresh
+  // ===========================================================================
+  Future<void> refreshLeaves() async {
+    if (_currentUserId == null || _currentCompanyId == null) return;
+
+    try {
+      final leaves = await _repository.getAllLeaves(
+        companyId: _currentCompanyId!,
+      );
+      mainList = leaves;
+      _computeBalanceStats(_currentUserId!);
+      filterAndEmit(_currentUserId!);
+      emit(GetLeavesSuccessState());
+      loadVacationBalance(userId: _currentUserId!);
+    } catch (error) {
+      print(error.toString());
+      emit(GetLeavesErrorState(error.toString()));
+    }
+  }
+
+  // ===========================================================================
+  // 3. Get All Leaves (legacy one-shot, kept for backward compat)
   // ===========================================================================
   void getAllLeaves({required String? uId, required String? companyId}) {
     if (uId == null || companyId == null) return;
@@ -53,12 +114,33 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 2. Load user's vacation balance from team data
+  // 4. Load user's vacation balance from team data
   // ===========================================================================
   void loadVacationBalance({required String userId}) {
-    _repository.getEmployeeTeam(userId).then((teamData) {
+    _repository.getEmployeeTeam(userId).then((teamData) async {
       if (teamData != null) {
         managerId = teamData['managerId'];
+
+        // Check monthly balance reset before reading the balance
+        if (managerId != null) {
+          final didReset = await _repository.resetLeaveBalanceIfNeeded(
+            managerId: managerId!,
+            userId: userId,
+          );
+          if (didReset) {
+            // Re-read team data after reset
+            final refreshed = await _repository.getEmployeeTeam(userId);
+            if (refreshed != null) {
+              final refreshedMember =
+                  refreshed['memberData'] as Map<String, dynamic>;
+              remainingVacationDays =
+                  refreshedMember['remainingVacationDays'] as int?;
+              emit(LeaveBalanceResetState());
+              return;
+            }
+          }
+        }
+
         final memberData = teamData['memberData'] as Map<String, dynamic>;
         remainingVacationDays = memberData['remainingVacationDays'] as int?;
         emit(VacationBalanceLoadedState());
@@ -69,7 +151,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 3. Compute leave balance stats for the current user
+  // 5. Compute leave balance stats for the current user
   // ===========================================================================
   void _computeBalanceStats(String uId) {
     final myLeaves = mainList.where((e) => e.userID == uId).toList();
@@ -85,7 +167,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 4. Filter logic for My/Other and Tabs
+  // 6. Filter logic for My/Other and Tabs
   // ===========================================================================
   void filterAndEmit(String uId) {
     // Filter by Role (My Leaves vs Others)
@@ -106,7 +188,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 5. Tab Switching
+  // 7. Tab Switching
   // ===========================================================================
   void emitTabChange(String status, String uId) {
     selectedTab = status;
@@ -115,7 +197,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 6. Toggle My/Other Leaves
+  // 8. Toggle My/Other Leaves
   // ===========================================================================
   void changeMyData(bool value, String uId) {
     myData = value;
@@ -124,7 +206,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 7. Approve or Reject Leave (Admin action)
+  // 9. Approve or Reject Leave (Admin action)
   // ===========================================================================
   void updateLeaveStatus({
     required String leaveId,
@@ -178,7 +260,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
           : '$adminName rejected your leave request.${rejectReason != null ? ' Reason: $rejectReason' : ''}';
 
       if (leave.userID != null) {
-        await _repository.addNotification(
+        await _notificationRepo.addNotification(
           toUserId: leave.userID!,
           fromUserName: adminName,
           message: notificationMessage,
@@ -190,8 +272,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
       }
 
       emit(UpdateLeaveSuccessState());
-      // Refresh data
-      getAllLeaves(uId: uId, companyId: companyId);
+      // Stream will auto-update, but also refresh vacation balance
       loadVacationBalance(userId: uId);
     } catch (error) {
       print(error.toString());
@@ -200,7 +281,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
   }
 
   // ===========================================================================
-  // 8. Cancel an approved leave (Employee action → restores days)
+  // 10. Cancel an approved leave (Employee action → restores days)
   // ===========================================================================
   void cancelLeave({
     required String leaveId,
@@ -212,6 +293,7 @@ class LeaveCubit extends Cubit<LeaveStates> {
 
     try {
       final leave = mainList.firstWhere((e) => e.id == leaveId);
+      final wasApproved = leave.leaveStatus == LeaveActivityState.approved;
 
       // Update status to cancelled
       await _repository.updateLeaveStatus(
@@ -219,8 +301,10 @@ class LeaveCubit extends Cubit<LeaveStates> {
         statusCode: LeaveActivityState.cancelled.code,
       );
 
-      // Restore vacation days
-      if (leave.fromdate != null &&
+      // Only restore vacation days if the leave was previously approved
+      // (pending leaves never had days deducted)
+      if (wasApproved &&
+          leave.fromdate != null &&
           leave.todate != null &&
           leave.approvalTo?.uId != null) {
         final days = leave.totalDays ??
@@ -242,18 +326,19 @@ class LeaveCubit extends Cubit<LeaveStates> {
       }
 
       // Notify the admin
+      final statusLabel = wasApproved ? 'approved' : 'pending';
       if (leave.approvalTo?.uId != null) {
-        await _repository.addNotification(
+        await _notificationRepo.addNotification(
           toUserId: leave.approvalTo!.uId!,
           fromUserName: employeeName,
-          message: '$employeeName cancelled their approved leave request.',
+          message: '$employeeName cancelled their $statusLabel leave request.',
           type: 'leave_cancelled',
           leaveId: leaveId,
         );
       }
 
       emit(CancelLeaveSuccessState());
-      getAllLeaves(uId: uId, companyId: companyId);
+      // Stream will auto-update, but also refresh vacation balance
       loadVacationBalance(userId: uId);
     } catch (error) {
       print(error.toString());
@@ -261,29 +346,9 @@ class LeaveCubit extends Cubit<LeaveStates> {
     }
   }
 
-  // ===========================================================================
-  // 9. Notifications
-  // ===========================================================================
-  void loadNotifications({required String userId}) {
-    _repository.getNotifications(userId).then((result) {
-      notifications = result;
-      unreadNotificationCount = result.where((n) => !n.isRead).length;
-      emit(NotificationsLoadedState());
-    }).catchError((error) {
-      print('Failed to load notifications: $error');
-    });
-  }
-
-  void markNotificationRead(String notificationId) {
-    _repository.markNotificationRead(notificationId).then((_) {
-      final index = notifications.indexWhere((n) => n.id == notificationId);
-      if (index != -1) {
-        notifications[index].isRead = true;
-        unreadNotificationCount =
-            notifications.where((n) => !n.isRead).length;
-      }
-      emit(NotificationMarkedReadState());
-    });
+  @override
+  Future<void> close() {
+    _subscription?.cancel();
+    return super.close();
   }
 }
-

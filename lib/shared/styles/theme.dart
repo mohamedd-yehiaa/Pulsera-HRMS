@@ -26,6 +26,16 @@ TextStyle get btnTextStyle => const TextStyle(
       color: AppColors.black900,
     );
 final appTheme = ThemeData(
+  colorScheme: ColorScheme.fromSeed(
+    seedColor: AppColors.primary,
+    brightness: Brightness.light,
+  ),
+  dialogTheme: DialogThemeData(
+    backgroundColor: AppColors.grey50,
+    shape: RoundedRectangleBorder(
+      borderRadius: BorderRadius.circular(12),
+    ),
+  ),
 
   progressIndicatorTheme: ProgressIndicatorThemeData(color: AppColors.primary,strokeWidth: 6,refreshBackgroundColor: AppColors.grey300),
   primaryColor: AppColors.primary,
@@ -205,5 +215,5 @@ final appTheme = ThemeData(
       color: AppColors.black900,
     ),
   ),
-  scaffoldBackgroundColor: AppColors.white,
+  scaffoldBackgroundColor: AppColors.background,
 );

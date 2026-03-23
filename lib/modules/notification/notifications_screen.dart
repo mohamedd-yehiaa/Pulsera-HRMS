@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:pulsera/shared/cubit/leave_cubit.dart';
+import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
@@ -14,16 +14,25 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        title: const Text("Notifications",
-            style: TextStyle(color: Colors.black)),
+        leading: IconButton(
+          onPressed: () {
+            Navigator.pop(context);
+          },
+          icon: const Icon(IconBroken.Arrow___Left_2),
+        ),
+        title: Text("Notifications",
+          style: Theme.of(context).textTheme.titleLarge!.copyWith(
+            fontWeight: FontWeight.bold,
+            fontSize: 20,)
+        ),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),
       ),
-      body: BlocConsumer<LeaveCubit, LeaveStates>(
+      body: BlocConsumer<NotificationCubit, NotificationStates>(
         listener: (context, state) {},
         builder: (context, state) {
-          var cubit = LeaveCubit.get(context);
+          var cubit = NotificationCubit.get(context);
           var notifications = cubit.notifications;
 
           if (notifications.isEmpty) {
@@ -69,6 +78,14 @@ class NotificationsScreen extends StatelessWidget {
                   typeIcon = Icons.undo;
                   typeColor = AppColors.orange500;
                   break;
+                case 'attendance_checkin':
+                  typeIcon = IconBroken.Login;
+                  typeColor = AppColors.green500;
+                  break;
+                case 'attendance_checkout':
+                  typeIcon = IconBroken.Logout;
+                  typeColor = AppColors.blue600;
+                  break;
                 default:
                   typeIcon = IconBroken.Notification;
                   typeColor = AppColors.blue600;
@@ -77,19 +94,19 @@ class NotificationsScreen extends StatelessWidget {
               return GestureDetector(
                 onTap: () {
                   if (!isRead && notification.id != null) {
-                    cubit.markNotificationRead(notification.id!);
+                    cubit.markRead(notification.id!);
                   }
                 },
                 child: Container(
                   margin: const EdgeInsets.only(bottom: 10),
                   padding: const EdgeInsets.all(14),
                   decoration: BoxDecoration(
-                    color: isRead ? Colors.white : AppColors.blue600.withOpacity(0.05),
+                    color: isRead ? Colors.white : AppColors.blue600.withValues(alpha:0.05),
                     borderRadius: BorderRadius.circular(14),
                     border: Border.all(
                       color: isRead
                           ? AppColors.grey100
-                          : AppColors.blue600.withOpacity(0.2),
+                          : AppColors.blue600.withValues(alpha:0.2),
                     ),
                   ),
                   child: Row(
@@ -98,7 +115,7 @@ class NotificationsScreen extends StatelessWidget {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: typeColor.withOpacity(0.1),
+                          color: typeColor.withValues(alpha:0.1),
                           borderRadius: BorderRadius.circular(10),
                         ),
                         child: Icon(typeIcon, color: typeColor, size: 22),

@@ -33,6 +33,15 @@ class AttendanceValidationErrorState extends AttendanceStates {
   final String error;
   AttendanceValidationErrorState(this.error);
 }
+/// Emitted while a swipe action is in progress (prevents double-swipe).
+class AttendanceActionInProgressState extends AttendanceStates {}
+/// States for admin team attendance view.
+class TeamAttendanceLoadingState extends AttendanceStates {}
+class TeamAttendanceLoadedState extends AttendanceStates {}
+class TeamAttendanceErrorState extends AttendanceStates {
+  final String error;
+  TeamAttendanceErrorState(this.error);
+}
 
 
 // -----------------------------------------------------------------------------
@@ -141,10 +150,13 @@ class CancelLeaveErrorState extends LeaveStates {
 
 // Vacation Balance
 class VacationBalanceLoadedState extends LeaveStates {}
+class LeaveBalanceResetState extends LeaveStates {}
 
-// Notification States
-class NotificationsLoadedState extends LeaveStates {}
-class NotificationMarkedReadState extends LeaveStates {}
+// Stream Error
+class LeaveStreamErrorState extends LeaveStates {
+  final String error;
+  LeaveStreamErrorState(this.error);
+}
 
 // -----------------------------------------------------------------------------
 // Apply Leave States
@@ -214,3 +226,15 @@ class TeamErrorState extends TeamStates {
   final String error;
   TeamErrorState(this.error);
 }
+
+// -----------------------------------------------------------------------------
+// Notification States
+abstract class NotificationStates {}
+
+class NotificationInitialState extends NotificationStates {}
+class NotificationsLoadedState extends NotificationStates {}
+class NotificationMarkedReadState extends NotificationStates {}
+class NotificationStreamErrorState extends NotificationStates {
+  final String error;
+  NotificationStreamErrorState(this.error);
+}

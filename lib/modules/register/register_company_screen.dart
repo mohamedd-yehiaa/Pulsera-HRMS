@@ -40,6 +40,7 @@ class RegisterCompanyScreen extends StatelessWidget {
             textColor: Colors.white,
           );
           navigateAndFinish(context, HomeLayout());
+
         }
 
         if (state is CreateCompanyErrorState) {

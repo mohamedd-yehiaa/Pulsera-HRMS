@@ -4,7 +4,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/payroll_model.dart';
 import 'package:pulsera/modules/payroll/generate_payroll_screen.dart';
-import 'package:pulsera/modules/payroll/payroll_config_screen.dart';
 import 'package:pulsera/modules/payroll/payslip_detail_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
@@ -81,38 +80,23 @@ class _PayrollScreenState extends State<PayrollScreen> {
                 Padding(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16),
-                  child: Row(
-
-                    children: [
-                      Expanded(
-                        flex: 2,
-                        child: ElevatedButton.icon(
-                          icon: const Icon(IconBroken.Plus, size: 20),
-                          label: const Text(
-                            'Generate',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
-                          onPressed: () {
-                            navigateTo(
-                                context, const GeneratePayrollScreen());
-                          },
+                  child: Expanded(
+                    flex: 2,
+                    child: ElevatedButton.icon(
+                      icon: const Icon(IconBroken.Plus, size: 22),
+                      label: const Text(
+                        'Generate',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(IconBroken.Setting, size: 20),
-                          label: const Text('Rules'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary),
-                          ),
-                          onPressed: () {
-                            navigateTo(
-                                context, const PayrollConfigScreen());
-                          },
-                        ),
-                      ),
-                    ],
+                      onPressed: () {
+                        navigateTo(
+                            context, const GeneratePayrollScreen());
+                      },
+                    ),
                   ),
                 ),
 

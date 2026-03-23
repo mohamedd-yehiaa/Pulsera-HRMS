@@ -1,14 +1,17 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../models/user_activity_model.dart';
 import '../network/remote/attendance_repository.dart';
+import '../network/remote/notification_repository.dart';
 import '../services/attendance_service.dart';
 
 class AttendanceCubit extends Cubit<AttendanceStates> {
   static AttendanceCubit get(context) => BlocProvider.of(context);
   final AttendanceRepository _repository;
+  final NotificationRepository _notificationRepo = NotificationRepository();
 
   StreamSubscription? _subscription;
   Timer? _ticker;
@@ -25,18 +28,49 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   int _monthAbsenceDays = 0;
   int _monthPaidLeaveDays = 0;
 
+  // Guard against double-swipe
+  bool _isPerformingAction = false;
+
+  // Track which user/date the stream is currently for
+  String? _currentStreamUserId;
+  String? _currentStreamDate;
+
+  // Team attendance data (admin view)
+  List<Map<String, dynamic>> _teamAttendanceRecords = [];
+
   AttendanceCubit(this._repository) : super(AttendanceInitialState());
 
-  void init(String userId) {
+  // ===========================================================================
+  // Employee attendance — real-time stream
+  // ===========================================================================
 
+  void init(String userId) {
+    final dateStr = DateFormat('yyyy-MM-dd').format(_selectedDate);
+
+    // Skip re-initialization if already streaming for this user+date
+    if (_currentStreamUserId == userId &&
+        _currentStreamDate == dateStr &&
+        _subscription != null) {
+      // Already tracking — just re-emit current state to update UI
+      if (_currentActivity != null) {
+        emit(AttendanceSuccessState());
+      }
+      return;
+    }
+
+    _currentStreamUserId = userId;
+    _currentStreamDate = dateStr;
     emit(AttendanceLoadingState());
 
     _subscription?.cancel();
     _subscription = _repository
-        .watchUserActivity(userId, DateFormat('yyyy-MM-dd').format(_selectedDate))
+        .watchUserActivity(userId, dateStr)
         .listen((activity) {
-
-      // If activity is null, we still need to show the screen (with 00:00:00 time)
+      // ── Debug: attendance state ──
+      debugPrint('[Attendance] checkIn=${activity?.checkIn?.inTime}, '
+          'outTime=${activity?.outTime?.outTime}, '
+          'nextAction=${activity?.nextAction}, '
+          'canTakeBreak=${activity?.canTakeBreak}');
       _currentActivity = activity;
 
       if (activity != null && activity.checkIn?.inTime != null) {
@@ -46,7 +80,14 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
         } else {
           // Day completed — show final worked time
           _ticker?.cancel();
-          _workingTime = _calculateFinalWorkedTime();
+          // Use persisted workedMinutes if available, otherwise calculate
+          if (activity.workedMinutes != null) {
+            final h = activity.workedMinutes! ~/ 60;
+            final m = activity.workedMinutes! % 60;
+            _workingTime = '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
+          } else {
+            _workingTime = _calculateFinalWorkedTime();
+          }
         }
       } else {
         _workingTime = "00:00:00";
@@ -61,9 +102,14 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
 
   void changeDate(DateTime newDate, String userId) {
     _selectedDate = newDate;
+    _currentStreamDate = null; // Force re-init for new date
     emit(AttendanceChangeDateState());
     init(userId); // Re-fetch for the new date
   }
+
+  // ===========================================================================
+  // Monthly summary
+  // ===========================================================================
 
   /// Loads monthly summary from attendance records.
   Future<void> loadMonthlySummary({
@@ -97,6 +143,10 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     }
   }
 
+  // ===========================================================================
+  // Break time calculation
+  // ===========================================================================
+
   void _updateBreakTime() {
     final breakMinutes = AttendanceService.calculateBreakMinutes(
       _currentActivity?.breakInTime,
@@ -120,6 +170,10 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     final m = workedMin % 60;
     return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
   }
+
+  // ===========================================================================
+  // Live working timer
+  // ===========================================================================
 
   void _startWorkingTimer() {
     _ticker?.cancel();
@@ -151,38 +205,164 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     });
   }
 
-  Future<void> performSwipeAction(String userId, String companyId) async {
-    // Logic to determine action based on your model lists
-    final nextAction = _calculateNextAction();
+  // ===========================================================================
+  // Swipe action (check-in/out, breaks) — with double-swipe guard
+  // ===========================================================================
+
+  Future<void> performSwipeAction(
+    String userId,
+    String companyId, {
+    String? teamId,
+    String? companyStartTime,
+    int lateGracePeriodMinutes = 0,
+    String? userName,
+  }) async {
+    // Prevent double-swipe
+    if (_isPerformingAction) return;
+
+    // Use model's nextAction — single source of truth (DRY)
+    final nextAction = _currentActivity?.nextAction ?? UserPerformActivty.IN;
 
     // Don't allow action if day is already done
     if (nextAction == UserPerformActivty.DONE) return;
 
+    _isPerformingAction = true;
+    emit(AttendanceActionInProgressState());
+
     try {
-      // Don't emit loading here if you want a smooth swipe,
-      // or emit it if you want a blocker.
       await _repository.logAction(
         userId: userId,
         activityId: _currentActivity?.activityID ?? "NEW",
         action: nextAction,
         companyId: companyId,
+        teamId: teamId,
+        companyStartTime: companyStartTime,
+        lateGracePeriodMinutes: lateGracePeriodMinutes,
       );
+
+      // Notify team manager on check-in / check-out
+      if (teamId != null && userName != null) {
+        if (nextAction == UserPerformActivty.IN) {
+          await _notificationRepo.addNotification(
+            toUserId: teamId,
+            fromUserName: userName,
+            message: '$userName checked in.',
+            type: 'attendance_checkin',
+          );
+        } else if (nextAction == UserPerformActivty.OUT) {
+          await _notificationRepo.addNotification(
+            toUserId: teamId,
+            fromUserName: userName,
+            message: '$userName checked out.',
+            type: 'attendance_checkout',
+          );
+        }
+      }
+    } catch (e) {
+      emit(AttendanceErrorState(e.toString()));
+    } finally {
+      _isPerformingAction = false;
+      // ── Debug: button visibility ──
+      debugPrint('[Attendance] After action: nextAction=${_currentActivity?.nextAction}, '
+          'canTakeBreak=${_currentActivity?.canTakeBreak}, '
+          'isPerformingAction=$_isPerformingAction');
+    }
+  }
+
+  // ===========================================================================
+  // Break action
+  // ===========================================================================
+
+  Future<void> performBreakAction(
+    String userId,
+    String companyId, {
+    String? teamId,
+    String? userName,
+  }) async {
+    // Prevent double-swipe
+    if (_isPerformingAction) return;
+
+    // Use model's canTakeBreak — single source of truth
+    final canTakeBreak = _currentActivity?.canTakeBreak ?? false;
+
+    // Don't allow action if cannot take break
+    if (!canTakeBreak) return;
+
+    _isPerformingAction = true;
+    emit(AttendanceActionInProgressState());
+
+    try {
+      await _repository.logAction(
+        userId: userId,
+        activityId: _currentActivity?.activityID ?? "NEW",
+        action: UserPerformActivty.BREAKIN,
+        companyId: companyId,
+        teamId: teamId,
+      );
+
+      // Notify team manager on taking a break
+      if (teamId != null && userName != null) {
+        await _notificationRepo.addNotification(
+          toUserId: teamId,
+          fromUserName: userName,
+          message: '$userName is on a break.',
+          type: 'attendance_breakin',
+        );
+      }
+    } catch (e) {
+      emit(AttendanceErrorState(e.toString()));
+    } finally {
+      _isPerformingAction = false;
+      debugPrint('[Attendance] After break action: nextAction=${_currentActivity?.nextAction}, '
+          'canTakeBreak=${_currentActivity?.canTakeBreak}, '
+          'isPerformingAction=$_isPerformingAction');
+    }
+  }
+
+  // ===========================================================================
+  // Admin: Team attendance
+  // ===========================================================================
+
+  /// Loads all attendance records for [managerId]'s team on [date].
+  Future<void> loadTeamAttendanceForDate({
+    required String managerId,
+    required String date,
+  }) async {
+    emit(TeamAttendanceLoadingState());
+    try {
+      _teamAttendanceRecords = await _repository.fetchTeamAttendanceForDate(
+        managerId,
+        date,
+      );
+      emit(TeamAttendanceLoadedState());
+    } catch (e) {
+      emit(TeamAttendanceErrorState(e.toString()));
+    }
+  }
+
+  /// Admin: update a specific employee's attendance record.
+  Future<void> updateEmployeeAttendance({
+    required String userId,
+    required String date,
+    required Map<String, dynamic> updates,
+  }) async {
+    emit(AttendanceLoadingState());
+    try {
+      await _repository.updateAttendanceRecord(
+        userId: userId,
+        date: date,
+        updates: updates,
+      );
+      emit(AttendanceSuccessState());
     } catch (e) {
       emit(AttendanceErrorState(e.toString()));
     }
   }
 
-  UserPerformActivty _calculateNextAction() {
-    if (_currentActivity?.checkIn == null) return UserPerformActivty.IN;
-    if (_currentActivity?.outTime != null) return UserPerformActivty.DONE;
+  // ===========================================================================
+  // Getters for UI
+  // ===========================================================================
 
-    int inCount = _currentActivity?.breakInTime?.length ?? 0;
-    int outCount = _currentActivity?.breakOutTime?.length ?? 0;
-
-    return (inCount > outCount) ? UserPerformActivty.BREAKOUT : UserPerformActivty.BREAKIN;
-  }
-
-  // Getters for UI convenience
   UserActivityModel? get activity => _currentActivity;
   String get workingTime => _workingTime;
   String get breakTime => _breakTime;
@@ -191,6 +371,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   int get monthLateMinutes => _monthLateMinutes;
   int get monthAbsenceDays => _monthAbsenceDays;
   int get monthPaidLeaveDays => _monthPaidLeaveDays;
+  bool get isPerformingAction => _isPerformingAction;
+  List<Map<String, dynamic>> get teamAttendanceRecords => _teamAttendanceRecords;
 
   @override
   Future<void> close() {
@@ -198,5 +380,4 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     _ticker?.cancel();
     return super.close();
   }
-
 }

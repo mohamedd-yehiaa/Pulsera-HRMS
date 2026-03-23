@@ -24,10 +24,6 @@ class ProfileCubit extends Cubit<ProfileStates> {
 
   Future<void> updateProfile(var uId) async {
     emit(ProfileUpdateLoadingState());
-    // List<String> selectedCodes = workingDays
-    //     .where((e) => e.isSelected)
-    //     .map((e) => e.code)
-    //     .toList();
     List<String> nameParts = userNameTC.text.trim().split(' ');
     String firstName = nameParts[0];
     String lastName;
@@ -84,6 +80,10 @@ class ProfileCubit extends Cubit<ProfileStates> {
   Future<void> close() {
     organizationTC.dispose();
     userNameTC.dispose();
+    emailTC.dispose();
+    phoneTC.dispose();
+    startTimeTC.dispose();
+    endTimeTC.dispose();
     return super.close();
   }
 }
