@@ -8,6 +8,7 @@ import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
+import 'package:pulsera/modules/team/employee_attendance_screen.dart';
 
 class TeamMembersScreen extends StatefulWidget {
   const TeamMembersScreen({super.key});
@@ -47,12 +48,14 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
     final currentUser = appCubit.userModel;
     final isManager = currentUser?.userType == "Company Owner";
 
-
     return BlocConsumer<TeamCubit, TeamStates>(
       listener: (context, state) {
         if (state is TeamErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(state.error), backgroundColor: AppColors.error),
+            SnackBar(
+              content: Text(state.error),
+              backgroundColor: AppColors.error,
+            ),
           );
         }
       },
@@ -62,16 +65,31 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text(isManager ? "My Team" : "Team Info", style: const TextStyle(fontWeight: FontWeight.bold)),
+            leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(IconBroken.Arrow___Left_2),
+            ),
+            title: Text(
+              isManager ? "My Team" : "Team Info",
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
             actions: [
-              IconButton(onPressed: () => _loadData(), icon: const Icon(Icons.refresh)),
+              IconButton(
+                onPressed: () => _loadData(),
+                icon: const Icon(Icons.refresh),
+              ),
             ],
           ),
           body: isLoading
               ? const Center(child: CircularProgressIndicator())
               : isManager
               ? _buildManagerView(context, cubit)
-              : _buildEmployeeView(context, cubit, currentUser, ),
+              : _buildEmployeeView(context, cubit, currentUser),
         );
       },
     );
@@ -86,7 +104,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
     final filtered = membersList.where((m) {
       if (_searchQuery.isEmpty) return true;
-      return (m.fullName ?? '').toLowerCase().contains(_searchQuery.toLowerCase());
+      return (m.fullName ?? '').toLowerCase().contains(
+        _searchQuery.toLowerCase(),
+      );
     }).toList();
 
     return Padding(
@@ -94,8 +114,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
       child: Column(
         children: [
           SearchBar(
+            backgroundColor:  WidgetStatePropertyAll(AppColors.grey50),
             hintText: "Search team members",
-            leading: const Icon(IconBroken.Search, color: Colors.grey),
+            leading: const Icon(IconBroken.Search, color: AppColors.grey500),
             elevation: WidgetStateProperty.all(0.5),
             onChanged: (value) => setState(() => _searchQuery = value),
           ),
@@ -104,7 +125,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
             children: [
               Text(
                 "${filtered.length} Member${filtered.length != 1 ? 's' : ''}",
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.grey500),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.grey500),
               ),
             ],
           ),
@@ -113,23 +136,37 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
             child: filtered.isEmpty
                 ? _buildEmptyState(context)
                 : ListView.separated(
-              itemCount: filtered.length,
-              separatorBuilder: (_, __) => Divider(color: Colors.grey[200]),
-              itemBuilder: (context, index) => _buildMemberTile(context, filtered[index]),
-            ),
+                    itemCount: filtered.length,
+                    separatorBuilder: (_, __) =>
+                        Divider(color: Colors.grey[200]),
+                    itemBuilder: (context, index) =>
+                        _buildMemberTile(context, filtered[index]),
+                  ),
           ),
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             height: 55,
             child: ElevatedButton.icon(
-              style: ElevatedButton.styleFrom(backgroundColor: AppColors.primary),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: AppColors.primary,
+              ),
               onPressed: () async {
-                final result = await Navigator.push<bool>(context, MaterialPageRoute(builder: (_) => AddTeamMemberScreen()));
+                final result = await Navigator.push<bool>(
+                  context,
+                  MaterialPageRoute(builder: (_) => AddTeamMemberScreen()),
+                );
                 if (result == true) _loadData();
               },
-              icon: const Icon(IconBroken.Add_User, color: Colors.white),
-              label: const Text("Add Member", style: TextStyle(color: Colors.white)),
+              icon: const Icon(IconBroken.Add_User, color: Colors.white,size: 22,),
+              label: const Text(
+                "Add Member",
+                style: TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
             ),
           ),
         ],
@@ -145,38 +182,106 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         backgroundColor: AppColors.primary.withValues(alpha: 0.15),
         child: Text(
           (member.fullName ?? 'E')[0].toUpperCase(),
-          style: const TextStyle(color: AppColors.primary, fontWeight: FontWeight.bold),
+          style: const TextStyle(
+            color: AppColors.primary,
+            fontWeight: FontWeight.bold,
+          ),
         ),
       ),
-      title: Text(member.fullName ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
+      title: Text(
+        member.fullName ?? 'Unknown',
+        style: const TextStyle(fontWeight: FontWeight.bold),
+      ),
       subtitle: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              Text(member.email ?? '',style: const TextStyle(color: Colors.grey, fontSize: 12),),
+              Text(
+                member.email ?? '',
+                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              ),
               Spacer(),
-              Text(member.roleType ?? 'Employee', style: TextStyle(color: AppColors.primary, fontSize: 11, fontWeight: FontWeight.bold)),
+              Text(
+                member.roleType ?? 'Employee',
+                style: TextStyle(
+                  color: AppColors.primary,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
             ],
           ),
           const SizedBox(height: 4),
           Row(
             children: [
-              _buildBadge("\$${member.monthlySalary?.toStringAsFixed(0) ?? '0'}/mo", AppColors.blue700),
+              _buildBadge(
+                "\$${member.monthlySalary?.toStringAsFixed(0) ?? '0'}/mo",
+                AppColors.blue700,
+              ),
               const SizedBox(width: 8),
-              _buildBadge("${member.remainingVacationDays ?? 0}/${member.monthlyVacationDays ?? 0} days", AppColors.green400),
+              _buildBadge(
+                "${member.remainingVacationDays ?? 0}/${member.monthlyVacationDays ?? 0} days",
+                AppColors.green400,
+              ),
+              const Spacer(),
+              member.status != null && member.status != 'Terminated'
+                  ? Text(
+                      member.status!,
+                      style: TextStyle(
+                        color: AppColors.green400,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    )
+                  : Text(
+                      member.status!,
+                      style: TextStyle(
+                        color: AppColors.error,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ],
           ),
         ],
       ),
       trailing: PopupMenuButton<String>(
+        color: AppColors.grey50,
         onSelected: (value) {
           if (value == 'remove') _showRemoveDialog(context, member);
+          if (value == 'attendance') {
+            Navigator.push(
+              context,
+              MaterialPageRoute(
+                builder: (_) => EmployeeAttendanceScreen(
+                  employeeId: member.uId ?? '',
+                  employeeName: member.fullName ?? 'Employee',
+                ),
+              ),
+            );
+          }
         },
         itemBuilder: (context) => [
           const PopupMenuItem(
+            value: 'attendance',
+            child: Row(
+              children: [
+                Icon(Icons.access_time, color: AppColors.primary),
+                SizedBox(width: 8),
+                Text('View Attendance'),
+              ],
+            ),
+          ),
+          const PopupMenuItem(
             value: 'remove',
-            child: Row(children: [Icon(Icons.remove_circle_outline, color: AppColors.error), SizedBox(width: 8), Text('Remove')]),
+            child: Row(
+              children: [
+                Icon(Icons.remove_circle_outline, color: AppColors.error),
+                SizedBox(width: 8),
+                Text('Remove'),
+              ],
+            ),
           ),
         ],
       ),
@@ -206,24 +311,20 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(
-            IconBroken.User,
-            size: 64,
-            color: AppColors.grey300,
-          ),
+          Icon(IconBroken.User, size: 64, color: AppColors.grey300),
           const SizedBox(height: 16),
           Text(
             "No team members yet",
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              color: AppColors.grey500,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(color: AppColors.grey500),
           ),
           const SizedBox(height: 8),
           Text(
             "Tap \"Add Member\" to assign employees to your team.",
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: AppColors.grey300,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.grey300),
             textAlign: TextAlign.center,
           ),
         ],
@@ -231,16 +332,21 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
     );
   }
 
-
   void _showRemoveDialog(BuildContext context, MembersData member) {
     final appCubit = AppCubit.get(context);
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
+        backgroundColor: AppColors.grey50,
         title: const Text("Remove Member"),
-        content: Text("Are you sure you want to remove ${member.fullName} from your team?"),
+        content: Text(
+          "Are you sure you want to remove ${member.fullName} from your team?",
+        ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text("Cancel")),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text("Cancel"),
+          ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
@@ -249,7 +355,10 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 managerId: appCubit.userModel?.uId ?? '',
               );
             },
-            child: const Text("Remove", style: TextStyle(color: AppColors.error)),
+            child: const Text(
+              "Remove",
+              style: TextStyle(color: AppColors.error),
+            ),
           ),
         ],
       ),
@@ -260,15 +369,25 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   // Employee View — Manager info + Vacation balance
   // ===========================================================================
   Widget _buildEmployeeView(
-      BuildContext context, TeamCubit cubit, UserModel? currentUser,) {
-    // FIND the specific member details from the team list
-    // final myStats = cubit.teamData?.members?.firstWhere(
-    //       (m) => m.uId == currentUser?.uId,
-    //   orElse: () => MembersData(), // Return empty if not found
-    // );
+    BuildContext context,
+    TeamCubit cubit,
+    UserModel? currentUser,
+  ) {
     final myData = cubit.teamData?.getMemberByUid(currentUser?.uId);
     if (myData == null) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(IconBroken.User1, size: 64, color: Colors.grey),
+            SizedBox(height: 16),
+            Text(
+              "Not assigned to any team yet",
+              style: TextStyle(fontSize: 16, color: Colors.grey),
+            ),
+          ],
+        ),
+      );
     }
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20.0),
@@ -278,10 +397,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           // My Manager Section
           Text(
             "My Manager",
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           if (cubit.myManager != null)
@@ -320,18 +438,15 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                     children: [
                       Text(
                         "${cubit.myManager?.firstName ?? ''} ${cubit.myManager?.lastName ?? ''}",
-                        style: Theme.of(context)
-                            .textTheme
-                            .titleMedium
+                        style: Theme.of(context).textTheme.titleMedium
                             ?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 4),
                       Text(
                         cubit.myManager?.email ?? '',
-                        style: Theme.of(context)
-                            .textTheme
-                            .bodySmall
-                            ?.copyWith(color: AppColors.grey500),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: AppColors.grey500,
+                        ),
                       ),
                     ],
                   ),
@@ -348,10 +463,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               ),
               child: Text(
                 "You are not assigned to any manager yet.",
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: AppColors.grey500),
+                style: Theme.of(
+                  context,
+                ).textTheme.bodyMedium?.copyWith(color: AppColors.grey500),
                 textAlign: TextAlign.center,
               ),
             ),
@@ -361,10 +475,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           // Vacation Balance Section
           Text(
             "Vacation Balance",
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Row(
@@ -396,7 +509,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                   context,
                   title: "Used",
                   value:
-                  "${(myData.monthlyVacationDays ?? 0) - (myData.remainingVacationDays ?? 0)}",
+                      "${(myData.monthlyVacationDays ?? 0) - (myData.remainingVacationDays ?? 0)}",
                   subtitle: "days",
                   color: AppColors.orange500,
                   icon: IconBroken.Ticket,
@@ -410,10 +523,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           // Salary Info Section
           Text(
             "Salary Info",
-            style: Theme.of(context)
-                .textTheme
-                .titleLarge
-                ?.copyWith(fontWeight: FontWeight.bold),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 12),
           Container(
@@ -451,18 +563,18 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                   children: [
                     Text(
                       "Monthly Salary",
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                        color: AppColors.grey500,
-                      ),
+                      style: Theme.of(
+                        context,
+                      ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       "\$${myData.monthlySalary?.toStringAsFixed(2) ?? '0.00'}",
-                      style:
-                      Theme.of(context).textTheme.headlineSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.primary,
-                      ),
+                      style: Theme.of(context).textTheme.headlineSmall
+                          ?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.primary,
+                          ),
                     ),
                   ],
                 ),
@@ -475,13 +587,13 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   }
 
   Widget _buildStatCard(
-      BuildContext context, {
-        required String title,
-        required String value,
-        required String subtitle,
-        required Color color,
-        required IconData icon,
-      }) {
+    BuildContext context, {
+    required String title,
+    required String value,
+    required String subtitle,
+    required Color color,
+    required IconData icon,
+  }) {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
@@ -510,9 +622,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           const SizedBox(height: 4),
           Text(
             title,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              fontWeight: FontWeight.w500,
-            ),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w500),
           ),
           Text(
             subtitle,

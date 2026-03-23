@@ -212,31 +212,39 @@ class AttendanceService {
   // Validation helpers
   // ===========================================================================
 
-  /// Validates a check-in/check-out action, returning an error message or null.
+  /// Validates a check-in/check-out/break action, returning an error message
+  /// or null if the action is valid.
   static String? validateAction({
     required String action, // 'IN', 'OUT', 'BREAKIN', 'BREAKOUT'
     required String? existingCheckIn,
     required String? existingCheckOut,
     required String timeNow,
+    List<String>? breakInTimes,
+    List<String>? breakOutTimes,
   }) {
-    // Cannot check in if already checked in and not checked out
+    // --- Check-In validation ---
     if (action == 'IN' && existingCheckIn != null && existingCheckOut == null) {
       return 'Already checked in for today. Please check out first.';
     }
-
-    // Cannot check in if day is already completed
     if (action == 'IN' && existingCheckOut != null) {
       return 'Attendance already recorded for today.';
     }
 
-    // Cannot check out before checking in
+    // --- Check-Out validation ---
     if (action == 'OUT' && existingCheckIn == null) {
       return 'Cannot check out without checking in first.';
     }
-
-    // Cannot check out twice
     if (action == 'OUT' && existingCheckOut != null) {
       return 'Already checked out for today.';
+    }
+
+    // Cannot check out while on an active break
+    if (action == 'OUT') {
+      final inCount = breakInTimes?.length ?? 0;
+      final outCount = breakOutTimes?.length ?? 0;
+      if (inCount > outCount) {
+        return 'Cannot check out while on break. Please end your break first.';
+      }
     }
 
     // Validate check-out time is after check-in time
@@ -250,6 +258,79 @@ class AttendanceService {
       } catch (_) {}
     }
 
+    // --- Break-In validation ---
+    if (action == 'BREAKIN') {
+      if (existingCheckIn == null) {
+        return 'Cannot start break without checking in first.';
+      }
+      if (existingCheckOut != null) {
+        return 'Cannot start break after checking out.';
+      }
+      final inCount = breakInTimes?.length ?? 0;
+      final outCount = breakOutTimes?.length ?? 0;
+      if (inCount > outCount) {
+        return 'Already on break. Please end your current break first.';
+      }
+    }
+
+    // --- Break-Out validation ---
+    if (action == 'BREAKOUT') {
+      if (existingCheckIn == null) {
+        return 'Cannot end break without checking in first.';
+      }
+      if (existingCheckOut != null) {
+        return 'Cannot end break after checking out.';
+      }
+      final inCount = breakInTimes?.length ?? 0;
+      final outCount = breakOutTimes?.length ?? 0;
+      if (inCount <= outCount) {
+        return 'No active break to end.';
+      }
+    }
+
     return null;
   }
+
+  // ===========================================================================
+  // Attendance status determination
+  // ===========================================================================
+
+  /// Determines whether an employee is 'present' or 'late' based on their
+  /// check-in time compared to company start time + grace period.
+  ///
+  /// Returns 'late' if check-in is after [companyStartTime] + [graceMinutes],
+  /// otherwise 'present'.
+  static String determineAttendanceStatus({
+    required String checkInTime,
+    required String companyStartTime,
+    int graceMinutes = 0,
+  }) {
+    try {
+      final checkInMin = parseTimeToMinutes(checkInTime);
+      final startMin = parseTimeToMinutes(companyStartTime);
+      if (checkInMin > startMin + graceMinutes) {
+        return 'late';
+      }
+      return 'present';
+    } catch (_) {
+      return 'present'; // Default if parsing fails
+    }
+  }
+
+  /// Calculates worked minutes at the moment of check-out, deducting breaks.
+  /// This is the value that gets persisted in Firestore for payroll.
+  static int calculateWorkedMinutesOnCheckOut({
+    required String checkInTime,
+    required String checkOutTime,
+    List<String>? breakInTimes,
+    List<String>? breakOutTimes,
+  }) {
+    return calculateWorkedMinutes(
+      inTime: checkInTime,
+      outTimeStr: checkOutTime,
+      breakInTimes: breakInTimes,
+      breakOutTimes: breakOutTimes,
+    );
+  }
 }
+

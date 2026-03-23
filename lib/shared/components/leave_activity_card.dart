@@ -31,6 +31,7 @@ class LeaveActivityCard extends StatelessWidget {
     final bool isPending = item.leaveStatus == LeaveActivityState.pending;
     final bool isApproved = item.leaveStatus == LeaveActivityState.approved;
 
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -38,7 +39,7 @@ class LeaveActivityCard extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.05),
+            color: Colors.black.withValues(alpha:0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -72,8 +73,8 @@ class LeaveActivityCard extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: item.leaveStatus?.getColor.withOpacity(.1) ??
-                      Colors.grey.withOpacity(.1),
+                  color: item.leaveStatus?.getColor.withValues(alpha:0.1) ??
+                      Colors.grey.withValues(alpha:0.1),
                 ),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
@@ -149,13 +150,13 @@ class LeaveActivityCard extends StatelessWidget {
             ),
           ],
 
-          // Cancel Button (Employee only, approved only)
-          if (isOwner && isApproved) ...[
+          // Cancel Button (Employee only, pending or approved)
+          if (isOwner && (isPending || isApproved)) ...[
             const SizedBox(height: 16),
             SizedBox(
               width: double.infinity,
               child: OutlinedButton.icon(
-                onPressed: () => _showCancelConfirmation(context),
+                onPressed: () => _showCancelConfirmation(context, isApproved),
                 icon: const Icon(Icons.cancel_outlined, size: 18),
                 label: const Text("Cancel Leave"),
                 style: OutlinedButton.styleFrom(
@@ -182,14 +183,15 @@ class LeaveActivityCard extends StatelessWidget {
     );
   }
 
-  void _showCancelConfirmation(BuildContext context) {
+  void _showCancelConfirmation(BuildContext context, bool isApproved) {
+    final message = isApproved
+        ? "Are you sure you want to cancel this approved leave? Your vacation days will be restored."
+        : "Are you sure you want to cancel this pending leave request?";
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
         title: const Text("Cancel Leave"),
-        content: const Text(
-          "Are you sure you want to cancel this approved leave? Your vacation days will be restored.",
-        ),
+        content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),

@@ -9,7 +9,7 @@ class UserModel {
   bool? isEmailVerified;
   String? userType;
   String? managerId;
-  double? monthlySalary;
+  String? roleType;
 
 
 
@@ -24,7 +24,7 @@ class UserModel {
     this.isEmailVerified,
     this.userType,
     this.managerId,
-    this.monthlySalary,
+    this.roleType,
   });
 
   UserModel.fromJson(Map<String, dynamic> json)
@@ -39,7 +39,7 @@ class UserModel {
     isEmailVerified = json['isEmailVerified'];
     userType = json['userType'];
     managerId = json['managerId'];
-    monthlySalary = (json['monthlySalary'] as num?)?.toDouble();
+    roleType = json['roleType'];
   }
 
   Map<String, dynamic> toMap()
@@ -55,6 +55,7 @@ class UserModel {
       'isEmailVerified':isEmailVerified,
       'userType':userType,
       'managerId':managerId,
+      'roleType':roleType,
     };
   }
 }

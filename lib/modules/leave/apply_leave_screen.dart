@@ -20,8 +20,8 @@ class ApplyLeaveScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       body: BlocProvider(
-        create: (context) => ApplyLeaveCubit()
-          ..fetchTeamData(userId: user?.uId),
+        create: (context) =>
+            ApplyLeaveCubit()..fetchTeamData(userId: user?.uId),
         child: BlocConsumer<ApplyLeaveCubit, ApplyLeaveStates>(
           listener: (context, state) {
             if (state is ApplyLeaveSuccessState) {
@@ -46,7 +46,9 @@ class ApplyLeaveScreen extends StatelessWidget {
                 children: [
                   Padding(
                     padding: const EdgeInsets.symmetric(
-                        horizontal: 16, vertical: 10),
+                      horizontal: 16,
+                      vertical: 10,
+                    ),
                     child: Row(
                       children: [
                         title(context, "Apply Leave", IconBroken.Edit),
@@ -70,10 +72,7 @@ class ApplyLeaveScreen extends StatelessWidget {
                             margin: const EdgeInsets.only(bottom: 16),
                             decoration: BoxDecoration(
                               gradient: LinearGradient(
-                                colors: [
-                                  AppColors.blue600,
-                                  AppColors.blue700,
-                                ],
+                                colors: [AppColors.blue600, AppColors.blue700],
                                 begin: Alignment.topLeft,
                                 end: Alignment.bottomRight,
                               ),
@@ -124,10 +123,12 @@ class ApplyLeaveScreen extends StatelessWidget {
                             padding: const EdgeInsets.all(14),
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
-                              color: AppColors.green500.withOpacity(0.08),
+                              color: AppColors.green500.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                               border: Border.all(
-                                color: AppColors.green500.withOpacity(0.3),
+                                color: AppColors.green500.withValues(
+                                  alpha: 0.3,
+                                ),
                               ),
                             ),
                             child: Row(
@@ -167,7 +168,7 @@ class ApplyLeaveScreen extends StatelessWidget {
                             padding: const EdgeInsets.all(14),
                             margin: const EdgeInsets.only(bottom: 20),
                             decoration: BoxDecoration(
-                              color: AppColors.error.withOpacity(0.08),
+                              color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
                             child: const Text(
@@ -184,10 +185,13 @@ class ApplyLeaveScreen extends StatelessWidget {
                               cubit.setDate(context, isStart: true),
                           label: cubit.leaveStartDate == null
                               ? "Select start date"
-                              : DateFormat('dd MMM yyyy')
-                              .format(cubit.leaveStartDate!),
-                          suffixIcon: const Icon(IconBroken.Calendar,
-                              color: AppColors.blue600),
+                              : DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(cubit.leaveStartDate!),
+                          suffixIcon: const Icon(
+                            IconBroken.Calendar,
+                            color: AppColors.blue600,
+                          ),
                         ),
                         const SizedBox(height: 16),
                         AppButton.appOulineButtonRow(
@@ -196,10 +200,13 @@ class ApplyLeaveScreen extends StatelessWidget {
                               cubit.setDate(context, isStart: false),
                           label: cubit.leaveEndDate == null
                               ? "Select end date"
-                              : DateFormat('dd MMM yyyy')
-                              .format(cubit.leaveEndDate!),
-                          suffixIcon: const Icon(IconBroken.Calendar,
-                              color: AppColors.blue600),
+                              : DateFormat(
+                                  'dd MMM yyyy',
+                                ).format(cubit.leaveEndDate!),
+                          suffixIcon: const Icon(
+                            IconBroken.Calendar,
+                            color: AppColors.blue600,
+                          ),
                         ),
 
                         // Total Days Preview
@@ -208,16 +215,21 @@ class ApplyLeaveScreen extends StatelessWidget {
                           Container(
                             width: double.infinity,
                             padding: const EdgeInsets.symmetric(
-                                horizontal: 14, vertical: 10),
+                              horizontal: 14,
+                              vertical: 10,
+                            ),
                             decoration: BoxDecoration(
-                              color: AppColors.blue600.withOpacity(0.08),
+                              color: AppColors.blue600.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(10),
                             ),
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(IconBroken.Time_Circle,
-                                    color: AppColors.blue600, size: 18),
+                                const Icon(
+                                  IconBroken.Time_Circle,
+                                  color: AppColors.blue600,
+                                  size: 18,
+                                ),
                                 const SizedBox(width: 8),
                                 Text(
                                   "Total: ${cubit.totalDays} day${cubit.totalDays! > 1 ? 's' : ''}",
@@ -239,7 +251,7 @@ class ApplyLeaveScreen extends StatelessWidget {
                           label: const Text("Reason for leave"),
                           prefix: IconBroken.Document,
                           validator: (value) =>
-                          value!.isEmpty ? "Required" : null,
+                              value!.isEmpty ? "Required" : null,
                         ),
 
                         const SizedBox(height: 40),
@@ -252,16 +264,18 @@ class ApplyLeaveScreen extends StatelessWidget {
                               onPressed: cubit.teamAdmin == null
                                   ? null
                                   : () => cubit.applyLeave(
-                                uId: user?.uId,
-                                companyId: user?.companyId,
-                                userModel: user,
+                                      uId: user?.uId,
+                                      companyId: user?.companyId,
+                                      userModel: user,
+                                    ),
+                              child: const Text(
+                                "Submit Request",
+                                style: TextStyle(color: Colors.white),
                               ),
-                              child: const Text("Submit Request",
-                                  style: TextStyle(color: Colors.white)),
                             ),
                           ),
                           fallback: (context) =>
-                          const Center(child: CircularProgressIndicator()),
+                              const Center(child: CircularProgressIndicator()),
                         ),
                       ],
                     ),

@@ -32,7 +32,21 @@ class AddTeamMemberScreen extends StatelessWidget {
         bool isLoading = state is TeamLoadingState;
 
         return Scaffold(
-          appBar: AppBar(title: const Text("Add Team Member")),
+          appBar: AppBar(
+            leading: IconButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              icon: const Icon(IconBroken.Arrow___Left_2),
+            ),
+            title: Text(
+              "Add Team Member",
+              style: Theme.of(context).textTheme.titleLarge!.copyWith(
+                fontWeight: FontWeight.bold,
+                fontSize: 20,
+              ),
+            ),
+          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Form(
@@ -53,7 +67,14 @@ class AddTeamMemberScreen extends StatelessWidget {
                         userId: cubit.userIdController.text,
                         currentManagerId: appCubit.userModel!.uId!,
                       ),
-                      child: Text(isLoading ? "Validating..." : "Validate"),
+                      child: Text(
+                        isLoading ? "Validating..." : "Validate",
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.white,
+                        ),
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -175,9 +196,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                       type: TextInputType.number,
                       label: const Text('Monthly Vacation Days'),
                       prefix: IconBroken.Calendar,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter vacation days';
@@ -215,4 +234,3 @@ class AddTeamMemberScreen extends StatelessWidget {
     );
   }
 }
-

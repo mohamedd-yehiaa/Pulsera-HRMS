@@ -194,7 +194,7 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
                       ),
                       Switch(
                         value: _override,
-                        activeColor: AppColors.primary,
+                        activeThumbColor: AppColors.primary,
                         onChanged: (val) {
                           setState(() {
                             _override = val;
