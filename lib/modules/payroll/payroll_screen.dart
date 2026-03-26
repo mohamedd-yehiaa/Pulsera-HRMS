@@ -80,23 +80,24 @@ class _PayrollScreenState extends State<PayrollScreen> {
                 Padding(
                   padding:
                   const EdgeInsets.symmetric(horizontal: 16),
-                  child: Expanded(
-                    flex: 2,
-                    child: ElevatedButton.icon(
-                      icon: const Icon(IconBroken.Plus, size: 22),
-                      label: const Text(
-                        'Generate',
-                        style: TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
+                  child: Row(
+
+                    children: [
+                      Expanded(
+                        flex: 2,
+                        child: ElevatedButton.icon(
+                          icon: const Icon(IconBroken.Plus, size: 20),
+                          label: const Text(
+                            'Generate',
+                            style: TextStyle(fontWeight: FontWeight.bold),
+                          ),
+                          onPressed: () {
+                            navigateTo(
+                                context, const GeneratePayrollScreen());
+                          },
                         ),
                       ),
-                      onPressed: () {
-                        navigateTo(
-                            context, const GeneratePayrollScreen());
-                      },
-                    ),
+                    ],
                   ),
                 ),
 
@@ -213,7 +214,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: kBoxDecoration,
+        decoration: boxDecoration,
         child: Row(
 
           children: [

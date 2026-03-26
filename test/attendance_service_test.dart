@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/shared/services/attendance_service.dart';
 
 void main() {
@@ -455,6 +456,265 @@ void main() {
 
     test('formats 480 minutes as 08:00', () {
       expect(AttendanceService.formatMinutes(480), '08:00');
+    });
+  });
+
+  // ===========================================================================
+  // validateCheckInTime
+  // ===========================================================================
+  group('validateCheckInTime', () {
+    const config = WorkScheduleConfig(
+      workStartTime: '09:00',
+      workEndTime: '17:00',
+      gracePeriodMinutes: 15,
+      earlyAllowanceMinutes: 30,
+      lateCutoffMinutes: 120,
+      minimumWorkHours: 6,
+    );
+
+    test('returns early when before allowed window', () {
+      final result = AttendanceService.validateCheckInTime('08:20:00', config);
+      expect(result.status, 'early');
+      expect(result.lateMinutes, 0);
+      expect(result.message, contains('early'));
+    });
+
+    test('returns on_time at exact start time', () {
+      final result = AttendanceService.validateCheckInTime('09:00:00', config);
+      expect(result.status, 'on_time');
+      expect(result.lateMinutes, 0);
+    });
+
+    test('returns on_time within grace period', () {
+      final result = AttendanceService.validateCheckInTime('09:10:00', config);
+      expect(result.status, 'on_time');
+      expect(result.lateMinutes, 0);
+    });
+
+    test('returns on_time at exact grace boundary', () {
+      final result = AttendanceService.validateCheckInTime('09:15:00', config);
+      expect(result.status, 'on_time');
+      expect(result.lateMinutes, 0);
+    });
+
+    test('returns late 1 minute after grace', () {
+      final result = AttendanceService.validateCheckInTime('09:16:00', config);
+      expect(result.status, 'late');
+      expect(result.lateMinutes, 1);
+      expect(result.message, contains('late'));
+    });
+
+    test('returns late with correct minutes', () {
+      final result = AttendanceService.validateCheckInTime('09:45:00', config);
+      expect(result.status, 'late');
+      expect(result.lateMinutes, 30); // 09:45 - 09:15 = 30 min
+    });
+
+    test('returns late at exactly cutoff time', () {
+      // cutoff = 09:00 + 120 = 11:00
+      final result = AttendanceService.validateCheckInTime('11:00:00', config);
+      expect(result.status, 'late');
+      expect(result.lateMinutes, 105); // 11:00 - 09:15 = 105 min
+    });
+
+    test('returns very_late after cutoff', () {
+      final result = AttendanceService.validateCheckInTime('11:01:00', config);
+      expect(result.status, 'very_late');
+      expect(result.lateMinutes, 106); // 11:01 - 09:15 = 106 min
+      expect(result.message, contains('very late'));
+    });
+
+    test('returns very_late with correct minutes for very late arrival', () {
+      final result = AttendanceService.validateCheckInTime('12:00:00', config);
+      expect(result.status, 'very_late');
+      expect(result.lateMinutes, 165); // 12:00 - 09:15 = 165 min
+    });
+
+    test('returns on_time at earliest allowed time', () {
+      // earliest = 09:00 - 30 = 08:30
+      final result = AttendanceService.validateCheckInTime('08:30:00', config);
+      expect(result.status, 'on_time');
+      expect(result.lateMinutes, 0);
+    });
+  });
+
+  // ===========================================================================
+  // validateCheckOutTime
+  // ===========================================================================
+  group('validateCheckOutTime', () {
+    const config = WorkScheduleConfig(
+      workStartTime: '09:00',
+      workEndTime: '17:00',
+      gracePeriodMinutes: 15,
+      earlyAllowanceMinutes: 30,
+      lateCutoffMinutes: 120,
+      minimumWorkHours: 6,
+    );
+
+    test('returns early_leave when checking out before end time', () {
+      final result = AttendanceService.validateCheckOutTime(
+        '16:00:00', '09:00:00', config,
+      );
+      expect(result.status, 'early_leave');
+      expect(result.earlyLeaveMinutes, 60);
+      expect(result.overtimeMinutes, 0);
+      expect(result.message, contains('60 minutes early'));
+    });
+
+    test('returns completed when checking out exactly at end time', () {
+      final result = AttendanceService.validateCheckOutTime(
+        '17:00:00', '09:00:00', config,
+      );
+      expect(result.status, 'completed');
+      expect(result.earlyLeaveMinutes, 0);
+      expect(result.overtimeMinutes, 0);
+      expect(result.workedMinutes, 480);
+    });
+
+    test('returns overtime when checking out after end time', () {
+      final result = AttendanceService.validateCheckOutTime(
+        '18:00:00', '09:00:00', config,
+      );
+      expect(result.status, 'overtime');
+      expect(result.earlyLeaveMinutes, 0);
+      expect(result.overtimeMinutes, 60);
+      expect(result.workedMinutes, 540);
+    });
+
+    test('returns insufficient_hours when worked less than minimum', () {
+      // Check in at 09:00, check out at 13:00 = 4h < 6h minimum
+      final result = AttendanceService.validateCheckOutTime(
+        '13:00:00', '09:00:00', config,
+      );
+      expect(result.status, 'insufficient_hours');
+      expect(result.earlyLeaveMinutes, 240); // 17:00 - 13:00 = 240 min
+      expect(result.workedMinutes, 240);
+      expect(result.message, contains('below minimum'));
+    });
+
+    test('returns early_leave when worked more than min but before end', () {
+      // Check in at 09:00, check out at 16:00 = 7h > 6h min, still early
+      final result = AttendanceService.validateCheckOutTime(
+        '16:00:00', '09:00:00', config,
+      );
+      expect(result.status, 'early_leave');
+      expect(result.earlyLeaveMinutes, 60);
+      expect(result.workedMinutes, 420);
+    });
+
+    test('accounts for breaks in worked time', () {
+      // In 09:00, break 12:00-13:00, out 17:00 = 7h
+      final result = AttendanceService.validateCheckOutTime(
+        '17:00:00', '09:00:00', config,
+        breakInTimes: ['12:00:00'],
+        breakOutTimes: ['13:00:00'],
+      );
+      expect(result.status, 'completed');
+      expect(result.workedMinutes, 420); // 8h - 1h break = 7h
+    });
+
+    test('overtime calculation with breaks', () {
+      // In 09:00, break 12:00-13:00, out 18:30 = 8.5h worked
+      final result = AttendanceService.validateCheckOutTime(
+        '18:30:00', '09:00:00', config,
+        breakInTimes: ['12:00:00'],
+        breakOutTimes: ['13:00:00'],
+      );
+      expect(result.status, 'overtime');
+      expect(result.overtimeMinutes, 90); // 18:30 - 17:00 = 90 min
+      expect(result.workedMinutes, 510); // 9.5h - 1h = 8.5h = 510 min
+    });
+  });
+
+  // ===========================================================================
+  // calculateLateMinutes
+  // ===========================================================================
+  group('calculateLateMinutes', () {
+    test('returns 0 when on time', () {
+      expect(
+        AttendanceService.calculateLateMinutes('09:00:00', '09:00', 15),
+        0,
+      );
+    });
+
+    test('returns 0 when within grace period', () {
+      expect(
+        AttendanceService.calculateLateMinutes('09:10:00', '09:00', 15),
+        0,
+      );
+    });
+
+    test('returns correct minutes when late', () {
+      expect(
+        AttendanceService.calculateLateMinutes('09:30:00', '09:00', 15),
+        15, // 09:30 - 09:15 = 15 min
+      );
+    });
+
+    test('returns 0 when early', () {
+      expect(
+        AttendanceService.calculateLateMinutes('08:30:00', '09:00', 15),
+        0,
+      );
+    });
+  });
+
+  // ===========================================================================
+  // calculateEarlyLeaveMinutes
+  // ===========================================================================
+  group('calculateEarlyLeaveMinutes', () {
+    test('returns 0 when at end time', () {
+      expect(
+        AttendanceService.calculateEarlyLeaveMinutes('17:00:00', '17:00'),
+        0,
+      );
+    });
+
+    test('returns 0 when after end time', () {
+      expect(
+        AttendanceService.calculateEarlyLeaveMinutes('18:00:00', '17:00'),
+        0,
+      );
+    });
+
+    test('returns correct minutes when early', () {
+      expect(
+        AttendanceService.calculateEarlyLeaveMinutes('16:30:00', '17:00'),
+        30,
+      );
+    });
+
+    test('returns correct minutes for very early leave', () {
+      expect(
+        AttendanceService.calculateEarlyLeaveMinutes('14:00:00', '17:00'),
+        180,
+      );
+    });
+  });
+
+  // ===========================================================================
+  // calculateOvertimeMinutes
+  // ===========================================================================
+  group('calculateOvertimeMinutes', () {
+    test('returns 0 when at end time', () {
+      expect(
+        AttendanceService.calculateOvertimeMinutes('17:00:00', '17:00'),
+        0,
+      );
+    });
+
+    test('returns 0 when before end time', () {
+      expect(
+        AttendanceService.calculateOvertimeMinutes('16:30:00', '17:00'),
+        0,
+      );
+    });
+
+    test('returns correct minutes when overtime', () {
+      expect(
+        AttendanceService.calculateOvertimeMinutes('18:30:00', '17:00'),
+        90,
+      );
     });
   });
 }

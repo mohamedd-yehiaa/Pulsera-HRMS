@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/modules/register/register_company_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
+import 'package:pulsera/shared/styles/theme.dart';
 import '../../models/user_model.dart';
 import '../../shared/components/swipe_button.dart';
 import '../../shared/components/user_activity_view.dart';
@@ -28,6 +30,17 @@ class HomeScreen extends StatelessWidget {
           listener: (context, state) {
             if (state is AttendanceErrorState) {
               Fluttertoast.showToast(msg: state.error);
+            }
+            // Show time-rule feedback message after check-in/out
+            if (state is AttendanceSuccessState) {
+              final msg = AttendanceCubit.get(context).lastActionMessage;
+              if (msg != null && msg.isNotEmpty) {
+                Fluttertoast.showToast(
+                  msg: msg,
+                  toastLength: Toast.LENGTH_LONG,
+                  backgroundColor: Colors.black87,
+                );
+              }
             }
           },
 
@@ -138,11 +151,18 @@ class HomeScreen extends StatelessWidget {
 
                   _buildSectionHeader("Today Attendance", state, context),
                   const SizedBox(height: 16),
+
+                  // Status badge row
+                  _buildAttendanceStatusRow(cubit),
+
                   _buildCheckInOutGrid(cubit),
                   const SizedBox(height: 12),
                   _buildStatsGrid(cubit),
 
                   if (cubit.workingTime != "00:00:00") _buildWorkingTimeCard(cubit),
+
+                  // Time-rule details (late minutes, early leave, overtime)
+                  _buildTimeRuleDetails(cubit),
 
                   const SizedBox(height: 28),
                   _buildSectionHeader("Your Activity", null, context),
@@ -176,6 +196,171 @@ Widget _buildDatePicker(AttendanceCubit cubit, String? uid) {
       onTap: (newDate) {
         if (uid != null) cubit.changeDate(newDate, uid);
       },
+    ),
+  );
+}
+
+// --- Attendance Status Row ---
+Widget _buildAttendanceStatusRow(AttendanceCubit cubit) {
+  final activity = cubit.activity;
+  if (activity == null) return const SizedBox();
+
+  final checkInStatus = activity.checkInStatus;
+  final checkOutStatus = activity.checkOutStatus;
+
+  if (checkInStatus == null && checkOutStatus == null) return const SizedBox();
+
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+    child: Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (checkInStatus != null)
+          _buildStatusChip(checkInStatus, _checkInStatusLabel(checkInStatus)),
+        if (checkOutStatus != null)
+          _buildStatusChip(checkOutStatus, _checkOutStatusLabel(checkOutStatus)),
+      ],
+    ),
+  );
+}
+
+Widget _buildStatusChip(String status, String label) {
+  final color = _statusColor(status);
+  final icon = _statusIcon(status);
+
+  return Container(
+    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+    decoration: BoxDecoration(
+      color: color.withAlpha(25),
+      borderRadius: BorderRadius.circular(20),
+      border: Border.all(color: color.withAlpha(80)),
+    ),
+    child: Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: TextStyle(
+            color: color,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
+String _checkInStatusLabel(String status) {
+  return switch (status) {
+    'early' => 'Early',
+    'on_time' => 'On Time',
+    'late' => 'Late',
+    'very_late' => 'Very Late',
+    _ => status.toUpperCase(),
+  };
+}
+
+String _checkOutStatusLabel(String status) {
+  return switch (status) {
+    'early_leave' => 'Early Leave',
+    'completed' => 'Completed',
+    'overtime' => 'Overtime',
+    'insufficient_hours' => 'Insufficient Hours',
+    _ => status.toUpperCase(),
+  };
+}
+
+Color _statusColor(String status) {
+  return switch (status) {
+    'on_time' || 'completed' => AppColors.green400,
+    'early' => AppColors.blue600,
+    'late' || 'early_leave' => AppColors.orange500,
+    'very_late' || 'insufficient_hours' => AppColors.error,
+    'overtime' => AppColors.primary,
+    _ => AppColors.grey700,
+  };
+}
+
+IconData _statusIcon(String status) {
+  return switch (status) {
+    'on_time' || 'completed' => Icons.check_circle,
+    'early' => Icons.access_time,
+    'late' || 'very_late' => Icons.warning_amber_rounded,
+    'early_leave' => Icons.exit_to_app,
+    'overtime' => Icons.trending_up,
+    'insufficient_hours' => Icons.error_outline,
+    _ => Icons.info_outline,
+  };
+}
+
+// --- Time Rule Details ---
+Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
+  final activity = cubit.activity;
+  if (activity == null) return const SizedBox();
+
+  final hasDetails = (activity.lateMinutes != null && activity.lateMinutes! > 0) ||
+      (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes! > 0) ||
+      (activity.overtimeMinutes != null && activity.overtimeMinutes! > 0);
+
+  if (!hasDetails) return const SizedBox();
+
+  return Padding(
+    padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
+    child: Container(
+      padding: const EdgeInsets.all(12),
+      decoration: boxDecoration,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            "Time Details",
+            style: TextStyle(
+              fontSize: 13,
+              fontWeight: FontWeight.bold,
+              color: AppColors.grey700,
+            ),
+          ),
+          const SizedBox(height: 8),
+          if (activity.lateMinutes != null && activity.lateMinutes! > 0)
+            _buildDetailRow(
+              Icons.warning_amber_rounded,
+              AppColors.orange500,
+              "Late by ${activity.lateMinutes} min",
+            ),
+          if (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes! > 0)
+            _buildDetailRow(
+              Icons.exit_to_app,
+              AppColors.orange500,
+              "Left ${activity.earlyLeaveMinutes} min early",
+            ),
+          if (activity.overtimeMinutes != null && activity.overtimeMinutes! > 0)
+            _buildDetailRow(
+              Icons.trending_up,
+              AppColors.primary,
+              "Overtime: ${activity.overtimeMinutes} min",
+            ),
+        ],
+      ),
+    ),
+  );
+}
+
+Widget _buildDetailRow(IconData icon, Color color, String text) {
+  return Padding(
+    padding: const EdgeInsets.only(bottom: 4),
+    child: Row(
+      children: [
+        Icon(icon, color: color, size: 16),
+        const SizedBox(width: 6),
+        Text(
+          text,
+          style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w500),
+        ),
+      ],
     ),
   );
 }
@@ -265,6 +450,12 @@ Widget _buildSwipeButton(
   final teamId = appCubit.userModel?.managerId;
   final companyStartTime = appCubit.companyModel?.startTime;
 
+  // Build schedule config from company model
+  WorkScheduleConfig? scheduleConfig;
+  if (appCubit.companyModel != null) {
+    scheduleConfig = WorkScheduleConfig.fromCompanyModel(appCubit.companyModel!);
+  }
+
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Column(
@@ -289,6 +480,7 @@ Widget _buildSwipeButton(
                 teamId: teamId,
                 companyStartTime: companyStartTime,
                 userName: fullName.isNotEmpty ? fullName : null,
+                scheduleConfig: scheduleConfig,
               );
             }
           },
@@ -342,7 +534,7 @@ Widget _buildSwipeButton(
 }
 
 // --- Helper Methods ---
-Widget _buildSectionHeader(String title, AttendanceStates? state,BuildContext context) {
+Widget _buildSectionHeader(String title, AttendanceStates? state, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Row(
@@ -352,7 +544,7 @@ Widget _buildSectionHeader(String title, AttendanceStates? state,BuildContext co
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
                 fontFamily: "Jannah",
                 fontWeight: FontWeight.bold,
-        ),
+          ),
         ),
         const Spacer(),
         if (state is AttendanceChangeDateState)
@@ -369,18 +561,7 @@ Widget _buildSectionHeader(String title, AttendanceStates? state,BuildContext co
 Widget _buildInfoCard(String title, String value, IconData icon) {
   return Container(
     padding: const EdgeInsets.all(16),
-    decoration: BoxDecoration(
-      color: AppColors.white,
-      borderRadius: BorderRadius.circular(16),
-      border: Border.all(color: Colors.grey[200]!),
-      boxShadow: [
-        BoxShadow(
-          color: AppColors.grey300,
-          offset: Offset(0.0, 1.0), //(x,y)
-          blurRadius: 6.0,
-        ),
-      ],
-    ),
+    decoration: boxDecoration,
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

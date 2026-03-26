@@ -248,6 +248,16 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
                           _ruleRow(
                               'Overtime Bonus',
                               '${config.overtimeBonusPercentage}% of daily salary'),
+                          _ruleRow(
+                              'Early Leave',
+                              config.earlyLeaveDeductionMode == 'percentage'
+                                  ? '${config.earlyLeaveDeductionValue}% of daily salary'
+                                  : '\$${config.earlyLeaveDeductionValue}/min'),
+                          _ruleRow(
+                              'Missing Checkout',
+                              config.missingCheckoutPolicy == 'half_day'
+                                  ? 'Count as Half Day'
+                                  : 'Count as Absent'),
                         ],
                       ),
                     );

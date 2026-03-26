@@ -66,17 +66,12 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               icon: const Icon(IconBroken.Arrow___Left_2),
             ),
             title: Text(
               isManager ? "My Team" : "Team Info",
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
             actions: [
               IconButton(
@@ -114,9 +109,8 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
       child: Column(
         children: [
           SearchBar(
-            backgroundColor:  WidgetStatePropertyAll(AppColors.grey50),
             hintText: "Search team members",
-            leading: const Icon(IconBroken.Search, color: AppColors.grey500),
+            leading: const Icon(IconBroken.Search, color: Colors.grey),
             elevation: WidgetStateProperty.all(0.5),
             onChanged: (value) => setState(() => _searchQuery = value),
           ),
@@ -158,14 +152,10 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 );
                 if (result == true) _loadData();
               },
-              icon: const Icon(IconBroken.Add_User, color: Colors.white,size: 22,),
+              icon: const Icon(IconBroken.Add_User, color: Colors.white),
               label: const Text(
                 "Add Member",
-                style: TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: TextStyle(color: Colors.white),
               ),
             ),
           ),
@@ -247,7 +237,6 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         ],
       ),
       trailing: PopupMenuButton<String>(
-        color: AppColors.grey50,
         onSelected: (value) {
           if (value == 'remove') _showRemoveDialog(context, member);
           if (value == 'attendance') {
@@ -337,7 +326,6 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: AppColors.grey50,
         title: const Text("Remove Member"),
         content: Text(
           "Are you sure you want to remove ${member.fullName} from your team?",
@@ -395,12 +383,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // My Manager Section
-          Text(
-            "My Manager",
-            style: Theme.of(
-              context,
-            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-          ),
+          Text("My Manager", style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: 12),
           if (cubit.myManager != null)
             Container(

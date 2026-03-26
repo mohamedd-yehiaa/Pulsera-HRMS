@@ -6,6 +6,9 @@ class PayrollConfigModel {
   double lateDeductionValue;       // % of daily salary OR per-minute deduction amount
   int overtimeMinMinutes;          // minimum minutes to qualify as overtime
   double overtimeBonusPercentage;  // % of daily salary per qualifying overtime event
+  String earlyLeaveDeductionMode;  // 'percentage' or 'minutes'
+  double earlyLeaveDeductionValue; // % of daily salary OR per-minute deduction
+  String missingCheckoutPolicy;    // 'half_day' or 'absent'
 
   PayrollConfigModel({
     this.companyId,
@@ -15,6 +18,9 @@ class PayrollConfigModel {
     this.lateDeductionValue = 0.0,
     this.overtimeMinMinutes = 30,
     this.overtimeBonusPercentage = 0.0,
+    this.earlyLeaveDeductionMode = 'percentage',
+    this.earlyLeaveDeductionValue = 0.0,
+    this.missingCheckoutPolicy = 'half_day',
   });
 
   PayrollConfigModel.fromJson(Map<String, dynamic> json)
@@ -24,7 +30,10 @@ class PayrollConfigModel {
         lateDeductionMode = json['lateDeductionMode'] ?? 'percentage',
         lateDeductionValue = (json['lateDeductionValue'] as num?)?.toDouble() ?? 0.0,
         overtimeMinMinutes = json['overtimeMinMinutes'] ?? 30,
-        overtimeBonusPercentage = (json['overtimeBonusPercentage'] as num?)?.toDouble() ?? 0.0;
+        overtimeBonusPercentage = (json['overtimeBonusPercentage'] as num?)?.toDouble() ?? 0.0,
+        earlyLeaveDeductionMode = json['earlyLeaveDeductionMode'] ?? 'percentage',
+        earlyLeaveDeductionValue = (json['earlyLeaveDeductionValue'] as num?)?.toDouble() ?? 0.0,
+        missingCheckoutPolicy = json['missingCheckoutPolicy'] ?? 'half_day';
 
   Map<String, dynamic> toJson() {
     return {
@@ -35,6 +44,9 @@ class PayrollConfigModel {
       'lateDeductionValue': lateDeductionValue,
       'overtimeMinMinutes': overtimeMinMinutes,
       'overtimeBonusPercentage': overtimeBonusPercentage,
+      'earlyLeaveDeductionMode': earlyLeaveDeductionMode,
+      'earlyLeaveDeductionValue': earlyLeaveDeductionValue,
+      'missingCheckoutPolicy': missingCheckoutPolicy,
     };
   }
 
@@ -48,6 +60,9 @@ class PayrollConfigModel {
       lateDeductionValue: 0.0,
       overtimeMinMinutes: 30,
       overtimeBonusPercentage: 0.0,
+      earlyLeaveDeductionMode: 'percentage',
+      earlyLeaveDeductionValue: 0.0,
+      missingCheckoutPolicy: 'half_day',
     );
   }
 }

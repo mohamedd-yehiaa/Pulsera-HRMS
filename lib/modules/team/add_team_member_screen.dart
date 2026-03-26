@@ -34,17 +34,12 @@ class AddTeamMemberScreen extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             leading: IconButton(
-              onPressed: () {
-                Navigator.pop(context);
-              },
+              onPressed: () => Navigator.pop(context),
               icon: const Icon(IconBroken.Arrow___Left_2),
             ),
             title: Text(
               "Add Team Member",
-              style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontWeight: FontWeight.bold,
-                fontSize: 20,
-              ),
+              style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
           body: SingleChildScrollView(
@@ -67,14 +62,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                         userId: cubit.userIdController.text,
                         currentManagerId: appCubit.userModel!.uId!,
                       ),
-                      child: Text(
-                        isLoading ? "Validating..." : "Validate",
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white,
-                        ),
-                      ),
+                      child: Text(isLoading ? "Validating..." : "Validate"),
                     ),
                   ),
                   const SizedBox(height: 20),

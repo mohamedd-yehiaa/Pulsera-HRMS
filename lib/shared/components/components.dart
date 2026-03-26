@@ -80,64 +80,79 @@ class ActivityCard extends StatelessWidget {
     required this.description,
   });
 
-  @override
-  Widget build(BuildContext context) {
-    // 3. Move your UI code here
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: borderRadius, // Ensure this variable is accessible
-        color: AppColors.white,
-        boxShadow: kBoxShadow,
-      ),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(8.0),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(8),
-                color: AppColors.primary,
+    @override
+    Widget build(BuildContext context) {
+      return Container(
+        decoration: boxDecoration,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              // 1. Icon Section
+              Container(
+                padding: const EdgeInsets.all(8.0),
+                decoration: BoxDecoration(
+                  borderRadius: BorderRadius.circular(8),
+                  color: AppColors.primary,
+                ),
+                child: Icon(iconData, size: 24, color: AppColors.white),
               ),
-              child: Icon(iconData, size: 24, color: AppColors.white),
-            ),
-            const SizedBox(width: 10),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: 4),
-                Text(
-                  dateTime.toMMDDYY,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.grey300),
+              const SizedBox(width: 12),
+
+              // 2. Title and Date Section (Flex 2 gives it priority)
+              Expanded(
+                flex: 3,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleLarge,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      dateTime.toMMDDYY,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: AppColors.grey300,
+                      ),
+                    ),
+                  ],
                 ),
-              ],
-            ),
-            const Spacer(),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                Text(
-                  dateTime.tohhMMh,
-                  style: Theme.of(context).textTheme.titleLarge,
+              ),
+
+              // 3. Time and Description Section
+              Expanded(
+                flex: 2,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      dateTime.tohhMMh,
+                      style: Theme.of(context).textTheme.titleLarge,
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      description,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: AppColors.grey300,
+                      ),
+                      textAlign: TextAlign.start,
+                      maxLines: 3,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
                 ),
-                const SizedBox(height: 4),
-                Text(
-                  description,
-                  style: Theme.of(
-                    context,
-                  ).textTheme.bodyMedium?.copyWith(color: AppColors.grey300),
-                ),
-              ],
-            ),
-          ],
+              ),
+            ],
+          ),
         ),
-      ),
-    );
+      );
+    }
   }
-}
 
 class HorizontalDate extends StatelessWidget {
   final DateTime fromDate, toDate, selectedDate;

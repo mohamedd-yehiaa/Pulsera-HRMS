@@ -1,3 +1,5 @@
+import 'package:pulsera/models/work_schedule_config.dart';
+
 /// Shared attendance analysis service.
 ///
 /// Contains pure-logic utilities that both [AttendanceCubit] and [PayrollCubit]
@@ -138,24 +140,36 @@ class AttendanceService {
   /// Analyses a list of raw attendance Firestore documents and returns
   /// aggregate metrics for payroll calculation.
   ///
+  /// [approvedLeaveDates] — set of 'yyyy-MM-dd' strings for approved leave
+  /// days. Attendance records on these dates are excluded from workedDays
+  /// to prevent double-counting (leave is already counted as a paid day).
+  ///
   /// Keys returned:
   /// - `daysWorked` (int)
   /// - `lateDays` (int)
   /// - `lateMinutes` (int)
   /// - `overtimeMinutes` (int)
   /// - `overtimeDays` (int)
+  /// - `earlyLeaveDays` (int)
+  /// - `earlyLeaveMinutes` (int)
+  /// - `missingCheckoutDays` (int)
   static Map<String, dynamic> analyseAttendance({
     required List<Map<String, dynamic>> attendanceDocs,
     required String companyStartTime,
     required String companyEndTime,
     required int lateGracePeriodMinutes,
+    Set<String>? approvedLeaveDates,
   }) {
     int daysWorked = 0;
     int lateDays = 0;
     int totalLateMinutes = 0;
     int totalOvertimeMinutes = 0;
     int overtimeDays = 0;
+    int earlyLeaveDays = 0;
+    int totalEarlyLeaveMinutes = 0;
+    int missingCheckoutDays = 0;
 
+    final leaveDates = approvedLeaveDates ?? <String>{};
     final companyStartMinutes = parseTimeToMinutes(companyStartTime);
     final companyEndMinutes = parseTimeToMinutes(companyEndTime);
     final standardWorkingMinutes = companyEndMinutes - companyStartMinutes;
@@ -164,11 +178,34 @@ class AttendanceService {
       // Must have checkIn to count as worked
       if (doc['checkIn'] == null) continue;
 
+      // --- Leave-Attendance dedup ---
+      // If this date has an approved leave, skip it from worked-day count.
+      // The leave is already counted as a paid day separately.
+      final docId = doc['docId'] as String?; // 'yyyy-MM-dd'
+      if (docId != null && leaveDates.contains(docId)) continue;
+
+      // --- Missing checkout detection ---
+      final outTimeMap = doc['outTime'];
+      final hasCheckout = outTimeMap != null && outTimeMap['outTime'] != null;
+      if (!hasCheckout) {
+        missingCheckoutDays++;
+        // Still count as worked (policy decides how to handle in payroll)
+        daysWorked++;
+        continue; // No further analysis possible without checkout
+      }
+
       daysWorked++;
 
-      // --- Lateness ---
       final inTimeStr = doc['checkIn']['inTime'] as String?;
-      if (inTimeStr != null) {
+      if (inTimeStr == null) continue;
+
+      // --- Lateness (prefer stored value, fall back to calculation) ---
+      final storedLateMinutes = doc['lateMinutes'] as int?;
+      if (storedLateMinutes != null && storedLateMinutes > 0) {
+        lateDays++;
+        totalLateMinutes += storedLateMinutes;
+      } else if (storedLateMinutes == null) {
+        // Fall back to recalculation for old records
         final inMinutes = parseTimeToMinutes(inTimeStr);
         final lateBy = inMinutes - companyStartMinutes;
         if (lateBy > lateGracePeriodMinutes) {
@@ -177,9 +214,27 @@ class AttendanceService {
         }
       }
 
-      // --- Overtime (deducting breaks) ---
-      final outTimeMap = doc['outTime'];
-      if (outTimeMap != null && outTimeMap['outTime'] != null && inTimeStr != null) {
+      // --- Early Leave (prefer stored value, fall back to calculation) ---
+      final storedEarlyLeaveMinutes = doc['earlyLeaveMinutes'] as int?;
+      if (storedEarlyLeaveMinutes != null && storedEarlyLeaveMinutes > 0) {
+        earlyLeaveDays++;
+        totalEarlyLeaveMinutes += storedEarlyLeaveMinutes;
+      } else if (storedEarlyLeaveMinutes == null) {
+        final outStr = outTimeMap['outTime'] as String;
+        final outMinutes = parseTimeToMinutes(outStr);
+        final earlyBy = companyEndMinutes - outMinutes;
+        if (earlyBy > 0) {
+          earlyLeaveDays++;
+          totalEarlyLeaveMinutes += earlyBy;
+        }
+      }
+
+      // --- Overtime (prefer stored value, fall back to calculation) ---
+      final storedOvertimeMinutes = doc['overtimeMinutes'] as int?;
+      if (storedOvertimeMinutes != null && storedOvertimeMinutes > 0) {
+        totalOvertimeMinutes += storedOvertimeMinutes;
+        overtimeDays++;
+      } else if (storedOvertimeMinutes == null) {
         final outStr = outTimeMap['outTime'] as String;
         try {
           final breakMin = calculateBreakMinutes(
@@ -205,6 +260,9 @@ class AttendanceService {
       'lateMinutes': totalLateMinutes,
       'overtimeMinutes': totalOvertimeMinutes,
       'overtimeDays': overtimeDays,
+      'earlyLeaveDays': earlyLeaveDays,
+      'earlyLeaveMinutes': totalEarlyLeaveMinutes,
+      'missingCheckoutDays': missingCheckoutDays,
     };
   }
 
@@ -332,5 +390,253 @@ class AttendanceService {
       breakOutTimes: breakOutTimes,
     );
   }
+
+  // ===========================================================================
+  // Time-window check-in validation
+  // ===========================================================================
+
+  /// Validates a check-in attempt against the work schedule configuration.
+  ///
+  /// Returns a [CheckInResult] with the status and a user-facing message.
+  /// Check-in is always **allowed** but categorised as:
+  /// - `early`     — before the allowed window
+  /// - `on_time`   — within grace period
+  /// - `late`      — after grace but before cutoff
+  /// - `very_late` — after cutoff
+  static CheckInResult validateCheckInTime(
+    String timeNow,
+    WorkScheduleConfig config,
+  ) {
+    try {
+      final nowMin = parseTimeToMinutes(timeNow);
+      final startMin = parseTimeToMinutes(config.workStartTime);
+      final earliestAllowed = startMin - config.earlyAllowanceMinutes;
+      final graceEnd = startMin + config.gracePeriodMinutes;
+      final cutoff = startMin + config.lateCutoffMinutes;
+
+      if (nowMin < earliestAllowed) {
+        return CheckInResult(
+          status: 'early',
+          lateMinutes: 0,
+          message: 'You are checking in early. '
+              'Work starts at ${config.workStartTime}.',
+        );
+      }
+
+      if (nowMin <= graceEnd) {
+        return CheckInResult(
+          status: 'on_time',
+          lateMinutes: 0,
+          message: 'On time! Have a great day.',
+        );
+      }
+
+      if (nowMin <= cutoff) {
+        final late = nowMin - graceEnd;
+        return CheckInResult(
+          status: 'late',
+          lateMinutes: late,
+          message: 'You are late by $late minutes.',
+        );
+      }
+
+      // Past cutoff — allowed but marked very late
+      final late = nowMin - graceEnd;
+      return CheckInResult(
+        status: 'very_late',
+        lateMinutes: late,
+        message: 'You are very late by $late minutes.',
+      );
+    } catch (_) {
+      return CheckInResult(
+        status: 'on_time',
+        lateMinutes: 0,
+        message: 'Checked in.',
+      );
+    }
+  }
+
+  // ===========================================================================
+  // Time-window check-out validation
+  // ===========================================================================
+
+  /// Validates a check-out attempt against the work schedule configuration.
+  ///
+  /// Returns a [CheckOutResult] with the status and user-facing message.
+  static CheckOutResult validateCheckOutTime(
+    String timeNow,
+    String checkInTime,
+    WorkScheduleConfig config, {
+    List<String>? breakInTimes,
+    List<String>? breakOutTimes,
+  }) {
+    try {
+      final nowMin = parseTimeToMinutes(timeNow);
+      final endMin = parseTimeToMinutes(config.workEndTime);
+
+      final workedMin = calculateWorkedMinutes(
+        inTime: checkInTime,
+        outTimeStr: timeNow,
+        breakInTimes: breakInTimes,
+        breakOutTimes: breakOutTimes,
+      );
+
+      final minWorkMinutes = config.minimumWorkHours * 60;
+
+      // Early leave
+      if (nowMin < endMin) {
+        final earlyBy = endMin - nowMin;
+
+        if (workedMin < minWorkMinutes) {
+          return CheckOutResult(
+            status: 'insufficient_hours',
+            earlyLeaveMinutes: earlyBy,
+            overtimeMinutes: 0,
+            workedMinutes: workedMin,
+            message: 'Early leave by $earlyBy min. '
+                'Worked ${formatMinutes(workedMin)} — '
+                'below minimum ${config.minimumWorkHours}h.',
+          );
+        }
+
+        return CheckOutResult(
+          status: 'early_leave',
+          earlyLeaveMinutes: earlyBy,
+          overtimeMinutes: 0,
+          workedMinutes: workedMin,
+          message: 'You are checking out $earlyBy minutes early.',
+        );
+      }
+
+      // Overtime
+      if (nowMin > endMin) {
+        final overtime = nowMin - endMin;
+        return CheckOutResult(
+          status: 'overtime',
+          earlyLeaveMinutes: 0,
+          overtimeMinutes: overtime,
+          workedMinutes: workedMin,
+          message: 'Great work! ${formatMinutes(overtime)} overtime today.',
+        );
+      }
+
+      // Exactly on time
+      return CheckOutResult(
+        status: 'completed',
+        earlyLeaveMinutes: 0,
+        overtimeMinutes: 0,
+        workedMinutes: workedMin,
+        message: 'Day completed. Well done!',
+      );
+    } catch (_) {
+      final workedMin = calculateWorkedMinutes(
+        inTime: checkInTime,
+        outTimeStr: timeNow,
+        breakInTimes: breakInTimes,
+        breakOutTimes: breakOutTimes,
+      );
+      return CheckOutResult(
+        status: 'completed',
+        earlyLeaveMinutes: 0,
+        overtimeMinutes: 0,
+        workedMinutes: workedMin,
+        message: 'Checked out.',
+      );
+    }
+  }
+
+  // ===========================================================================
+  // Calculation helpers for late / early-leave / overtime
+  // ===========================================================================
+
+  /// Minutes late past grace period. Returns 0 if on time or early.
+  static int calculateLateMinutes(
+    String checkInTime,
+    String workStartTime,
+    int gracePeriodMinutes,
+  ) {
+    try {
+      final inMin = parseTimeToMinutes(checkInTime);
+      final graceEnd = parseTimeToMinutes(workStartTime) + gracePeriodMinutes;
+      return inMin > graceEnd ? inMin - graceEnd : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Minutes before workEndTime. Returns 0 if at or after end time.
+  static int calculateEarlyLeaveMinutes(
+    String checkOutTime,
+    String workEndTime,
+  ) {
+    try {
+      final outMin = parseTimeToMinutes(checkOutTime);
+      final endMin = parseTimeToMinutes(workEndTime);
+      return outMin < endMin ? endMin - outMin : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
+
+  /// Minutes worked past workEndTime. Returns 0 if before or at end time.
+  static int calculateOvertimeMinutes(
+    String checkOutTime,
+    String workEndTime,
+  ) {
+    try {
+      final outMin = parseTimeToMinutes(checkOutTime);
+      final endMin = parseTimeToMinutes(workEndTime);
+      return outMin > endMin ? outMin - endMin : 0;
+    } catch (_) {
+      return 0;
+    }
+  }
 }
 
+// ===========================================================================
+// Result classes
+// ===========================================================================
+
+/// Result of a check-in time validation.
+class CheckInResult {
+  /// 'early', 'on_time', 'late', or 'very_late'.
+  final String status;
+
+  /// Minutes late past grace period (0 if not late).
+  final int lateMinutes;
+
+  /// User-facing message.
+  final String message;
+
+  const CheckInResult({
+    required this.status,
+    required this.lateMinutes,
+    required this.message,
+  });
+}
+
+/// Result of a check-out time validation.
+class CheckOutResult {
+  /// 'early_leave', 'completed', 'overtime', or 'insufficient_hours'.
+  final String status;
+
+  /// Minutes before workEndTime (0 if not early).
+  final int earlyLeaveMinutes;
+
+  /// Minutes past workEndTime (0 if not overtime).
+  final int overtimeMinutes;
+
+  /// Net worked minutes.
+  final int workedMinutes;
+
+  /// User-facing message.
+  final String message;
+
+  const CheckOutResult({
+    required this.status,
+    required this.earlyLeaveMinutes,
+    required this.overtimeMinutes,
+    required this.workedMinutes,
+    required this.message,
+  });
+}

@@ -250,6 +250,37 @@ class PayslipDetailScreen extends StatelessWidget {
             ),
           ],
         ),
+        const SizedBox(height: 10),
+        Row(
+          children: [
+            Expanded(
+              child: _buildStatCard(
+                context,
+                Icons.exit_to_app,
+                '${payroll.earlyLeaveMinutes ?? 0}m',
+                'Early Leave',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildStatCard(
+                context,
+                Icons.warning_amber_rounded,
+                '${payroll.missingCheckoutDays ?? 0}',
+                'No Checkout',
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildStatCard(
+                context,
+                Icons.payments_outlined,
+                '${payroll.totalPayableDays ?? (payroll.workedDays ?? 0) + (payroll.paidVacationDays ?? 0)}',
+                'Payable Days',
+              ),
+            ),
+          ],
+        ),
       ],
     );
   }
@@ -259,7 +290,7 @@ class PayslipDetailScreen extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _buildEarningsCard(BuildContext context, PayrollModel payroll) {
     return Container(
-      decoration: kBoxDecoration,
+      decoration: boxDecoration,
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
@@ -293,7 +324,7 @@ class PayslipDetailScreen extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _buildDeductionsCard(BuildContext context, PayrollModel payroll) {
     return Container(
-      decoration: kBoxDecoration,
+      decoration: boxDecoration,
       padding: const EdgeInsets.all(16),
       child: Column(
         children: [
@@ -308,6 +339,13 @@ class PayslipDetailScreen extends StatelessWidget {
             context,
             'Late Deduction',
             '-\$${payroll.lateDeduction?.toStringAsFixed(2) ?? '0.00'}',
+            AppColors.error,
+          ),
+          const Divider(height: 24),
+          _buildLineItem(
+            context,
+            'Early Leave Deduction',
+            '-\$${payroll.earlyLeaveDeduction?.toStringAsFixed(2) ?? '0.00'}',
             AppColors.error,
           ),
         ],
@@ -380,7 +418,7 @@ class PayslipDetailScreen extends StatelessWidget {
   ) {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 8),
-      decoration: kBoxDecoration,
+      decoration: boxDecoration,
       child: Column(
         children: [
           Icon(icon, color: AppColors.primary, size: 20),

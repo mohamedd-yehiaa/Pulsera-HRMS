@@ -3,28 +3,28 @@ import 'colors.dart';
 
 final borderRadius = BorderRadius.circular(12);
 
-List<BoxShadow> get kBoxShadow => [
-      BoxShadow(
-        color: AppColors.grey300.withValues(alpha: 0.2),
-        offset: const Offset(0, 4),
-        blurRadius: 6,
-        spreadRadius: 2,
-      ),
-    ];
+List<BoxShadow> get boxShadow => [
+  BoxShadow(
+    color: AppColors.grey300.withValues(alpha: 0.4),
+    offset: Offset(0.0, 4.0), //(x,y)
+    blurRadius: 6.0,
+    spreadRadius: 2.0,
+  ),
+];
 
-BoxDecoration get kBoxDecoration => BoxDecoration(
-      borderRadius: BorderRadius.circular(12),
-      color: AppColors.white,
-      boxShadow: kBoxShadow,
-    );
+BoxDecoration get boxDecoration => BoxDecoration(
+  borderRadius: BorderRadius.circular(12),
+  color: AppColors.white,
+  boxShadow: boxShadow,
+);
 
 Size get buttonFixedSize => const Size(double.maxFinite, 50);
 TextStyle get btnTextStyle => const TextStyle(
-      fontSize: 15,
-      height: 24 / 16,
-      fontWeight: FontWeight.w400,
-      color: AppColors.black900,
-    );
+  fontSize: 15,
+  height: 24 / 16,
+  fontWeight: FontWeight.w400,
+  color: AppColors.black900,
+);
 final appTheme = ThemeData(
   colorScheme: ColorScheme.fromSeed(
     seedColor: AppColors.primary,
@@ -58,6 +58,7 @@ final appTheme = ThemeData(
     unselectedItemColor: AppColors.grey800,
     elevation: 0,
     type: BottomNavigationBarType.fixed,
+
   ),
 
   elevatedButtonTheme: ElevatedButtonThemeData(
@@ -69,6 +70,7 @@ final appTheme = ThemeData(
       shape: RoundedRectangleBorder(
         borderRadius: borderRadius,
       ),
+      elevation: 0.1,
     ),
   ),
 
@@ -95,6 +97,8 @@ final appTheme = ThemeData(
     shape: RoundedRectangleBorder(
       borderRadius: BorderRadius.circular(3.5),
     ),
+    checkColor: WidgetStateProperty.all(AppColors.white),
+    fillColor: WidgetStateProperty.all(AppColors.primary),
   ),
   chipTheme: ChipThemeData(
     checkmarkColor: AppColors.white,
@@ -108,6 +112,7 @@ final appTheme = ThemeData(
   iconTheme: const IconThemeData(
     color: AppColors.black900,
   ),
+
   textTheme: const TextTheme(
     bodySmall: TextStyle(
       fontFamily: "Jannah",
@@ -167,9 +172,8 @@ final appTheme = ThemeData(
     ),
     titleLarge: TextStyle(
       fontFamily: "Jannah",
-      fontSize: 18,
-      height: 28 / 22,
-      fontWeight: FontWeight.w500,
+      fontSize: 20,
+      fontWeight: FontWeight.bold,
       color: AppColors.black900,
     ),
     headlineSmall: TextStyle(

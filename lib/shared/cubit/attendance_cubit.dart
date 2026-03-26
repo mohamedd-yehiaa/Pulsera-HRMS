@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
@@ -38,6 +39,9 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   // Team attendance data (admin view)
   List<Map<String, dynamic>> _teamAttendanceRecords = [];
 
+  // Last action feedback message (from time-rule validation)
+  String? _lastActionMessage;
+
   AttendanceCubit(this._repository) : super(AttendanceInitialState());
 
   // ===========================================================================
@@ -70,7 +74,9 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
       debugPrint('[Attendance] checkIn=${activity?.checkIn?.inTime}, '
           'outTime=${activity?.outTime?.outTime}, '
           'nextAction=${activity?.nextAction}, '
-          'canTakeBreak=${activity?.canTakeBreak}');
+          'canTakeBreak=${activity?.canTakeBreak}, '
+          'checkInStatus=${activity?.checkInStatus}, '
+          'checkOutStatus=${activity?.checkOutStatus}');
       _currentActivity = activity;
 
       if (activity != null && activity.checkIn?.inTime != null) {
@@ -216,6 +222,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     String? companyStartTime,
     int lateGracePeriodMinutes = 0,
     String? userName,
+    WorkScheduleConfig? scheduleConfig,
   }) async {
     // Prevent double-swipe
     if (_isPerformingAction) return;
@@ -227,6 +234,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     if (nextAction == UserPerformActivty.DONE) return;
 
     _isPerformingAction = true;
+    _lastActionMessage = null;
     emit(AttendanceActionInProgressState());
 
     try {
@@ -238,7 +246,32 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
         teamId: teamId,
         companyStartTime: companyStartTime,
         lateGracePeriodMinutes: lateGracePeriodMinutes,
+        scheduleConfig: scheduleConfig,
       );
+
+      // Generate user-facing message from schedule config
+      if (scheduleConfig != null) {
+        final timeNow = DateFormat("HH:mm:ss").format(DateTime.now());
+        if (nextAction == UserPerformActivty.IN) {
+          final result = AttendanceService.validateCheckInTime(
+            timeNow,
+            scheduleConfig,
+          );
+          _lastActionMessage = result.message;
+        } else if (nextAction == UserPerformActivty.OUT) {
+          final checkInTime = _currentActivity?.checkIn?.inTime;
+          if (checkInTime != null) {
+            final result = AttendanceService.validateCheckOutTime(
+              timeNow,
+              checkInTime,
+              scheduleConfig,
+              breakInTimes: _currentActivity?.breakInTime,
+              breakOutTimes: _currentActivity?.breakOutTime,
+            );
+            _lastActionMessage = result.message;
+          }
+        }
+      }
 
       // Notify team manager on check-in / check-out
       if (teamId != null && userName != null) {
@@ -265,7 +298,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
       // ── Debug: button visibility ──
       debugPrint('[Attendance] After action: nextAction=${_currentActivity?.nextAction}, '
           'canTakeBreak=${_currentActivity?.canTakeBreak}, '
-          'isPerformingAction=$_isPerformingAction');
+          'isPerformingAction=$_isPerformingAction, '
+          'lastMessage=$_lastActionMessage');
     }
   }
 
@@ -373,6 +407,9 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   int get monthPaidLeaveDays => _monthPaidLeaveDays;
   bool get isPerformingAction => _isPerformingAction;
   List<Map<String, dynamic>> get teamAttendanceRecords => _teamAttendanceRecords;
+
+  /// The last feedback message from a check-in/check-out time-rule validation.
+  String? get lastActionMessage => _lastActionMessage;
 
   @override
   Future<void> close() {

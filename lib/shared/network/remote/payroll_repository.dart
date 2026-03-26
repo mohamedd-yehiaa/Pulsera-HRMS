@@ -151,7 +151,7 @@ class PayrollRepository {
     final snapshot = await _firestore
         .collection('payrolls')
         .where('employeeId', isEqualTo: employeeId)
-        .orderBy('month', descending: true)
+        // .orderBy('month', descending: true)
         .get();
 
     return snapshot.docs

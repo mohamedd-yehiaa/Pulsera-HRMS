@@ -14,17 +14,10 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(
-          onPressed: () {
-            Navigator.pop(context);
-          },
-          icon: const Icon(IconBroken.Arrow___Left_2),
-        ),
-        title: Text("Notifications",
-          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-            fontWeight: FontWeight.bold,
-            fontSize: 20,)
-        ),
+        leading: IconButton(onPressed: (){
+          Navigator.pop(context);
+        }, icon: Icon(IconBroken.Arrow___Left_2,)),
+        title:  Text("Notifications", style: Theme.of(context).textTheme.titleLarge),
         backgroundColor: Colors.white,
         elevation: 0,
         iconTheme: const IconThemeData(color: Colors.black),

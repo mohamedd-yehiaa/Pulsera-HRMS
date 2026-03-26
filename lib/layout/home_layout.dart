@@ -193,16 +193,13 @@ class HomeLayout extends StatelessWidget {
             AppBar(
               title: Text(
                 "All Leaves",
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               backgroundColor: Colors.white,
               elevation: 0,
               actions: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsetsDirectional.only(end: 8.0),
                   child: Row(
                     children: [
                       IconButton(
@@ -217,6 +214,7 @@ class HomeLayout extends StatelessWidget {
                         ),
                         tooltip: "Apply Leave",
                       ),
+
                       IconButton(
                         onPressed: () {
                           // Context works perfectly here now
@@ -242,26 +240,27 @@ class HomeLayout extends StatelessWidget {
             AppBar(
               title: Text(
                 "Payroll History",
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               backgroundColor: Colors.white,
               elevation: 0,
               actions: [
                 Padding(
-                  padding: const EdgeInsets.all(8.0),
-                  child: IconButton(
-                    onPressed: () {
-                      navigateTo(context, const PayrollConfigScreen());
-                    },
-                    icon: const Icon(
-                      IconBroken.Setting,
-                      color: Colors.black,
-                      size: 30,
-                    ),
-                    tooltip: "Payroll Configuration",
+                  padding: const EdgeInsetsDirectional.only(end: 8.0),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        onPressed: () {
+                          navigateTo(context, PayrollConfigScreen());
+                        },
+                        icon: const Icon(
+                          IconBroken.Setting,
+                          color: Colors.black,
+                          size: 30,
+                        ),
+                        tooltip: "Payroll Settings",
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -271,10 +270,7 @@ class HomeLayout extends StatelessWidget {
             AppBar(
               title: Text(
                 "Settings",
-                style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 20,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
               backgroundColor: Colors.white,
               elevation: 0,

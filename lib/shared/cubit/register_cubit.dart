@@ -217,6 +217,10 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required TimeOfDay? endTime,
     required String ownerId,
     required List<WorkingDaysModel> workingDaysList,
+    int gracePeriodMinutes = 15,
+    int earlyAllowanceMinutes = 30,
+    int lateCutoffMinutes = 120,
+    int minimumWorkHours = 6,
   }) {
 
     // Convert the List of Objects into a List of Strings
@@ -241,7 +245,11 @@ class RegisterCubit extends Cubit<RegisterStates> {
       wfhPerMonth: int.parse(wfhDays),
       startTime: formatTimeOfDay(startTime!),
       endTime: formatTimeOfDay(endTime!),
-      workingDays:selectedDayValues,
+      workingDays: selectedDayValues,
+      gracePeriodMinutes: gracePeriodMinutes,
+      earlyAllowanceMinutes: earlyAllowanceMinutes,
+      lateCutoffMinutes: lateCutoffMinutes,
+      minimumWorkHours: minimumWorkHours,
 
     );
 

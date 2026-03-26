@@ -44,12 +44,9 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Navigator.pop(context);
-        }, icon: Icon(IconBroken.Arrow___Left_2)),
         title: Text(
           "${widget.employeeName}'s Attendance",
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
       ),
       body: BlocConsumer<AttendanceCubit, AttendanceStates>(
@@ -78,9 +75,13 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               _buildDateSelector(context),
               const SizedBox(height: 24),
 
-              // Status badge
-              if (activity?.status != null) ...[
-                _buildStatusBadge(activity!.status!),
+              // Status badges row
+              if (activity?.checkInStatus != null ||
+                  activity?.checkOutStatus != null) ...[
+                _buildStatusBadgesRow(activity!),
+                const SizedBox(height: 16),
+              ] else if (activity?.status != null) ...[
+                _buildLegacyStatusBadge(activity!.status!),
                 const SizedBox(height: 16),
               ],
 
@@ -146,6 +147,9 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               ),
               const SizedBox(height: 12),
 
+              // Time-rule details
+              _buildTimeRuleCards(activity),
+
               // Worked minutes (persisted)
               if (activity?.workedMinutes != null)
                 _buildInfoCard(
@@ -190,6 +194,177 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
         },
       ),
     );
+  }
+
+  // ===========================================================================
+  // Status badges row (new time-rule based)
+  // ===========================================================================
+  Widget _buildStatusBadgesRow(dynamic activity) {
+    return Wrap(
+      spacing: 8,
+      runSpacing: 8,
+      children: [
+        if (activity.checkInStatus != null)
+          _buildStatusBadge(
+            _checkInStatusLabel(activity.checkInStatus!),
+            _statusColor(activity.checkInStatus!),
+            _statusIcon(activity.checkInStatus!),
+          ),
+        if (activity.checkOutStatus != null)
+          _buildStatusBadge(
+            _checkOutStatusLabel(activity.checkOutStatus!),
+            _statusColor(activity.checkOutStatus!),
+            _statusIcon(activity.checkOutStatus!),
+          ),
+      ],
+    );
+  }
+
+  Widget _buildStatusBadge(String label, Color color, IconData icon) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: color.withAlpha(25),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withAlpha(80)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, color: color, size: 16),
+          const SizedBox(width: 4),
+          Text(
+            label,
+            style: TextStyle(
+              color: color,
+              fontWeight: FontWeight.bold,
+              fontSize: 12,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildLegacyStatusBadge(String status) {
+    final color = status == 'late' ? AppColors.orange500 : AppColors.green400;
+    return _buildStatusBadge(
+      status.toUpperCase(),
+      color,
+      status == 'late' ? Icons.warning_amber_rounded : Icons.check_circle,
+    );
+  }
+
+  // Time-rule detail cards
+  Widget _buildTimeRuleCards(dynamic activity) {
+    if (activity == null) return const SizedBox();
+
+    final List<Widget> cards = [];
+
+    if (activity.lateMinutes != null && activity.lateMinutes > 0) {
+      cards.add(_buildDetailCard(
+        Icons.warning_amber_rounded,
+        AppColors.orange500,
+        "Late",
+        "${activity.lateMinutes} min",
+      ));
+    }
+    if (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes > 0) {
+      cards.add(_buildDetailCard(
+        Icons.exit_to_app,
+        AppColors.orange500,
+        "Early Leave",
+        "${activity.earlyLeaveMinutes} min",
+      ));
+    }
+    if (activity.overtimeMinutes != null && activity.overtimeMinutes > 0) {
+      cards.add(_buildDetailCard(
+        Icons.trending_up,
+        AppColors.primary,
+        "Overtime",
+        "${activity.overtimeMinutes} min",
+      ));
+    }
+
+    if (cards.isEmpty) return const SizedBox();
+
+    return Column(
+      children: [
+        const SizedBox(height: 12),
+        ...cards,
+      ],
+    );
+  }
+
+  Widget _buildDetailCard(
+      IconData icon, Color color, String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: color.withAlpha(15),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(color: color.withAlpha(60)),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: color, size: 18),
+            const SizedBox(width: 8),
+            Text(label,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+            const Spacer(),
+            Text(value,
+                style: TextStyle(
+                    color: color, fontWeight: FontWeight.bold, fontSize: 14)),
+          ],
+        ),
+      ),
+    );
+  }
+
+  String _checkInStatusLabel(String status) {
+    return switch (status) {
+      'early' => 'Early Check-in',
+      'on_time' => 'On Time',
+      'late' => 'Late',
+      'very_late' => 'Very Late',
+      _ => status.toUpperCase(),
+    };
+  }
+
+  String _checkOutStatusLabel(String status) {
+    return switch (status) {
+      'early_leave' => 'Early Leave',
+      'completed' => 'Completed',
+      'overtime' => 'Overtime',
+      'insufficient_hours' => 'Insufficient Hours',
+      _ => status.toUpperCase(),
+    };
+  }
+
+  Color _statusColor(String status) {
+    return switch (status) {
+      'on_time' || 'completed' => AppColors.green400,
+      'early' => AppColors.blue600,
+      'late' || 'early_leave' => AppColors.orange500,
+      'very_late' || 'insufficient_hours' => AppColors.error,
+      'overtime' => AppColors.primary,
+      _ => AppColors.grey700,
+    };
+  }
+
+  IconData _statusIcon(String status) {
+    return switch (status) {
+      'on_time' || 'completed' => Icons.check_circle,
+      'early' => Icons.access_time,
+      'late' || 'very_late' => Icons.warning_amber_rounded,
+      'early_leave' => Icons.exit_to_app,
+      'overtime' => Icons.trending_up,
+      'insufficient_hours' => Icons.error_outline,
+      _ => Icons.info_outline,
+    };
   }
 
   // ===========================================================================
@@ -241,40 +416,6 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
           icon: const Icon(IconBroken.Arrow___Right_2),
         ),
       ],
-    );
-  }
-
-  // ===========================================================================
-  // Status badge
-  // ===========================================================================
-  Widget _buildStatusBadge(String status) {
-    final color = status == 'late' ? AppColors.orange500 : AppColors.green400;
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-      decoration: BoxDecoration(
-        color: color.withAlpha(25),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: color.withAlpha(80)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            status == 'late' ? Icons.warning_amber_rounded : Icons.check_circle,
-            color: color,
-            size: 18,
-          ),
-          const SizedBox(width: 6),
-          Text(
-            status.toUpperCase(),
-            style: TextStyle(
-              color: color,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
-          ),
-        ],
-      ),
     );
   }
 

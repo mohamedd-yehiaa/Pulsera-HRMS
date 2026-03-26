@@ -15,6 +15,21 @@ class UserActivityModel {
   /// Attendance status: 'present', 'late', or 'absent'.
   String? status;
 
+  /// Minutes late past grace period (stored on check-in).
+  int? lateMinutes;
+
+  /// Minutes before workEndTime that employee checked out.
+  int? earlyLeaveMinutes;
+
+  /// Minutes worked past workEndTime.
+  int? overtimeMinutes;
+
+  /// Check-in status: 'early', 'on_time', 'late', 'very_late'.
+  String? checkInStatus;
+
+  /// Check-out status: 'early_leave', 'completed', 'overtime', 'insufficient_hours'.
+  String? checkOutStatus;
+
   UserActivityModel({
     this.breakOutTime,
     this.activityID,
@@ -25,6 +40,11 @@ class UserActivityModel {
     this.teamId,
     this.workedMinutes,
     this.status,
+    this.lateMinutes,
+    this.earlyLeaveMinutes,
+    this.overtimeMinutes,
+    this.checkInStatus,
+    this.checkOutStatus,
   });
 
   UserPerformActivty get nextAction {
@@ -69,6 +89,11 @@ class UserActivityModel {
     teamId = json['teamId'];
     workedMinutes = json['workedMinutes'];
     status = json['status'];
+    lateMinutes = json['lateMinutes'];
+    earlyLeaveMinutes = json['earlyLeaveMinutes'];
+    overtimeMinutes = json['overtimeMinutes'];
+    checkInStatus = json['checkInStatus'];
+    checkOutStatus = json['checkOutStatus'];
   }
 
   Map<String, dynamic> toJson() {
@@ -82,6 +107,11 @@ class UserActivityModel {
       if (teamId != null) 'teamId': teamId,
       if (workedMinutes != null) 'workedMinutes': workedMinutes,
       if (status != null) 'status': status,
+      if (lateMinutes != null) 'lateMinutes': lateMinutes,
+      if (earlyLeaveMinutes != null) 'earlyLeaveMinutes': earlyLeaveMinutes,
+      if (overtimeMinutes != null) 'overtimeMinutes': overtimeMinutes,
+      if (checkInStatus != null) 'checkInStatus': checkInStatus,
+      if (checkOutStatus != null) 'checkOutStatus': checkOutStatus,
     };
   }
 }
