@@ -218,7 +218,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _lateDeductionMode,
+                    initialValue: _lateDeductionMode,
                     decoration: const InputDecoration(
                       labelText: 'Deduction Mode',
                       prefixIcon: Icon(IconBroken.Setting),
@@ -278,7 +278,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _earlyLeaveDeductionMode,
+                    initialValue: _earlyLeaveDeductionMode,
                     decoration: const InputDecoration(
                       labelText: 'Early Leave Deduction Mode',
                       prefixIcon: Icon(IconBroken.Setting),
@@ -374,7 +374,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    value: _missingCheckoutPolicy,
+                    initialValue: _missingCheckoutPolicy,
                     decoration: const InputDecoration(
                       labelText: 'Policy',
                       prefixIcon: Icon(IconBroken.Shield_Fail),

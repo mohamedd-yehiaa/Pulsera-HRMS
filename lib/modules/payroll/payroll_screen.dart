@@ -4,7 +4,6 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/payroll_model.dart';
 import 'package:pulsera/modules/payroll/generate_payroll_screen.dart';
-import 'package:pulsera/modules/payroll/payroll_config_screen.dart';
 import 'package:pulsera/modules/payroll/payslip_detail_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';

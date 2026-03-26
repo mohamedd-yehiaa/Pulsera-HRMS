@@ -73,8 +73,8 @@ class LeaveActivityCard extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: item.leaveStatus?.getColor.withOpacity(.1) ??
-                      Colors.grey.withOpacity(.1),
+                  color: item.leaveStatus?.getColor.withValues(alpha:0.1) ??
+                      Colors.grey.withValues(alpha:0.1),
                 ),
                 padding:
                 const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
