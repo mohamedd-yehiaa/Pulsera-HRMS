@@ -84,7 +84,7 @@ Ensure you have the following installed on your local machine:
 
 1. **Clone the repository:**
    ```bash
-   git clone [Placeholder: Insert Git Repository Link Here]
+   git clone Mohamed-Yehiaaa/Pulsera: A Flutter-Based Human Resource Management System including Payroll feature
 2. Navigate to the project directory:
    ```bash
    cd pulsera
