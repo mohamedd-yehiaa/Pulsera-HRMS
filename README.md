@@ -3,9 +3,12 @@
 # Pulsera
 **A Flutter-Based Human Resource Management System**
 
-![License](<[Placeholder for License Badge]>)
-![Build Status](<[Placeholder for Build Status Badge]>)
-![Version](<[Placeholder for Version Badge]>)
+![License](![License](https://img.shields.io/badge/License-MIT-blue.svg)
+)
+![Build Status](![Build Status](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/main.yml/badge.svg)
+)
+![Version](![1.0.0](https://img.shields.io/badge/version-1.0.0-success)
+)
 
 </div>
 
