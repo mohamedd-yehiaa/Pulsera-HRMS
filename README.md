@@ -76,13 +76,16 @@ Ensure you have the following installed on your local machine:
    ```bash
    git clone [Placeholder: Insert Git Repository Link Here]
 2. Navigate to the project directory:
+   ```bash
    cd pulsera
-3. Install dependencies: Fetch all required Dart packages and plugins.
+4. Install dependencies: Fetch all required Dart packages and plugins.
+   ```bash
    flutter pub get
-4. Run the application: Launch the app on your connected device or emulator.
+6. Run the application: Launch the app on your connected device or emulator.
+   ```bash
    flutter run
    
-💡 Usage
+## 💡 Usage
 Employee Workflow Example:
 
 Open the Pulsera app and log in using your credentials.
@@ -95,7 +98,7 @@ Log in with Manager credentials.
 Review pending leave requests from your team on the Dashboard.
 Generate the monthly Payroll Summary to automatically calculate wages based on the month's verified attendance logs.
 
-📬 Contact & Acknowledgments
+## 📬 Contact & Acknowledgments
 Developer: Mohamed Yehia Ali
 (Student ID: 22511402)
 Information Technology and Computing Department, Arab Open University - Egypt.
