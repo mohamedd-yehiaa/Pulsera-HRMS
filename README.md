@@ -1,16 +1,102 @@
-# pulsera
+<div align="center">
 
-A new Flutter project.
+# Pulsera
+**A Flutter-Based Human Resource Management System**
 
-## Getting Started
+![License](<[Placeholder for License Badge]>)
+![Build Status](<[Placeholder for Build Status Badge]>)
+![Version](<[Placeholder for Version Badge]>)
 
-This project is a starting point for a Flutter application.
+</div>
 
-A few resources to get you started if this is your first Flutter project:
+## 📖 Table of Contents
+- [About The Project](#about-the-project)
+- [Key Features](#key-features)
+- [System Architecture](#system-architecture)
+- [Built With](#built-with)
+- [Getting Started](#getting-started)
+  - [Prerequisites](#prerequisites)
+  - [Installation](#installation)
+- [Usage](#usage)
+- [Contact & Acknowledgments](#contact--acknowledgments)
 
-- [Lab: Write your first Flutter app](https://docs.flutter.dev/get-started/codelab)
-- [Cookbook: Useful Flutter samples](https://docs.flutter.dev/cookbook)
+---
 
-For help getting started with Flutter development, view the
-[online documentation](https://docs.flutter.dev/), which offers tutorials,
-samples, guidance on mobile development, and a full API reference.
+## 🎯 About The Project
+
+Small and Medium-sized Enterprises often struggle with traditional HR management processes. Manual calculations, paper-based leave requests, and disjointed attendance tracking create significant data silos, increasing the risk of computation errors and operational bottlenecks. 
+
+**Pulsera** is a cross-platform mobile application engineered to solve these exact problems. Designed to replace slow, error-prone manual workflows, Pulsera provides a single, unified platform for both employees and managers. It empowers organizations to handle essential HR tasks quickly, transparently, and efficiently, right from their mobile devices or desktops. By centralizing attendance, leave management, and automated payroll, Pulsera ensures accurate data management and significantly reduces administrative overhead.
+
+---
+
+## ✨ Key Features
+
+* **👥 Employee Management:** Seamlessly add, update, and delete employee profiles. Enforce robust access control by assigning system roles such as Admin, Manager, and Employee.
+* **⏱️ Attendance Management:** Employees can quickly check in and out using the app. The system centrally records all time logs and generates comprehensive monthly attendance reports.
+* **🏖️ Leave Management:** A streamlined workflow allows employees to smoothly apply for annual, sick, or emergency leave. Managers can instantly review, approve, or reject requests while the system automatically tracks remaining leave balances.
+* **💰 Automated Payroll:** Eliminates manual errors by automatically computing monthly salaries based on configured attendance rules. It accurately processes deductions for absences and additions for bonuses, generating clear, itemized payroll summaries.
+* **🔒 Security:** Enterprise-grade security featuring secure user authentication, role-based access control (RBAC), and fully encrypted communication between the application client and the database.
+
+---
+
+## 🏗️ System Architecture
+
+*Cross-platform deployment supporting iOS, Android, and Desktop environments.*
+
+### Diagrams
+* **Use Case Diagram:** `[Placeholder: Insert Use Case Diagram Here reflecting Actor interactions per role]`
+* **Activity Diagram:** `[Placeholder: Insert Activity Diagram Here for Leave Request and Payroll workflows]`
+* **Sequence Diagram:** `[Placeholder: Insert Sequence Diagram Here illustrating standard Authentication and Data Retrieval flows]`
+* **Class Diagram:** `[Placeholder: Insert Class Diagram Here detailing the primary domain models and system architecture]`
+
+---
+
+## 🛠️ Built With
+
+* **Frontend:** Google Flutter framework (Dart) 
+* **Architecture:** Cross-platform capability (iOS, Android, Desktop)
+
+---
+
+## 🚀 Getting Started
+
+Follow these simple instructions to set up your local development environment and get Pulsera up and running.
+
+### Prerequisites
+
+Ensure you have the following installed on your local machine:
+* **Flutter SDK:** The latest stable release of the Flutter development kit.
+* **IDE:** Android Studio, Xcode, or Visual Studio Code configured with the Flutter and Dart plugins.
+* **Connected Device:** An active emulator, simulator, or a physical device connected via USB/Wi-Fi to deploy the application.
+
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone [Placeholder: Insert Git Repository Link Here]
+2. Navigate to the project directory:
+   cd pulsera
+3. Install dependencies: Fetch all required Dart packages and plugins.
+   flutter pub get
+4. Run the application: Launch the app on your connected device or emulator.
+   flutter run
+   
+💡 Usage
+Employee Workflow Example:
+
+Open the Pulsera app and log in using your credentials.
+Navigate to the Attendance tab to Check-In at the start of your shift.
+Access the Leave section to request upcoming time off, selecting the appropriate leave category.
+Check-Out at the end of the day.
+Manager Workflow Example:
+
+Log in with Manager credentials.
+Review pending leave requests from your team on the Dashboard.
+Generate the monthly Payroll Summary to automatically calculate wages based on the month's verified attendance logs.
+
+📬 Contact & Acknowledgments
+Developer: Mohamed Yehia Ali
+(Student ID: 22511402)
+Information Technology and Computing Department, Arab Open University - Egypt.
+
