@@ -5,7 +5,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-![Build Status](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/main.yml/badge.svg)
+[![Flutter Build](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/flutter-build.yml/badge.svg)](https://github.comMohamed-Yehiaaa/pulsera/actions/workflows/flutter-build.yml)
 
 ![Version](https://img.shields.io/badge/version-1.0.0-success)
 
