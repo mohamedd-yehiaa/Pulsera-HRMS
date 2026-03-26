@@ -3,12 +3,9 @@
 # Pulsera
 **A Flutter-Based Human Resource Management System**
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-)
-![Build Status](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/main.yml/badge.svg)
-
-(![1.0.0](https://img.shields.io/badge/version-1.0.0-success)
-)
+![License](<[Placeholder for License Badge]>)
+![Build Status](<[Placeholder for Build Status Badge]>)
+![Version](<[Placeholder for Version Badge]>)
 
 </div>
 
@@ -25,6 +22,7 @@
 
 ---
 
+<a id="about-the-project"></a>
 ## 🎯 About The Project
 
 Small and Medium-sized Enterprises often struggle with traditional HR management processes. Manual calculations, paper-based leave requests, and disjointed attendance tracking create significant data silos, increasing the risk of computation errors and operational bottlenecks. 
@@ -33,6 +31,7 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 ---
 
+<a id="key-features"></a>
 ## ✨ Key Features
 
 * **👥 Employee Management:** Seamlessly add, update, and delete employee profiles. Enforce robust access control by assigning system roles such as Admin, Manager, and Employee.
@@ -43,6 +42,7 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 ---
 
+<a id="system-architecture"></a>
 ## 🏗️ System Architecture
 
 *Cross-platform deployment supporting iOS, Android, and Desktop environments.*
@@ -55,6 +55,7 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 ---
 
+<a id="built-with"></a>
 ## 🛠️ Built With
 
 * **Frontend:** Google Flutter framework (Dart) 
@@ -62,10 +63,12 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 ---
 
+<a id="getting-started"></a>
 ## 🚀 Getting Started
 
 Follow these simple instructions to set up your local development environment and get Pulsera up and running.
 
+<a id="prerequisites"></a>
 ### Prerequisites
 
 Ensure you have the following installed on your local machine:
@@ -73,6 +76,7 @@ Ensure you have the following installed on your local machine:
 * **IDE:** Android Studio, Xcode, or Visual Studio Code configured with the Flutter and Dart plugins.
 * **Connected Device:** An active emulator, simulator, or a physical device connected via USB/Wi-Fi to deploy the application.
 
+<a id="installation"></a>
 ### Installation
 
 1. **Clone the repository:**
@@ -88,6 +92,7 @@ Ensure you have the following installed on your local machine:
    ```bash
    flutter run
    
+<a id="usage"></a>
 ## 💡 Usage
 Employee Workflow Example:
 
@@ -101,6 +106,7 @@ Log in with Manager credentials.
 Review pending leave requests from your team on the Dashboard.
 Generate the monthly Payroll Summary to automatically calculate wages based on the month's verified attendance logs.
 
+<a id="contact--acknowledgments"></a>
 ## 📬 Contact & Acknowledgments
 Developer: Mohamed Yehia Ali
 (Student ID: 22511402)
