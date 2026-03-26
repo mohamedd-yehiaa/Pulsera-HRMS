@@ -183,7 +183,7 @@ class PayrollCubit extends Cubit<PayrollStates> {
       companyWorkingDays,
     );
 
-    // 6. Fetch approved leaves for this month
+    // 6. Fetch approved leaves for this month → build Set<String> of leave dates
     final approvedLeaves = await _repository.fetchApprovedLeavesForMonth(
       member.uId!,
       month,
@@ -194,8 +194,14 @@ class PayrollCubit extends Cubit<PayrollStates> {
       effectiveEnd,
       companyWorkingDays,
     );
+    final approvedLeaveDates = _buildApprovedLeaveDatesSet(
+      approvedLeaves,
+      effectiveStart,
+      effectiveEnd,
+      companyWorkingDays,
+    );
 
-    // 7. Fetch attendance and analyse
+    // 7. Fetch attendance and analyse (with leave-attendance dedup)
     final attendanceDocs = await _repository.fetchAttendanceForMonth(
       member.uId!,
       month,
@@ -205,24 +211,48 @@ class PayrollCubit extends Cubit<PayrollStates> {
       companyStartTime: companyStartTime,
       companyEndTime: companyEndTime,
       lateGracePeriodMinutes: config.lateGracePeriodMinutes,
+      approvedLeaveDates: approvedLeaveDates,
     );
 
-    final workedDays = analysis['daysWorked'] as int;
+    int workedDays = analysis['daysWorked'] as int;
     final totalLateMinutes = analysis['lateMinutes'] as int;
     final totalOvertimeMinutes = analysis['overtimeMinutes'] as int;
+    final totalEarlyLeaveMinutes = analysis['earlyLeaveMinutes'] as int;
+    final missingCheckoutDays = analysis['missingCheckoutDays'] as int;
 
-    // 8. Unapproved absences
+    // 8. Handle missing checkouts based on policy
+    if (missingCheckoutDays > 0) {
+      if (config.missingCheckoutPolicy == 'absent') {
+        // Subtract missing-checkout days — they won't count as worked
+        workedDays -= missingCheckoutDays;
+        if (workedDays < 0) workedDays = 0;
+      }
+      // 'half_day' → counted as worked but workedDays already includes them;
+      // we'll halve their contribution below
+    }
+
+    // 9. Unapproved absences
     final unapprovedAbsences = expectedWorkingDays - workedDays - paidVacationDays;
     final clampedAbsences = unapprovedAbsences > 0 ? unapprovedAbsences : 0;
 
-    // 9. Calculate salary components
-    final workedDaysSalary = workedDays * dailySalary;
+    // Total payable days
+    final totalPayableDays = workedDays + paidVacationDays;
+
+    // 10. Calculate salary components
+    double workedDaysSalary;
+    if (config.missingCheckoutPolicy == 'half_day' && missingCheckoutDays > 0) {
+      // Full days + half days for missing checkouts
+      final fullDays = workedDays - missingCheckoutDays;
+      workedDaysSalary = (fullDays * dailySalary) + (missingCheckoutDays * dailySalary * 0.5);
+    } else {
+      workedDaysSalary = workedDays * dailySalary;
+    }
     final paidVacationSalary = paidVacationDays * dailySalary;
 
-    // 10. Absence deduction (configurable multiplier)
+    // 11. Absence deduction (configurable multiplier)
     final absenceDeduction = clampedAbsences * config.absenceMultiplier * dailySalary;
 
-    // 11. Late deduction (configurable)
+    // 12. Late deduction (configurable)
     double lateDeduction = 0.0;
     if (totalLateMinutes > 0) {
       if (config.lateDeductionMode == 'percentage') {
@@ -235,7 +265,18 @@ class PayrollCubit extends Cubit<PayrollStates> {
       }
     }
 
-    // 12. Overtime bonus (configurable)
+    // 13. Early-leave deduction (configurable)
+    double earlyLeaveDeduction = 0.0;
+    if (totalEarlyLeaveMinutes > 0) {
+      if (config.earlyLeaveDeductionMode == 'percentage') {
+        final earlyLeaveDays = analysis['earlyLeaveDays'] as int;
+        earlyLeaveDeduction = earlyLeaveDays * (config.earlyLeaveDeductionValue / 100) * dailySalary;
+      } else {
+        earlyLeaveDeduction = totalEarlyLeaveMinutes * config.earlyLeaveDeductionValue;
+      }
+    }
+
+    // 14. Overtime bonus (configurable)
     double overtimeBonus = 0.0;
     if (totalOvertimeMinutes >= config.overtimeMinMinutes &&
         config.overtimeBonusPercentage > 0) {
@@ -244,17 +285,17 @@ class PayrollCubit extends Cubit<PayrollStates> {
       overtimeBonus = overtimeDays * (config.overtimeBonusPercentage / 100) * dailySalary;
     }
 
-    // 13. Final salary
+    // 15. Final salary
     final rawFinal = workedDaysSalary + paidVacationSalary -
-        lateDeduction - absenceDeduction + overtimeBonus;
+        lateDeduction - absenceDeduction - earlyLeaveDeduction + overtimeBonus;
     final finalSalary = rawFinal < 0 ? 0.0 : rawFinal;
 
-    // 14. Determine employee status label
+    // 16. Determine employee status label
     final employeeStatus = member.status == 'Terminated'
         ? 'Former Employee'
         : 'Active';
 
-    // 15. Build and save model
+    // 17. Build and save model
     final payroll = PayrollModel(
       payrollId: payrollId,
       employeeId: member.uId,
@@ -271,11 +312,15 @@ class PayrollCubit extends Cubit<PayrollStates> {
       unapprovedAbsenceDays: clampedAbsences,
       lateMinutes: totalLateMinutes,
       overtimeMinutes: totalOvertimeMinutes,
+      earlyLeaveMinutes: totalEarlyLeaveMinutes,
+      missingCheckoutDays: missingCheckoutDays,
+      totalPayableDays: totalPayableDays,
       workedDaysSalary: workedDaysSalary,
       paidVacationSalary: paidVacationSalary,
       absenceDeduction: absenceDeduction,
       lateDeduction: lateDeduction,
       overtimeBonus: overtimeBonus,
+      earlyLeaveDeduction: earlyLeaveDeduction,
       finalSalary: finalSalary,
     );
 
@@ -296,16 +341,15 @@ class PayrollCubit extends Cubit<PayrollStates> {
     List<String> companyWorkingDays,
   ) => AttendanceService.countWorkingDaysInRange(start, end, companyWorkingDays);
 
-  /// Count approved leave days that fall on working days within the effective range.
-  int _countApprovedLeaveDays(
+  /// Builds a Set of 'yyyy-MM-dd' strings for all approved leave days
+  /// that fall on working days within the effective range.
+  Set<String> _buildApprovedLeaveDatesSet(
     List<Map<String, dynamic>> approvedLeaves,
     DateTime effectiveStart,
     DateTime effectiveEnd,
     List<String> companyWorkingDays,
   ) {
     final workingWeekdays = AttendanceService.workingWeekdays(companyWorkingDays);
-
-    // Collect all approved leave working days (dedup via Set)
     final Set<String> leaveDates = {};
 
     for (final leave in approvedLeaves) {
@@ -333,6 +377,21 @@ class PayrollCubit extends Cubit<PayrollStates> {
       } catch (_) {}
     }
 
-    return leaveDates.length;
+    return leaveDates;
+  }
+
+  /// Count approved leave days that fall on working days within the effective range.
+  int _countApprovedLeaveDays(
+    List<Map<String, dynamic>> approvedLeaves,
+    DateTime effectiveStart,
+    DateTime effectiveEnd,
+    List<String> companyWorkingDays,
+  ) {
+    return _buildApprovedLeaveDatesSet(
+      approvedLeaves,
+      effectiveStart,
+      effectiveEnd,
+      companyWorkingDays,
+    ).length;
   }
 }

@@ -6,7 +6,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/models/working_days_model.dart';
-import 'package:pulsera/shared/components/api_Keys.dart';
+import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 
@@ -32,7 +32,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
-     serverClientId: ServerClientId,
+     serverClientId: serverClientId,
     ).then((_) {
 
       _googleSignIn.authenticate().then((googleAccount) {
@@ -159,7 +159,6 @@ class RegisterCubit extends Cubit<RegisterStates> {
       emit(CreateUserSuccessState());
     })
         .catchError((error) {
-      print(error.toString());
       emit(CreateUserErrorState(error.toString()));
     });
   }
@@ -218,6 +217,10 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required TimeOfDay? endTime,
     required String ownerId,
     required List<WorkingDaysModel> workingDaysList,
+    int gracePeriodMinutes = 15,
+    int earlyAllowanceMinutes = 30,
+    int lateCutoffMinutes = 120,
+    int minimumWorkHours = 6,
   }) {
 
     // Convert the List of Objects into a List of Strings
@@ -242,17 +245,24 @@ class RegisterCubit extends Cubit<RegisterStates> {
       wfhPerMonth: int.parse(wfhDays),
       startTime: formatTimeOfDay(startTime!),
       endTime: formatTimeOfDay(endTime!),
-      workingDays:selectedDayValues,
+      workingDays: selectedDayValues,
+      gracePeriodMinutes: gracePeriodMinutes,
+      earlyAllowanceMinutes: earlyAllowanceMinutes,
+      lateCutoffMinutes: lateCutoffMinutes,
+      minimumWorkHours: minimumWorkHours,
 
     );
 
     companyDocRef
         .set(comModel.toMap())
         .then((value) {
-       FirebaseFirestore.instance
+      // Wait for the user doc update before emitting success
+      // to avoid a race condition where getUserData() fetches stale data.
+      return FirebaseFirestore.instance
           .collection('users')
           .doc(ownerId)
           .update({'companyId': companyDocRef.id});
+    }).then((_) {
       emit(CreateCompanySuccessState());
     }).catchError((error) {
       emit(CreateCompanyErrorState(error.toString()));

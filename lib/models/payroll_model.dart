@@ -18,6 +18,9 @@ class PayrollModel {
   int? unapprovedAbsenceDays; // Days absent without approval
   int? lateMinutes; // Total late minutes beyond grace
   int? overtimeMinutes; // Total overtime minutes
+  int? earlyLeaveMinutes; // Total early-departure minutes
+  int? missingCheckoutDays; // Days with check-in but no check-out
+  int? totalPayableDays; // workedDays + paidVacationDays
 
   // --- Calculated amounts ---
   double? workedDaysSalary; // workedDays × dailySalary
@@ -25,6 +28,7 @@ class PayrollModel {
   double? absenceDeduction; // unapprovedAbsences × multiplier × dailySalary
   double? lateDeduction; // Configurable late deduction total
   double? overtimeBonus; // Configurable overtime bonus total
+  double? earlyLeaveDeduction; // Configurable early-leave deduction total
   double? finalSalary; // Net salary
 
   PayrollModel({
@@ -43,11 +47,15 @@ class PayrollModel {
     this.unapprovedAbsenceDays,
     this.lateMinutes,
     this.overtimeMinutes,
+    this.earlyLeaveMinutes,
+    this.missingCheckoutDays,
+    this.totalPayableDays,
     this.workedDaysSalary,
     this.paidVacationSalary,
     this.absenceDeduction,
     this.lateDeduction,
     this.overtimeBonus,
+    this.earlyLeaveDeduction,
     this.finalSalary,
   });
 
@@ -67,11 +75,15 @@ class PayrollModel {
     unapprovedAbsenceDays = json['unapprovedAbsenceDays'];
     lateMinutes = json['lateMinutes'];
     overtimeMinutes = json['overtimeMinutes'];
+    earlyLeaveMinutes = json['earlyLeaveMinutes'];
+    missingCheckoutDays = json['missingCheckoutDays'];
+    totalPayableDays = json['totalPayableDays'];
     workedDaysSalary = (json['workedDaysSalary'] as num?)?.toDouble();
     paidVacationSalary = (json['paidVacationSalary'] as num?)?.toDouble();
     absenceDeduction = (json['absenceDeduction'] as num?)?.toDouble();
     lateDeduction = (json['lateDeduction'] as num?)?.toDouble();
     overtimeBonus = (json['overtimeBonus'] as num?)?.toDouble();
+    earlyLeaveDeduction = (json['earlyLeaveDeduction'] as num?)?.toDouble();
     finalSalary = (json['finalSalary'] as num?)?.toDouble();
   }
 
@@ -92,11 +104,15 @@ class PayrollModel {
       'unapprovedAbsenceDays': unapprovedAbsenceDays,
       'lateMinutes': lateMinutes,
       'overtimeMinutes': overtimeMinutes,
+      'earlyLeaveMinutes': earlyLeaveMinutes,
+      'missingCheckoutDays': missingCheckoutDays,
+      'totalPayableDays': totalPayableDays,
       'workedDaysSalary': workedDaysSalary,
       'paidVacationSalary': paidVacationSalary,
       'absenceDeduction': absenceDeduction,
       'lateDeduction': lateDeduction,
       'overtimeBonus': overtimeBonus,
+      'earlyLeaveDeduction': earlyLeaveDeduction,
       'finalSalary': finalSalary,
     };
   }

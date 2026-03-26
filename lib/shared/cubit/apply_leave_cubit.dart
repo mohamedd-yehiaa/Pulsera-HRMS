@@ -4,6 +4,7 @@ import 'package:pulsera/models/leave_activity_model.dart';
 import 'package:pulsera/models/team_members_model.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/remote/leave_repository.dart';
+import 'package:pulsera/shared/network/remote/notification_repository.dart';
 
 class ApplyLeaveCubit extends Cubit<ApplyLeaveStates> {
   ApplyLeaveCubit() : super(ApplyLeaveInitialState());
@@ -11,6 +12,7 @@ class ApplyLeaveCubit extends Cubit<ApplyLeaveStates> {
   static ApplyLeaveCubit get(context) => BlocProvider.of(context);
 
   final LeaveRepository _repository = LeaveRepository();
+  final NotificationRepository _notificationRepo = NotificationRepository();
 
   var leavereasonTC = TextEditingController();
   DateTime? leaveStartDate;
@@ -138,7 +140,7 @@ class ApplyLeaveCubit extends Cubit<ApplyLeaveStates> {
       );
 
       // Notify the team admin
-      await _repository.addNotification(
+      await _notificationRepo.addNotification(
         toUserId: managerId!,
         fromUserName: userFullName,
         message: '$userFullName submitted a leave request for $totalDays days.',

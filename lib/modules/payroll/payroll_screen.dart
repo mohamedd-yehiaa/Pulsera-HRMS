@@ -98,20 +98,6 @@ class _PayrollScreenState extends State<PayrollScreen> {
                           },
                         ),
                       ),
-                      const SizedBox(width: 2),
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          icon: const Icon(IconBroken.Setting, size: 20),
-                          label: const Text('Rules'),
-                          style: OutlinedButton.styleFrom(
-                            side: const BorderSide(color: AppColors.primary),
-                          ),
-                          onPressed: () {
-                            navigateTo(
-                                context, const PayrollConfigScreen());
-                          },
-                        ),
-                      ),
                     ],
                   ),
                 ),
@@ -229,7 +215,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(16),
-        decoration: kBoxDecoration,
+        decoration: boxDecoration,
         child: Row(
 
           children: [

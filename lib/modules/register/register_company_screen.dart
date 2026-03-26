@@ -24,6 +24,10 @@ class RegisterCompanyScreen extends StatelessWidget {
   final wfhTC = TextEditingController();
   final startTimeTC = TextEditingController();
   final endTimeTC = TextEditingController();
+  final gracePeriodTC = TextEditingController(text: '15');
+  final earlyAllowanceTC = TextEditingController(text: '30');
+  final lateCutoffTC = TextEditingController(text: '120');
+  final minimumWorkHoursTC = TextEditingController(text: '6');
 
   RegisterCompanyScreen({super.key});
 
@@ -40,6 +44,7 @@ class RegisterCompanyScreen extends StatelessWidget {
             textColor: Colors.white,
           );
           navigateAndFinish(context, HomeLayout());
+
         }
 
         if (state is CreateCompanyErrorState) {
@@ -56,12 +61,11 @@ class RegisterCompanyScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: const Text('Organization Setup'),
+            title: Text('Organization Setup',style: Theme.of(context).textTheme.titleLarge,),
             leading: IconButton(
               onPressed: () => Navigator.pop(context),
               icon: const Icon(
-                IconBroken.Arrow___Left,
-                color: AppColors.primary,
+                IconBroken.Arrow___Left_2,
               ),
             ),
           ),
@@ -206,6 +210,59 @@ class RegisterCompanyScreen extends StatelessWidget {
                         ),
                       ),
                     ),
+                    const SizedBox(height: 24.0),
+
+                    // Attendance Rules Section
+                    Row(
+                      children: [
+                        Text(
+                          "Attendance Rules",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(width: 10),
+                        const Icon(
+                          Icons.rule_outlined,
+                          size: 20,
+                          color: AppColors.primary,
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 16.0),
+
+                    DefaultFormField(
+                      controller: gracePeriodTC,
+                      type: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      label: const Text('Grace Period (minutes)'),
+                      prefix: IconBroken.Time_Circle,
+                    ),
+                    const SizedBox(height: 16.0),
+
+                    DefaultFormField(
+                      controller: earlyAllowanceTC,
+                      type: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      label: const Text('Early Check-in Allowance (minutes)'),
+                      prefix: IconBroken.Time_Circle,
+                    ),
+                    const SizedBox(height: 16.0),
+
+                    DefaultFormField(
+                      controller: lateCutoffTC,
+                      type: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      label: const Text('Late Cut-off (minutes)'),
+                      prefix: IconBroken.Time_Circle,
+                    ),
+                    const SizedBox(height: 16.0),
+
+                    DefaultFormField(
+                      controller: minimumWorkHoursTC,
+                      type: TextInputType.number,
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      label: const Text('Minimum Work Hours'),
+                      prefix: IconBroken.Time_Circle,
+                    ),
                     const SizedBox(height: 16.0),
 
                     // Final Registration Button
@@ -233,6 +290,10 @@ class RegisterCompanyScreen extends StatelessWidget {
                                 endTime: registerCubit.endTime,
                                 workingDaysList: registerCubit.workingDaysList,
                                 ownerId: FirebaseAuth.instance.currentUser!.uid,
+                                gracePeriodMinutes: int.tryParse(gracePeriodTC.text) ?? 15,
+                                earlyAllowanceMinutes: int.tryParse(earlyAllowanceTC.text) ?? 30,
+                                lateCutoffMinutes: int.tryParse(lateCutoffTC.text) ?? 120,
+                                minimumWorkHours: int.tryParse(minimumWorkHoursTC.text) ?? 6,
                               );
                             }
                           },

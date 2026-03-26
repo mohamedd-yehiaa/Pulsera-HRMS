@@ -6,6 +6,30 @@ class UserActivityModel {
   OutTime? outTime;
   String? createdAt;
 
+  /// The team (manager) this attendance record belongs to.
+  String? teamId;
+
+  /// Net worked minutes (stored on check-out for payroll readiness).
+  int? workedMinutes;
+
+  /// Attendance status: 'present', 'late', or 'absent'.
+  String? status;
+
+  /// Minutes late past grace period (stored on check-in).
+  int? lateMinutes;
+
+  /// Minutes before workEndTime that employee checked out.
+  int? earlyLeaveMinutes;
+
+  /// Minutes worked past workEndTime.
+  int? overtimeMinutes;
+
+  /// Check-in status: 'early', 'on_time', 'late', 'very_late'.
+  String? checkInStatus;
+
+  /// Check-out status: 'early_leave', 'completed', 'overtime', 'insufficient_hours'.
+  String? checkOutStatus;
+
   UserActivityModel({
     this.breakOutTime,
     this.activityID,
@@ -13,6 +37,14 @@ class UserActivityModel {
     this.breakInTime,
     this.outTime,
     this.createdAt,
+    this.teamId,
+    this.workedMinutes,
+    this.status,
+    this.lateMinutes,
+    this.earlyLeaveMinutes,
+    this.overtimeMinutes,
+    this.checkInStatus,
+    this.checkOutStatus,
   });
 
   UserPerformActivty get nextAction {
@@ -20,15 +52,30 @@ class UserActivityModel {
     if (checkIn == null) return UserPerformActivty.IN;
     // 2. If already checked out, day is done
     if (outTime != null) return UserPerformActivty.DONE;
-    // 3. Logic for Breaks
+    // 3. If on an active break, end it first
     int inCount = breakInTime?.length ?? 0;
     int outCount = breakOutTime?.length ?? 0;
-    // If they have more "In" breaks than "Out" breaks, they are currently ON break
     if (inCount > outCount) {
       return UserPerformActivty.BREAKOUT;
     }
-    // If they aren't on break and haven't checked out, they can either take a break or check out.
-    return UserPerformActivty.BREAKIN;
+    // 4. Primary action is Check-out (break is offered via separate button)
+    return UserPerformActivty.OUT;
+  }
+
+  /// Whether the employee can start a break right now.
+  bool get canTakeBreak {
+    if (checkIn == null || outTime != null) return false;
+    int inCount = breakInTime?.length ?? 0;
+    int outCount = breakOutTime?.length ?? 0;
+    return inCount <= outCount; // Not currently on break
+  }
+
+  /// Whether the employee is currently on an active break.
+  bool get isOnBreak {
+    if (checkIn == null || outTime != null) return false;
+    int inCount = breakInTime?.length ?? 0;
+    int outCount = breakOutTime?.length ?? 0;
+    return inCount > outCount;
   }
 
   UserActivityModel.fromJson(Map<String, dynamic> json) {
@@ -39,6 +86,14 @@ class UserActivityModel {
 
     breakInTime = (json['breakInTime'] as List<dynamic>?)?.cast<String>();
     breakOutTime = (json['breakOutTime'] as List<dynamic>?)?.cast<String>();
+    teamId = json['teamId'];
+    workedMinutes = json['workedMinutes'];
+    status = json['status'];
+    lateMinutes = json['lateMinutes'];
+    earlyLeaveMinutes = json['earlyLeaveMinutes'];
+    overtimeMinutes = json['overtimeMinutes'];
+    checkInStatus = json['checkInStatus'];
+    checkOutStatus = json['checkOutStatus'];
   }
 
   Map<String, dynamic> toJson() {
@@ -49,6 +104,14 @@ class UserActivityModel {
       if (outTime != null) 'outTime': outTime!.toJson(),
       'breakInTime': breakInTime,
       'breakOutTime': breakOutTime,
+      if (teamId != null) 'teamId': teamId,
+      if (workedMinutes != null) 'workedMinutes': workedMinutes,
+      if (status != null) 'status': status,
+      if (lateMinutes != null) 'lateMinutes': lateMinutes,
+      if (earlyLeaveMinutes != null) 'earlyLeaveMinutes': earlyLeaveMinutes,
+      if (overtimeMinutes != null) 'overtimeMinutes': overtimeMinutes,
+      if (checkInStatus != null) 'checkInStatus': checkInStatus,
+      if (checkOutStatus != null) 'checkOutStatus': checkOutStatus,
     };
   }
 }

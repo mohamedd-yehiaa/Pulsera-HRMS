@@ -32,7 +32,16 @@ class AddTeamMemberScreen extends StatelessWidget {
         bool isLoading = state is TeamLoadingState;
 
         return Scaffold(
-          appBar: AppBar(title: const Text("Add Team Member")),
+          appBar: AppBar(
+            leading: IconButton(
+              onPressed: () => Navigator.pop(context),
+              icon: const Icon(IconBroken.Arrow___Left_2),
+            ),
+            title: Text(
+              "Add Team Member",
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ),
           body: SingleChildScrollView(
             padding: const EdgeInsets.all(20.0),
             child: Form(
@@ -175,9 +184,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                       type: TextInputType.number,
                       label: const Text('Monthly Vacation Days'),
                       prefix: IconBroken.Calendar,
-                      inputFormatters: [
-                        FilteringTextInputFormatter.digitsOnly,
-                      ],
+                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
                           return 'Please enter vacation days';
@@ -215,4 +222,3 @@ class AddTeamMemberScreen extends StatelessWidget {
     );
   }
 }
-

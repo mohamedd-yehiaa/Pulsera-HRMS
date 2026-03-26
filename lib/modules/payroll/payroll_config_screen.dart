@@ -23,8 +23,11 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   final _lateDeductionValueController = TextEditingController();
   final _overtimeMinController = TextEditingController();
   final _overtimeBonusController = TextEditingController();
+  final _earlyLeaveDeductionValueController = TextEditingController();
 
   String _lateDeductionMode = 'percentage';
+  String _earlyLeaveDeductionMode = 'percentage';
+  String _missingCheckoutPolicy = 'half_day';
 
   @override
   void initState() {
@@ -44,6 +47,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     _lateDeductionValueController.dispose();
     _overtimeMinController.dispose();
     _overtimeBonusController.dispose();
+    _earlyLeaveDeductionValueController.dispose();
     super.dispose();
   }
 
@@ -55,8 +59,12 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     _lateDeductionValueController.text = config.lateDeductionValue.toString();
     _overtimeMinController.text = config.overtimeMinMinutes.toString();
     _overtimeBonusController.text = config.overtimeBonusPercentage.toString();
+    _earlyLeaveDeductionValueController.text =
+        config.earlyLeaveDeductionValue.toString();
     setState(() {
       _lateDeductionMode = config.lateDeductionMode;
+      _earlyLeaveDeductionMode = config.earlyLeaveDeductionMode;
+      _missingCheckoutPolicy = config.missingCheckoutPolicy;
     });
   }
 
@@ -79,6 +87,10 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
           int.tryParse(_overtimeMinController.text) ?? 30,
       overtimeBonusPercentage:
           double.tryParse(_overtimeBonusController.text) ?? 0.0,
+      earlyLeaveDeductionMode: _earlyLeaveDeductionMode,
+      earlyLeaveDeductionValue:
+          double.tryParse(_earlyLeaveDeductionValueController.text) ?? 0.0,
+      missingCheckoutPolicy: _missingCheckoutPolicy,
     );
   }
 
@@ -153,9 +165,9 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // =======================================
+                  // ===========================================================
                   // ABSENCE DEDUCTION
-                  // =======================================
+                  // ===========================================================
                   _sectionTitle(context, 'Absence Deduction'),
                   const SizedBox(height: 8),
                   Text(
@@ -186,9 +198,9 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // =======================================
+                  // ===========================================================
                   // LATE ARRIVAL
-                  // =======================================
+                  // ===========================================================
                   _sectionTitle(context, 'Late Arrival Deduction'),
                   const SizedBox(height: 12),
                   DefaultFormField(
@@ -206,7 +218,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 12),
                   DropdownButtonFormField<String>(
-                    initialValue: _lateDeductionMode,
+                    value: _lateDeductionMode,
                     decoration: const InputDecoration(
                       labelText: 'Deduction Mode',
                       prefixIcon: Icon(IconBroken.Setting),
@@ -252,9 +264,69 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   ),
                   const SizedBox(height: 24),
 
-                  // =======================================
+                  // ===========================================================
+                  // EARLY LEAVE DEDUCTION
+                  // ===========================================================
+                  _sectionTitle(context, 'Early Leave Deduction'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'Deduction applied when employees leave before the scheduled end time.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.grey500),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _earlyLeaveDeductionMode,
+                    decoration: const InputDecoration(
+                      labelText: 'Early Leave Deduction Mode',
+                      prefixIcon: Icon(IconBroken.Setting),
+                      filled: true,
+                      fillColor: AppColors.grey100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'percentage',
+                        child: Text('Percentage of Daily Salary'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'minutes',
+                        child: Text('Per Minute Deduction'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setState(() {
+                        _earlyLeaveDeductionMode = val ?? 'percentage';
+                      });
+                    },
+                  ),
+                  const SizedBox(height: 12),
+                  DefaultFormField(
+                    controller: _earlyLeaveDeductionValueController,
+                    type:
+                        const TextInputType.numberWithOptions(decimal: true),
+                    label: Text(_earlyLeaveDeductionMode == 'percentage'
+                        ? 'Deduction % per Early Leave Day'
+                        : 'Deduction Amount per Minute'),
+                    prefix: IconBroken.Wallet,
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                    ],
+                    validator: (value) {
+                      if (value == null || value.isEmpty) return 'Required';
+                      return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ===========================================================
                   // OVERTIME BONUS
-                  // =======================================
+                  // ===========================================================
                   _sectionTitle(context, 'Overtime Bonus'),
                   const SizedBox(height: 12),
                   DefaultFormField(
@@ -284,6 +356,49 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                     validator: (value) {
                       if (value == null || value.isEmpty) return 'Required';
                       return null;
+                    },
+                  ),
+                  const SizedBox(height: 24),
+
+                  // ===========================================================
+                  // MISSING CHECKOUT POLICY
+                  // ===========================================================
+                  _sectionTitle(context, 'Missing Checkout Policy'),
+                  const SizedBox(height: 8),
+                  Text(
+                    'How to handle days where an employee checked in but never checked out.',
+                    style: Theme.of(context)
+                        .textTheme
+                        .bodySmall
+                        ?.copyWith(color: AppColors.grey500),
+                  ),
+                  const SizedBox(height: 12),
+                  DropdownButtonFormField<String>(
+                    value: _missingCheckoutPolicy,
+                    decoration: const InputDecoration(
+                      labelText: 'Policy',
+                      prefixIcon: Icon(IconBroken.Shield_Fail),
+                      filled: true,
+                      fillColor: AppColors.grey100,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                        borderSide: BorderSide.none,
+                      ),
+                    ),
+                    items: const [
+                      DropdownMenuItem(
+                        value: 'half_day',
+                        child: Text('Count as Half Day'),
+                      ),
+                      DropdownMenuItem(
+                        value: 'absent',
+                        child: Text('Count as Absent'),
+                      ),
+                    ],
+                    onChanged: (val) {
+                      setState(() {
+                        _missingCheckoutPolicy = val ?? 'half_day';
+                      });
                     },
                   ),
                   const SizedBox(height: 32),

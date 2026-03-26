@@ -10,6 +10,18 @@ class CompanyModel {
   String? companyEmail;
   List<String>? workingDays;
 
+  /// How many minutes after startTime is still considered "on time".
+  int? gracePeriodMinutes;
+
+  /// How many minutes before startTime an employee may check in.
+  int? earlyAllowanceMinutes;
+
+  /// Minutes after startTime beyond which check-in is marked "very late".
+  int? lateCutoffMinutes;
+
+  /// Minimum hours an employee should work per day.
+  int? minimumWorkHours;
+
   CompanyModel({
     this.companyId,
     this.ownerId,
@@ -21,6 +33,10 @@ class CompanyModel {
     this.endTime,
     this.companyEmail,
     this.workingDays,
+    this.gracePeriodMinutes,
+    this.earlyAllowanceMinutes,
+    this.lateCutoffMinutes,
+    this.minimumWorkHours,
   });
 
   // Receiving data from Firebase (Map -> Model)
@@ -34,6 +50,10 @@ class CompanyModel {
     startTime = json?['startTime'];
     endTime = json?['endTime'];
     companyEmail = json?['companyEmail'];
+    gracePeriodMinutes = json?['gracePeriodMinutes'];
+    earlyAllowanceMinutes = json?['earlyAllowanceMinutes'];
+    lateCutoffMinutes = json?['lateCutoffMinutes'];
+    minimumWorkHours = json?['minimumWorkHours'];
     // Safe casting for the List
     if (json?['workingDays'] != null) {
       workingDays = List<String>.from(json?['workingDays']);
@@ -53,6 +73,11 @@ class CompanyModel {
       'endTime': endTime,
       'companyEmail': companyEmail,
       'workingDays': workingDays,
+      if (gracePeriodMinutes != null) 'gracePeriodMinutes': gracePeriodMinutes,
+      if (earlyAllowanceMinutes != null) 'earlyAllowanceMinutes': earlyAllowanceMinutes,
+      if (lateCutoffMinutes != null) 'lateCutoffMinutes': lateCutoffMinutes,
+      if (minimumWorkHours != null) 'minimumWorkHours': minimumWorkHours,
     };
   }
 }
+

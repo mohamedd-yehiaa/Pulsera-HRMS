@@ -3,13 +3,11 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/models/leave_activity_model.dart';
-import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/components/leave_activity_card.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/leave_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
-import 'apply_leave_screen.dart';
 
 class LeaveScreen extends StatelessWidget {
   const LeaveScreen({super.key});
@@ -30,6 +28,9 @@ class LeaveScreen extends StatelessWidget {
         if (state is GetLeavesErrorState) {
           Fluttertoast.showToast(msg: state.error);
         }
+        if (state is LeaveStreamErrorState) {
+          Fluttertoast.showToast(msg: state.error);
+        }
         if (state is CancelLeaveErrorState) {
           Fluttertoast.showToast(msg: state.error);
         }
@@ -41,25 +42,13 @@ class LeaveScreen extends StatelessWidget {
           children: [
             // Header Row
             Padding(
-              padding:
-              const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
               child: Row(
                 children: [
-                  IconButton(
-                    onPressed: () {
-                      navigateTo(
-                        context,
-                        const ApplyLeaveScreen(),
-                      );
-                    },
-                    icon: const Icon(Icons.add_circle_outline,
-                        color: AppColors.blue600, size: 28),
-                    tooltip: "Apply Leave",
-                  ),
                   const Spacer(),
                   // My/Other Switch for Managers/Owners
                   if (user?.userType == 'Company Owner' ||
-                      user?.userType == 'Manager')
+                      user?.roleType == 'Hr admin')
                     Row(
                       children: [
                         Text(
@@ -71,119 +60,131 @@ class LeaveScreen extends StatelessWidget {
                         ),
                         Switch(
                           value: cubit.myData,
-                          activeColor: AppColors.blue600,
+                          activeThumbColor: AppColors.blue600,
                           onChanged: (value) =>
                               cubit.changeMyData(value, user!.uId!),
                         ),
                       ],
                     ),
-                  IconButton(
-                    onPressed: () {
-                      cubit.getAllLeaves(
-                        uId: user?.uId,
-                        companyId: user?.companyId,
-                      );
-                      cubit.loadVacationBalance(userId: user!.uId!);
-                    },
-                    icon:
-                    const Icon(Icons.refresh, color: AppColors.blue600),
-                  ),
                 ],
               ),
             ),
 
-            // Vacation Balance + Statistics
+            // -----------------------------------------------------------------
+            // STATS GRID
+            // -----------------------------------------------------------------
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
+              child: Column(
                 children: [
-                  // Remaining Vacation Days
-                  _buildStatItem(
-                    context,
-                    "Balance",
-                    cubit.remainingVacationDays,
-                    icon: Icons.beach_access_outlined,
-                    isPrimary: true,
+                  // Top Row
+                  Row(
+                    children: [
+                      _buildStatCard(
+                        label: "Leave\nBalance",
+                        value: "${cubit.remainingVacationDays ?? '-'}",
+                        color: AppColors.blue500,
+                        bgColor: AppColors.blue500.withAlpha(20),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        label: "Leave\nApproved",
+                        value: "${cubit.approvedCount}",
+                        color: AppColors.green500,
+                        bgColor: AppColors.green500.withAlpha(20),
+                      ),
+                    ],
                   ),
-                  const SizedBox(width: 8),
-                  _buildStatItem(
-                    context,
-                    "Approved",
-                    cubit.approvedCount,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildStatItem(
-                    context,
-                    "Pending",
-                    cubit.pendingCount,
-                  ),
-                  const SizedBox(width: 8),
-                  _buildStatItem(
-                    context,
-                    "Rejected",
-                    cubit.rejectedCount,
-                    isWarning: true,
+                  const SizedBox(height: 12),
+                  // Bottom Row
+                  Row(
+                    children: [
+                      _buildStatCard(
+                        label: "Leave\nPending",
+                        value: "${cubit.pendingCount}",
+                        color: AppColors.green400,
+                        bgColor: AppColors.green400.withAlpha(20),
+                      ),
+                      const SizedBox(width: 12),
+                      _buildStatCard(
+                        label: "Leave\nRejected",
+                        value: "${cubit.rejectedCount}",
+                        color: AppColors.red500,
+                        bgColor: AppColors.red500.withAlpha(20),
+                      ),
+                    ],
                   ),
                 ],
               ),
             ),
+            // -----------------------------------------------------------------
 
-            const SizedBox(height: 20),
+            const SizedBox(height: 24),
 
             // Tab Selection
             _buildTabs(context, cubit, user?.uId),
 
             const SizedBox(height: 10),
 
-            // Leave List
+            // Leave List — wrapped in RefreshIndicator
             Expanded(
-              child: ConditionalBuilder(
-                condition: state is! GetLeavesLoadingState,
-                builder: (context) => cubit.filteredLeaves.isEmpty
-                    ? const Center(child: Text("No Data found."))
-                    : ListView.builder(
-                  physics: const BouncingScrollPhysics(),
-                  itemCount: cubit.filteredLeaves.length,
-                  itemBuilder: (context, index) {
-                    return LeaveActivityCard(
-                      item: cubit.filteredLeaves[index],
-                      approveRejectTap: (status) {
-                        if (status == LeaveActivityState.rejected) {
-                          _showRejectDialog(
-                            context,
-                            cubit,
-                            cubit.filteredLeaves[index].id!,
-                            user!.uId!,
-                            user.companyId!,
-                            '${user.firstName} ${user.lastName}',
-                          );
-                        } else {
-                          cubit.updateLeaveStatus(
-                            leaveId:
-                            cubit.filteredLeaves[index].id!,
-                            status: status,
+              child: RefreshIndicator(
+                color: AppColors.blue600,
+                onRefresh: () => cubit.refreshLeaves(),
+                child: ConditionalBuilder(
+                  condition: state is! GetLeavesLoadingState,
+                  builder: (context) => cubit.filteredLeaves.isEmpty
+                      ? ListView(
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          children: const [
+                            SizedBox(height: 100),
+                            Center(child: Text("No Data found.")),
+                          ],
+                        )
+                      : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(
+                      parent: BouncingScrollPhysics(),
+                    ),
+                    itemCount: cubit.filteredLeaves.length,
+                    itemBuilder: (context, index) {
+                      return LeaveActivityCard(
+                        item: cubit.filteredLeaves[index],
+                        approveRejectTap: (status) {
+                          if (status == LeaveActivityState.rejected) {
+                            _showRejectDialog(
+                              context,
+                              cubit,
+                              cubit.filteredLeaves[index].id!,
+                              user!.uId!,
+                              user.companyId!,
+                              '${user.firstName} ${user.lastName}',
+                            );
+                          } else {
+                            cubit.updateLeaveStatus(
+                              leaveId: cubit.filteredLeaves[index].id!,
+                              status: status,
+                              uId: user!.uId!,
+                              companyId: user.companyId!,
+                              adminName: '${user.firstName} ${user.lastName}',
+                            );
+                          }
+                        },
+                        onCancel: () {
+                          cubit.cancelLeave(
+                            leaveId: cubit.filteredLeaves[index].id!,
                             uId: user!.uId!,
                             companyId: user.companyId!,
-                            adminName:
-                            '${user.firstName} ${user.lastName}',
+                            employeeName: '${user.firstName} ${user.lastName}',
                           );
-                        }
-                      },
-                      onCancel: () {
-                        cubit.cancelLeave(
-                          leaveId:
-                          cubit.filteredLeaves[index].id!,
-                          uId: user!.uId!,
-                          companyId: user.companyId!,
-                          employeeName:
-                          '${user.firstName} ${user.lastName}',
-                        );
-                      },
-                    );
-                  },
+                        },
+                      );
+                    },
+                  ),
+                  fallback: (context) =>
+                  const Center(child: CircularProgressIndicator()),
                 ),
-                fallback: (context) =>
-                const Center(child: CircularProgressIndicator()),
               ),
             ),
           ],
@@ -234,53 +235,49 @@ class LeaveScreen extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.error,
             ),
-            child:
-            const Text("Reject", style: TextStyle(color: Colors.white)),
+            child: const Text("Reject", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildStatItem(
-      BuildContext context,
-      String label,
-      int? count, {
-        bool isWarning = false,
-        bool isPrimary = false,
-        IconData? icon,
-      }) {
-    final Color baseColor = isPrimary
-        ? AppColors.blue600
-        : isWarning
-        ? Colors.orange
-        : AppColors.blue600;
-
+  // -----------------------------------------------------------------
+  // UPDATED STAT CARD WIDGET
+  // -----------------------------------------------------------------
+  Widget _buildStatCard({
+    required String label,
+    required String value,
+    required Color color,
+    required Color bgColor,
+  }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.all(10),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         decoration: BoxDecoration(
-          color: baseColor.withOpacity(0.1),
+          color: bgColor,
           borderRadius: BorderRadius.circular(12),
-          border: isPrimary
-              ? Border.all(color: baseColor.withOpacity(0.3))
-              : null,
+          border: Border.all(color: color, width: 1.2),
         ),
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start, // Aligns text to the left
           children: [
-            if (icon != null)
-              Icon(icon, color: baseColor, size: 16),
             Text(
               label,
-              style: const TextStyle(fontSize: 11, color: Colors.grey),
+              style: const TextStyle(
+                fontSize: 15,
+                fontWeight: FontWeight.w600,
+                color: Colors.black87,
+                height: 1.2, // Tighter line spacing for the title
+              ),
             ),
-            const SizedBox(height: 2),
+            const SizedBox(height: 14),
             Text(
-              "${count ?? '-'}",
+              value,
               style: TextStyle(
-                fontSize: 16,
+                fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: baseColor,
+                color: color,
               ),
             ),
           ],
@@ -288,19 +285,19 @@ class LeaveScreen extends StatelessWidget {
       ),
     );
   }
+  // -----------------------------------------------------------------
 
   Widget _buildTabs(BuildContext context, LeaveCubit cubit, String? uId) {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
         children: LeaveActivityState.list.map((e) {
-          bool isSelected =
-              cubit.selectedTab.toLowerCase() == e.toLowerCase();
+          bool isSelected = cubit.selectedTab.toLowerCase() == e.toLowerCase();
           return Expanded(
             child: InkWell(
               onTap: () => cubit.emitTabChange(e.toLowerCase(), uId!),
               child: Container(
-                height: 38,
+                height: 55,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.blue600 : Colors.grey[200],
@@ -312,7 +309,9 @@ class LeaveScreen extends StatelessWidget {
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: 12,
+                      fontSize: 14,
+                      letterSpacing: 0.5,
+                      fontFamily: 'Jannah',
                     ),
                   ),
                 ),

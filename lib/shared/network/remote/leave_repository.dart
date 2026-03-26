@@ -1,7 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/leave_activity_model.dart';
-import 'package:pulsera/models/notification_model.dart';
 
 
 class LeaveRepository {
@@ -67,6 +66,21 @@ class LeaveRepository {
       model.id = doc.id;
       return model;
     }).toList();
+  }
+
+  /// Real-time stream of leaves for a given company.
+  Stream<List<LeaveActivityModel>> watchLeaves({
+    required String companyId,
+  }) {
+    return _firestore
+        .collection('leaves')
+        .where('companyID', isEqualTo: companyId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs.map((doc) {
+              var model = LeaveActivityModel.fromJson(doc.data());
+              model.id = doc.id;
+              return model;
+            }).toList());
   }
 
   /// Creates a new leave request with auto-assigned team admin.
@@ -208,58 +222,50 @@ class LeaveRepository {
   }
 
   // ===========================================================================
-  // Notifications
+  // Monthly Leave Balance Reset
   // ===========================================================================
 
-  /// Creates a notification document.
-  Future<void> addNotification({
-    required String toUserId,
-    required String fromUserName,
-    required String message,
-    required String type,
-    String? leaveId,
+  /// Checks if the current month differs from `lastResetMonth` for the member.
+  /// If so, resets `remainingVacationDays` to `monthlyVacationDays` (default 4)
+  /// and updates `lastResetMonth`. Prevents multiple resets in the same month.
+  /// Returns `true` if a reset was performed.
+  Future<bool> resetLeaveBalanceIfNeeded({
+    required String managerId,
+    required String userId,
   }) async {
-    await _firestore.collection('notifications').add({
-      'toUserId': toUserId,
-      'fromUserName': fromUserName,
-      'message': message,
-      'type': type,
-      'leaveId': leaveId,
-      'createdAt': DateFormat('yyyy-MM-ddTHH:mm:ss').format(DateTime.now()),
-      'isRead': false,
-    });
-  }
+    final docRef = _firestore.collection('teams').doc(managerId);
+    final doc = await docRef.get();
 
-  /// Fetches all notifications for a user, ordered by most recent.
-  Future<List<NotificationModel>> getNotifications(String userId) async {
-    final snapshot = await _firestore
-        .collection('notifications')
-        .where('toUserId', isEqualTo: userId)
-        .orderBy('createdAt', descending: true)
-        .get();
+    if (!doc.exists || doc.data() == null) return false;
 
-    return snapshot.docs.map((doc) {
-      var model = NotificationModel.fromJson(doc.data());
-      model.id = doc.id;
-      return model;
-    }).toList();
-  }
+    final members = List<Map<String, dynamic>>.from(
+      (doc.data()!['members'] as List<dynamic>?)
+              ?.map((e) => Map<String, dynamic>.from(e))
+          ?? [],
+    );
 
-  /// Marks a notification as read.
-  Future<void> markNotificationRead(String notificationId) async {
-    await _firestore
-        .collection('notifications')
-        .doc(notificationId)
-        .update({'isRead': true});
-  }
+    final currentMonth = DateFormat('yyyy-MM').format(DateTime.now());
+    bool didReset = false;
 
-  /// Gets the count of unread notifications for a user.
-  Future<int> getUnreadNotificationCount(String userId) async {
-    final snapshot = await _firestore
-        .collection('notifications')
-        .where('toUserId', isEqualTo: userId)
-        .where('isRead', isEqualTo: false)
-        .get();
-    return snapshot.docs.length;
+    for (int i = 0; i < members.length; i++) {
+      if (members[i]['uId'] == userId) {
+        final lastResetMonth = members[i]['lastResetMonth'] as String?;
+
+        if (lastResetMonth != currentMonth) {
+          // Reset balance to the configured monthly allowance (default 4)
+          final defaultBalance = (members[i]['monthlyVacationDays'] as int?) ?? 4;
+          members[i]['remainingVacationDays'] = defaultBalance;
+          members[i]['lastResetMonth'] = currentMonth;
+          didReset = true;
+        }
+        break;
+      }
+    }
+
+    if (didReset) {
+      await docRef.update({'members': members});
+    }
+
+    return didReset;
   }
 }

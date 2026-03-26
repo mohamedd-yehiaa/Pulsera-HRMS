@@ -22,43 +22,35 @@ class SettingsScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     UserModel? user = AppCubit.get(context).userModel;
     CompanyModel? company = AppCubit.get(context).companyModel;
-
     ProfileCubit profileCubit = ProfileCubit.get(context);
     RegisterCubit registerCubit = RegisterCubit.get(context);
-
     if (user == null) {
       return const Center(child: CircularProgressIndicator());
     }
-
+    if (profileCubit.userNameTC.text.isEmpty) {
+      profileCubit.userNameTC.text = '${user.firstName} ${user.lastName}';
+      profileCubit.emailTC.text = user.email ?? '';
+      profileCubit.phoneTC.text = user.phone?.toString() ?? '';
+    }
     return BlocConsumer<ProfileCubit, ProfileStates>(
       listener: (context, state) {
         if (state is ProfileUpdateLoadingState) {
           Center(child: CircularProgressIndicator());
         }
+
+        if (state is ProfileErrorState) {
+          Fluttertoast.showToast(msg: state.error, backgroundColor: Colors.red);
+        }
         if (state is ProfileUpdateSuccessState) {
           AppCubit.get(context).getUserData();
-          var updatedUser = AppCubit.get(context).userModel;
-          if (updatedUser != null) {
-            profileCubit.userNameTC.text =
-                '${updatedUser.firstName} ${updatedUser.lastName}';
-            profileCubit.emailTC.text = updatedUser.email ?? '';
-            profileCubit.phoneTC.text = updatedUser.phone?.toString() ?? '';
-          }
+
           Fluttertoast.showToast(
             msg: "Profile Updated Successfully",
             backgroundColor: Colors.green,
           );
         }
-        if (state is ProfileErrorState) {
-          Fluttertoast.showToast(msg: state.error, backgroundColor: Colors.red);
-        }
       },
       builder: (context, state) {
-        if (profileCubit.userNameTC.text.isEmpty) {
-          profileCubit.userNameTC.text = '${user.firstName} ${user.lastName}';
-          profileCubit.emailTC.text = user.email ?? '';
-          profileCubit.phoneTC.text = user.phone?.toString() ?? '';
-        }
         return ListView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           children: [
@@ -110,8 +102,8 @@ class SettingsScreen extends StatelessWidget {
                 width: double.infinity,
                 height: 50,
                 child: ElevatedButton(
-                  onPressed: () {
-                    profileCubit.updateProfile(user.uId);
+                  onPressed: () async {
+                    await profileCubit.updateProfile(user.uId);
                   },
                   child: const Text(
                     "Update Profile",
@@ -134,12 +126,11 @@ class SettingsScreen extends StatelessWidget {
                   AppCubit.get(context).userModel = null;
                   AppCubit.get(context).companyModel = null;
                   AppCubit.get(context).changeIndex(0);
-                  profileCubit.userNameTC.text = '';
-                  profileCubit.emailTC.text = '';
-                  profileCubit.phoneTC.text = '';
-                  profileCubit.organizationTC.text = '';
-                  registerCubit.startTime = null;
-                  registerCubit.endTime = null;
+                  profileCubit.userNameTC.clear();
+                  profileCubit.emailTC.clear();
+                  profileCubit.phoneTC.clear();
+                  registerCubit.endTimeTC.clear();
+                  registerCubit.startTimeTC.clear();
                 });
                 navigateAndFinish(context, LoginScreen());
               },
@@ -306,7 +297,7 @@ class SettingsScreen extends StatelessWidget {
                                 width: double.infinity,
                                 height: 50,
                                 child: ElevatedButton(
-                                  onPressed: () {
+                                  onPressed: () async{
                                     if (company?.companyId != null) {
                                       List<String> selectedCodes = registerCubit
                                           .workingDaysList
@@ -314,7 +305,7 @@ class SettingsScreen extends StatelessWidget {
                                           .map((e) => e.code)
                                           .toList();
 
-                                      profileCubit.updateOrganization(
+                                      await profileCubit.updateOrganization(
                                         companyId: company!.companyId!,
                                         orgName:
                                             profileCubit.organizationTC.text,

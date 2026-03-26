@@ -37,6 +37,9 @@ class PayrollConfigCubit extends Cubit<PayrollConfigStates> {
     required double lateDeductionValue,
     required int overtimeMinMinutes,
     required double overtimeBonusPercentage,
+    required String earlyLeaveDeductionMode,
+    required double earlyLeaveDeductionValue,
+    required String missingCheckoutPolicy,
   }) async {
     emit(PayrollConfigLoadingState());
     try {
@@ -48,6 +51,9 @@ class PayrollConfigCubit extends Cubit<PayrollConfigStates> {
         lateDeductionValue: lateDeductionValue,
         overtimeMinMinutes: overtimeMinMinutes,
         overtimeBonusPercentage: overtimeBonusPercentage,
+        earlyLeaveDeductionMode: earlyLeaveDeductionMode,
+        earlyLeaveDeductionValue: earlyLeaveDeductionValue,
+        missingCheckoutPolicy: missingCheckoutPolicy,
       );
       await _repository.savePayrollConfig(config!);
       emit(PayrollConfigSavedState());

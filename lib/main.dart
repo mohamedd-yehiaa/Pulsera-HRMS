@@ -7,6 +7,7 @@ import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
 import 'package:pulsera/shared/cubit/leave_cubit.dart';
+import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_config_cubit.dart';
 import 'package:pulsera/shared/cubit/team_cubit.dart';
@@ -15,6 +16,7 @@ import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/network/remote/attendance_repository.dart';
+import 'package:pulsera/shared/network/remote/notification_repository.dart';
 import 'package:pulsera/shared/network/remote/payroll_repository.dart';
 import 'package:pulsera/shared/network/remote/team_repository.dart';
 import 'package:pulsera/shared/styles/theme.dart';
@@ -55,6 +57,9 @@ class Pulsera extends StatelessWidget {
         ),
         BlocProvider(create: (context) => ProfileCubit()),
         BlocProvider(create: (context) => LeaveCubit()),
+        BlocProvider(
+          create: (context) => NotificationCubit(NotificationRepository()),
+        ),
 
         BlocProvider(create: (context) => PayrollCubit(PayrollRepository())),
         BlocProvider(
