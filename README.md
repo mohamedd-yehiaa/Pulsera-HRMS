@@ -5,7 +5,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 )
-(![Build Status](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/main.yml/badge.svg)
+(https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/main.yml/badge.svg)
 )
 (![1.0.0](https://img.shields.io/badge/version-1.0.0-success)
 )
