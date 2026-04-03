@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:pulsera/models/payroll_model.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/payroll_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
@@ -22,17 +23,13 @@ class PayslipDetailScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(
+        leading: backButton(context),
+        title: Text(
           'Payslip Details',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(IconBroken.Arrow___Left_2,
-              color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(20),

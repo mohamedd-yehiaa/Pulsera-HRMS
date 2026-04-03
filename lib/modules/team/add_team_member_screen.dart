@@ -33,10 +33,7 @@ class AddTeamMemberScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(IconBroken.Arrow___Left_2),
-            ),
+            leading: backButton(context),
             title: Text(
               "Add Team Member",
               style: Theme.of(context).textTheme.titleLarge,
@@ -140,9 +137,23 @@ class AddTeamMemberScreen extends StatelessWidget {
                     // Role Dropdown
                     DropdownButtonFormField<String>(
                       initialValue: cubit.selectedRole,
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: "Role Type",
-                        prefixIcon: Icon(IconBroken.Shield_Done),
+                        prefixIcon: Icon(
+                          IconBroken.Shield_Done,
+                          color: AppColors.blue500,
+                        ),
+                        fillColor: AppColors.grey100,
+                        filled: true,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.all(Radius.circular(16.0)),
+                          borderSide: BorderSide.none,
+                        ),
+                        labelStyle: Theme.of(context).textTheme.labelLarge!
+                            .copyWith(
+                              color: AppColors.textSecondary,
+                              fontSize: 16,
+                            ),
                       ),
                       items: const [
                         DropdownMenuItem(

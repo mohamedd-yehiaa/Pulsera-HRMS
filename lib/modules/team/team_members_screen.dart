@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/team_members_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/modules/team/add_team_member_screen.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/cubit/team_cubit.dart';
@@ -65,10 +66,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
         return Scaffold(
           appBar: AppBar(
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(IconBroken.Arrow___Left_2),
-            ),
+            leading:backButton(context),
             title: Text(
               isManager ? "My Team" : "Team Info",
               style: Theme.of(context).textTheme.titleLarge,

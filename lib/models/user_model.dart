@@ -34,7 +34,7 @@ class UserModel {
     lastName = json['lastName'];
     phone = json['phone'];
     uId = json['uId'];
-    image = json['image'];
+    image = json['image'] == '' ? null : json['image'];
     companyId = json['companyId'];
     isEmailVerified = json['isEmailVerified'];
     userType = json['userType'];

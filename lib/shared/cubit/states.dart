@@ -81,7 +81,10 @@ class CreateUserErrorState extends RegisterStates {
   CreateUserErrorState(this.error);
 }
 class CreateCompanyLoadingState extends RegisterStates {}
-class CreateCompanySuccessState extends RegisterStates {}
+class CreateCompanySuccessState extends RegisterStates {
+  final String companyId;
+  CreateCompanySuccessState(this.companyId);
+}
 class CreateCompanyChangeWorkingDaysState extends RegisterStates {}
 class CreateCompanyTimeChangedState extends  RegisterStates {}
 class CreateCompanyErrorState extends RegisterStates {
@@ -116,6 +119,18 @@ class UpdateCompanyErrorState extends ProfileStates {
   final String error;
   UpdateCompanyErrorState(this.error);
 }
+class ProfileImagePickedSuccessState extends ProfileStates {}
+class ProfileImagePickedErrorState extends ProfileStates {
+  final String error;
+  ProfileImagePickedErrorState(this.error);
+}
+class ProfileRemoveImageLoadingState extends ProfileStates {}
+class ProfileRemoveImageSuccessState extends ProfileStates {}
+class ProfileRemoveImageErrorState extends ProfileStates {
+  final String error;
+  ProfileRemoveImageErrorState(this.error);
+}
+
 // -----------------------------------------------------------------------------
 // Leave States
 abstract class LeaveStates {}
@@ -237,4 +252,4 @@ class NotificationMarkedReadState extends NotificationStates {}
 class NotificationStreamErrorState extends NotificationStates {
   final String error;
   NotificationStreamErrorState(this.error);
-}
+}
