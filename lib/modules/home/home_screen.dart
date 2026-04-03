@@ -37,7 +37,7 @@ class HomeScreen extends StatelessWidget {
               if (msg != null && msg.isNotEmpty) {
                 Fluttertoast.showToast(
                   msg: msg,
-                  toastLength: Toast.LENGTH_LONG,
+                  toastLength: Toast.LENGTH_SHORT,
                   backgroundColor: Colors.black87,
                 );
               }
@@ -46,7 +46,12 @@ class HomeScreen extends StatelessWidget {
 
           builder: (context, state) {
             AttendanceCubit cubit = AttendanceCubit.get(context);
-            if (user?.companyId == null && user?.userType == "Company Owner") {
+            if (user == null) {
+              return const Scaffold(
+                body: Center(child: CircularProgressIndicator()),
+              );
+            }
+            if (user.companyId == null && user.userType == "Company Owner") {
               return SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -55,9 +60,7 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Text(
                         "Plaese Register your Company Details!",
-                        style: Theme.of(
-                          context,
-                        ).textTheme.titleLarge!.copyWith(fontFamily: "Jannah"),
+                        style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: 50),
                       ElevatedButton(
@@ -66,11 +69,10 @@ class HomeScreen extends StatelessWidget {
                         style: Theme.of(context).elevatedButtonTheme.style,
                         child: Text(
                           "Create Company",
-                          style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.white,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge!
+                              .copyWith(
+                                color: Colors.white,
+                              ),
                         ),
                       ),
                     ],
@@ -78,65 +80,81 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             }
-            if (user?.companyId == null && user?.userType == "Employee") {
+            if (user.companyId == null && user.userType == "Employee") {
               return SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Center(
-                    child: Expanded(
-                      child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            "Please join a company to continue!",
-                            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                              fontFamily: "Jannah",
-                              fontSize: 22,
-                            ),
-                          ),
-                          Text(
-                            "Give your Id to the company",
-                            style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                              fontFamily: "Jannah",
-                              fontSize: 22,
-                            ),
-                          ),
-                          SizedBox(height: 50),
+                    child: Column( // Note: Removed the Expanded() you had here, it causes layout errors inside Center
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Please join a company to continue!",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        Text(
+                          "Give your Id to the company",
+                          style: Theme.of(context).textTheme.titleLarge,
+                        ),
+                        const SizedBox(height: 50),
 
-                          Row(
+                        // Your existing Copy ID Row
+                        SingleChildScrollView(
+                          scrollDirection: Axis.horizontal,
+                          child: Row(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SelectableText(
-                                "${user?.uId}",
+                                "${user.uId}",
                                 style: Theme.of(context).textTheme.titleLarge!
-                                    .copyWith(
-                                      fontFamily: "Jannah",
-                                      fontWeight: FontWeight.bold,
-                                      color: AppColors.primary,
-                                    ),
+                                    .copyWith(color: AppColors.primary),
+                                textAlign: TextAlign.center,
+                                maxLines: 1,
                               ),
                               IconButton(
                                 onPressed: () {
                                   Clipboard.setData(
-                                    ClipboardData(text: "${user?.uId}"),
+                                    ClipboardData(text: "${user.uId}"),
                                   ).then((_) {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      SnackBar(
-                                        content: Text('Copied to your clipboard !'),
-                                      ),
+                                      const SnackBar(content: Text('Copied to your clipboard !')),
                                     );
                                   });
                                 },
-                                icon: Icon(
+                                icon: const Icon(
                                   Icons.copy_outlined,
                                   color: AppColors.grey900,
+                                  size: 20,
                                 ),
                               ),
                             ],
                           ),
-                        ],
-                      ),
+                        ),
+
+                        const SizedBox(height: 40),
+
+                        // === NEW REFRESH BUTTON ===
+                        // This forces the Cubit to check the database again to see
+                        // if the owner has updated this employee's companyId
+                        OutlinedButton.icon(
+                          onPressed: () {
+                            // Call whatever function in AppCubit fetches the user data from your DB.
+                            // It is usually called getUserData() or fetchProfile()
+                            AppCubit.get(context).getUserData();
+                          },
+                          icon: const Icon(Icons.refresh),
+                          label: const Text(
+                            "Refresh Status",
+                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            foregroundColor: AppColors.primary,
+                            side: const BorderSide(color: AppColors.primary),
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ),
@@ -146,7 +164,7 @@ class HomeScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 children: [
-                  _buildDatePicker(cubit, user?.uId),
+                  _buildDatePicker(cubit, user.uId),
                   const SizedBox(height: 28),
 
                   _buildSectionHeader("Today Attendance", state, context),
@@ -159,7 +177,8 @@ class HomeScreen extends StatelessWidget {
                   const SizedBox(height: 12),
                   _buildStatsGrid(cubit),
 
-                  if (cubit.workingTime != "00:00:00") _buildWorkingTimeCard(cubit),
+                  if (cubit.workingTime != "00:00:00")
+                    _buildWorkingTimeCard(cubit),
 
                   // Time-rule details (late minutes, early leave, overtime)
                   _buildTimeRuleDetails(cubit),
@@ -168,7 +187,7 @@ class HomeScreen extends StatelessWidget {
                   _buildSectionHeader("Your Activity", null, context),
                   const SizedBox(height: 16),
 
-                  _buildSwipeButton(cubit, user?.uId, context),
+                  _buildSwipeButton(cubit, user.uId, context),
                   const SizedBox(height: 20),
 
                   Padding(
@@ -219,7 +238,10 @@ Widget _buildAttendanceStatusRow(AttendanceCubit cubit) {
         if (checkInStatus != null)
           _buildStatusChip(checkInStatus, _checkInStatusLabel(checkInStatus)),
         if (checkOutStatus != null)
-          _buildStatusChip(checkOutStatus, _checkOutStatusLabel(checkOutStatus)),
+          _buildStatusChip(
+            checkOutStatus,
+            _checkOutStatusLabel(checkOutStatus),
+          ),
       ],
     ),
   );
@@ -302,7 +324,8 @@ Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
   final activity = cubit.activity;
   if (activity == null) return const SizedBox();
 
-  final hasDetails = (activity.lateMinutes != null && activity.lateMinutes! > 0) ||
+  final hasDetails =
+      (activity.lateMinutes != null && activity.lateMinutes! > 0) ||
       (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes! > 0) ||
       (activity.overtimeMinutes != null && activity.overtimeMinutes! > 0);
 
@@ -331,7 +354,8 @@ Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
               AppColors.orange500,
               "Late by ${activity.lateMinutes} min",
             ),
-          if (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes! > 0)
+          if (activity.earlyLeaveMinutes != null &&
+              activity.earlyLeaveMinutes! > 0)
             _buildDetailRow(
               Icons.exit_to_app,
               AppColors.orange500,
@@ -358,7 +382,11 @@ Widget _buildDetailRow(IconData icon, Color color, String text) {
         const SizedBox(width: 6),
         Text(
           text,
-          style: TextStyle(fontSize: 13, color: color, fontWeight: FontWeight.w500),
+          style: TextStyle(
+            fontSize: 13,
+            color: color,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     ),
@@ -453,7 +481,9 @@ Widget _buildSwipeButton(
   // Build schedule config from company model
   WorkScheduleConfig? scheduleConfig;
   if (appCubit.companyModel != null) {
-    scheduleConfig = WorkScheduleConfig.fromCompanyModel(appCubit.companyModel!);
+    scheduleConfig = WorkScheduleConfig.fromCompanyModel(
+      appCubit.companyModel!,
+    );
   }
 
   return Padding(
@@ -473,7 +503,8 @@ Widget _buildSwipeButton(
           onSwipe: () {
             if (uid != null) {
               final user = appCubit.userModel;
-              final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+              final fullName =
+                  '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
               cubit.performSwipeAction(
                 uid,
                 companyId,
@@ -503,7 +534,8 @@ Widget _buildSwipeButton(
               onPressed: () {
                 if (uid != null) {
                   final user = appCubit.userModel;
-                  final fullName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+                  final fullName =
+                      '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
                   cubit.performBreakAction(
                     uid,
                     companyId,
@@ -534,7 +566,11 @@ Widget _buildSwipeButton(
 }
 
 // --- Helper Methods ---
-Widget _buildSectionHeader(String title, AttendanceStates? state, BuildContext context) {
+Widget _buildSectionHeader(
+  String title,
+  AttendanceStates? state,
+  BuildContext context,
+) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Row(
@@ -542,8 +578,8 @@ Widget _buildSectionHeader(String title, AttendanceStates? state, BuildContext c
         Text(
           title,
           style: Theme.of(context).textTheme.titleLarge!.copyWith(
-                fontFamily: "Jannah",
-                fontWeight: FontWeight.bold,
+            fontFamily: "Jannah",
+            fontWeight: FontWeight.bold,
           ),
         ),
         const Spacer(),

@@ -9,7 +9,7 @@ import 'package:pulsera/models/working_days_model.dart';
 import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
-
+import 'package:pulsera/shared/network/local/cache_helper.dart';
 
 
 class RegisterCubit extends Cubit<RegisterStates> {
@@ -262,8 +262,9 @@ class RegisterCubit extends Cubit<RegisterStates> {
           .collection('users')
           .doc(ownerId)
           .update({'companyId': companyDocRef.id});
-    }).then((_) {
-      emit(CreateCompanySuccessState());
+    }).then((_) async {
+      await CacheHelper.saveData(key: 'companyId', value: companyDocRef.id);
+      emit(CreateCompanySuccessState(companyDocRef.id));
     }).catchError((error) {
       emit(CreateCompanyErrorState(error.toString()));
     });
@@ -291,5 +292,20 @@ class RegisterCubit extends Cubit<RegisterStates> {
       }
       emit(CreateCompanyTimeChangedState());
     }
+  }
+  void resetRegistrationData() {
+    startTimeTC.clear();
+    endTimeTC.clear();
+
+    // Clear the actual TimeOfDay variables
+    startTime = null;
+    endTime = null;
+
+    // Reset all working days to false
+    for (var day in workingDaysList) {
+      day.isSelected = false;
+    }
+
+    emit(RegisterInitialState());
   }
 }

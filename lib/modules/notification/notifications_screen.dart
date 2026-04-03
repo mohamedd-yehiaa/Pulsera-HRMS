@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
@@ -14,9 +15,7 @@ class NotificationsScreen extends StatelessWidget {
     return Scaffold(
       backgroundColor: Colors.white,
       appBar: AppBar(
-        leading: IconButton(onPressed: (){
-          Navigator.pop(context);
-        }, icon: Icon(IconBroken.Arrow___Left_2,)),
+        leading: backButton(context),
         title:  Text("Notifications", style: Theme.of(context).textTheme.titleLarge),
         backgroundColor: Colors.white,
         elevation: 0,

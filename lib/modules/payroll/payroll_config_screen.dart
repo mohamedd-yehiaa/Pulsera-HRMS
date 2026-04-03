@@ -99,17 +99,13 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
     return Scaffold(
       backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(
+        leading: backButton(context),
+        title: Text(
           'Payroll Configuration',
-          style: TextStyle(color: AppColors.textPrimary),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(IconBroken.Arrow___Left_2,
-              color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
       ),
       body: BlocConsumer<PayrollConfigCubit, PayrollConfigStates>(
         listener: (context, state) {

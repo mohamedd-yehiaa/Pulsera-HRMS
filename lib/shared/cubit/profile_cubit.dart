@@ -1,6 +1,9 @@
+import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
@@ -21,6 +24,91 @@ class ProfileCubit extends Cubit<ProfileStates> {
   final startTimeTC = TextEditingController();
   final endTimeTC = TextEditingController();
 
+  File? profileImage;
+  final ImagePicker _picker = ImagePicker();
+  Future<void> getProfileImage() async {
+    try {
+      final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        profileImage = File(pickedFile.path);
+        print("Image Path: ${pickedFile.path}");
+        emit(ProfileImagePickedSuccessState());
+      } else {
+        print('No image selected.');
+      }
+    } catch (e) {
+      // Catching platform exceptions (e.g., permission denied)
+      emit(ProfileImagePickedErrorState('Error picking image: $e'));
+    }
+  }
+
+  void uploadProfileImage({required String uId}) {
+    if (profileImage == null) return;
+
+    emit(ProfileUpdateLoadingState());
+
+    firebase_storage.FirebaseStorage.instance
+        .ref()
+        .child(
+          'users/$uId/profile_pictures/${Uri.file(profileImage!.path).pathSegments.last}',
+        )
+        .putFile(profileImage!)
+        .then((value) {
+          value.ref
+              .getDownloadURL()
+              .then((url) {
+                // After getting the URL, update the user's image field in Firestore
+                _updateUserImage(uId: uId, imageUrl: url);
+              })
+              .catchError((error) {
+                emit(
+                  ProfileErrorState(
+                    "Failed to get download URL: ${error.toString()}",
+                  ),
+                );
+              });
+        })
+        .catchError((error) {
+          emit(
+            ProfileErrorState("Failed to upload image: ${error.toString()}"),
+          );
+        });
+  }
+
+  // Private helper to update only the image field in Firestore
+  void _updateUserImage({required String uId, required String imageUrl}) {
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uId)
+        .update({'image': imageUrl})
+        .then((value) {
+          // Clear the local file after successful upload so the UI refreshes to the NetworkImage
+          profileImage = null;
+          emit(ProfileUpdateSuccessState());
+        })
+        .catchError((error) {
+          emit(ProfileErrorState(error.toString()));
+        });
+  }
+
+  Future<void> removeProfileImage({required String uId}) async {
+    emit(ProfileUpdateLoadingState());
+
+    FirebaseFirestore.instance
+        .collection('users')
+        .doc(uId)
+        .update({
+          'image': '', // Set to empty string
+        })
+        .then((value) {
+          // Update local model so UI refreshes
+          user?.image = null;
+          emit(ProfileUpdateSuccessState());
+        })
+        .catchError((error) {
+          emit(ProfileErrorState(error.toString()));
+        });
+  }
 
   Future<void> updateProfile(var uId) async {
     emit(ProfileUpdateLoadingState());
@@ -41,9 +129,6 @@ class ProfileCubit extends Cubit<ProfileStates> {
           'email': emailTC.text.trim(),
           'phone': phoneTC.text.trim(),
           'updatedAt': FieldValue.serverTimestamp(),
-          // 'startTime': '${startTime!.hour}:${startTime!.minute}',
-          // 'endTime': '${endTime!.hour}:${endTime!.minute}',
-          // 'workingDays': selectedCodes,
         })
         .then((value) => emit(ProfileUpdateSuccessState()))
         .catchError((error) => emit(ProfileErrorState(error.toString())));
@@ -63,12 +148,12 @@ class ProfileCubit extends Cubit<ProfileStates> {
           .collection('companies')
           .doc(companyId)
           .update({
-        'organizationName': orgName.trim(),
-        'startTime': formatTimeOfDay(startTime!),
-        'endTime': formatTimeOfDay(endTime!),
-        'workingDays': workingDays,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+            'organizationName': orgName.trim(),
+            'startTime': formatTimeOfDay(startTime!),
+            'endTime': formatTimeOfDay(endTime!),
+            'workingDays': workingDays,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
 
       emit(UpdateCompanySuccessState());
     } catch (error) {
@@ -85,5 +170,13 @@ class ProfileCubit extends Cubit<ProfileStates> {
     startTimeTC.dispose();
     endTimeTC.dispose();
     return super.close();
+  }
+
+  void resetProfileData() {
+    userNameTC.clear();
+    emailTC.clear();
+    phoneTC.clear();
+    organizationTC.clear();
+    emit(ProfileInitialState());
   }
 }

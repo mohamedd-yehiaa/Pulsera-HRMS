@@ -79,19 +79,14 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Generate Payroll',
-          style: TextStyle(color: AppColors.textPrimary),
+          style:Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
-        leading: IconButton(
-          icon: const Icon(IconBroken.Arrow___Left_2,
-              color: AppColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: backButton(context),
       ),
       body: BlocConsumer<PayrollCubit, PayrollStates>(
         listener: (context, state) {

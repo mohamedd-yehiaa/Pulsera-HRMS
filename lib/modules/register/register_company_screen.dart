@@ -36,6 +36,7 @@ class RegisterCompanyScreen extends StatelessWidget {
     return BlocConsumer<RegisterCubit, RegisterStates>(
       listener: (context, state) {
         if (state is CreateCompanySuccessState) {
+          AppCubit.get(context).userModel?.companyId = state.companyId;
           AppCubit.get(context).getUserData();
 
           Fluttertoast.showToast(

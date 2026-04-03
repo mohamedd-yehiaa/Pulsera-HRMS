@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
@@ -44,9 +45,10 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        leading: backButton(context),
         title: Text(
           "${widget.employeeName}'s Attendance",
-          style: const TextStyle(fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
       body: BlocConsumer<AttendanceCubit, AttendanceStates>(

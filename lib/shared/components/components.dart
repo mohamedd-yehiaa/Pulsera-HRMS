@@ -367,4 +367,16 @@ Widget title(BuildContext context, String name, IconData iconData) {
   );
 }
 
+Widget backButton(BuildContext context) {
+  return IconButton(
+    onPressed: () {
+      Navigator.pop(context);
+    },
+    icon: const Icon(
+      IconBroken.Arrow___Left_2,
+      size: 28,
+    ),
+  );
+}
+
 

@@ -408,8 +408,15 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   bool get isPerformingAction => _isPerformingAction;
   List<Map<String, dynamic>> get teamAttendanceRecords => _teamAttendanceRecords;
 
-  /// The last feedback message from a check-in/check-out time-rule validation.
+  /// Standard getter: Just reads the message without deleting it (fixes your error!)
   String? get lastActionMessage => _lastActionMessage;
+
+  /// Consumes and clears the last feedback message to prevent infinite UI loops (SnackBar).
+  String? consumeLastActionMessage() {
+    final msg = _lastActionMessage;
+    _lastActionMessage = null;
+    return msg;
+  }
 
   @override
   Future<void> close() {

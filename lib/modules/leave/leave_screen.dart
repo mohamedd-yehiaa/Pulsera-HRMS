@@ -297,7 +297,7 @@ class LeaveScreen extends StatelessWidget {
             child: InkWell(
               onTap: () => cubit.emitTabChange(e.toLowerCase(), uId!),
               child: Container(
-                height: 55,
+                height: 50,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
                 decoration: BoxDecoration(
                   color: isSelected ? AppColors.blue600 : Colors.grey[200],
@@ -309,7 +309,7 @@ class LeaveScreen extends StatelessWidget {
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                      fontSize: 12,
                       letterSpacing: 0.5,
                       fontFamily: 'Jannah',
                     ),
