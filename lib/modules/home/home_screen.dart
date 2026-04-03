@@ -51,7 +51,7 @@ class HomeScreen extends StatelessWidget {
                 body: Center(child: CircularProgressIndicator()),
               );
             }
-            if (user?.companyId == null && user?.userType == "Company Owner") {
+            if (user.companyId == null && user.userType == "Company Owner") {
               return SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -80,7 +80,7 @@ class HomeScreen extends StatelessWidget {
                 ),
               );
             }
-            if (user?.companyId == null && user?.userType == "Employee") {
+            if (user.companyId == null && user.userType == "Employee") {
               return SafeArea(
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -105,7 +105,7 @@ class HomeScreen extends StatelessWidget {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               SelectableText(
-                                "${user?.uId}",
+                                "${user.uId}",
                                 style: Theme.of(context).textTheme.titleLarge!
                                     .copyWith(color: AppColors.primary),
                                 textAlign: TextAlign.center,
@@ -114,7 +114,7 @@ class HomeScreen extends StatelessWidget {
                               IconButton(
                                 onPressed: () {
                                   Clipboard.setData(
-                                    ClipboardData(text: "${user?.uId}"),
+                                    ClipboardData(text: "${user.uId}"),
                                   ).then((_) {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
@@ -164,7 +164,7 @@ class HomeScreen extends StatelessWidget {
               child: ListView(
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 children: [
-                  _buildDatePicker(cubit, user?.uId),
+                  _buildDatePicker(cubit, user.uId),
                   const SizedBox(height: 28),
 
                   _buildSectionHeader("Today Attendance", state, context),
@@ -187,7 +187,7 @@ class HomeScreen extends StatelessWidget {
                   _buildSectionHeader("Your Activity", null, context),
                   const SizedBox(height: 16),
 
-                  _buildSwipeButton(cubit, user?.uId, context),
+                  _buildSwipeButton(cubit, user.uId, context),
                   const SizedBox(height: 20),
 
                   Padding(

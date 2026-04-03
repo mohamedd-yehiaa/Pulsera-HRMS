@@ -310,7 +310,7 @@ class HomeLayout extends StatelessWidget {
                         else if (user?.image != null && user!.image!.isNotEmpty)
                           TextButton(
                             onPressed: () {
-                              profileCubit.removeProfileImage(uId: user!.uId!);
+                              profileCubit.removeProfileImage(uId: user.uId!);
                             },
                             child: const Text(
                               "Remove Photo",
