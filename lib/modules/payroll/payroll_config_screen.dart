@@ -97,7 +97,6 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppColors.white,
       appBar: AppBar(
         leading: backButton(context),
         title: Text(

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/modules/home/home_screen.dart';
+import 'package:pulsera/modules/kiosk/kiosk_qr_screen.dart';
 import 'package:pulsera/modules/leave/apply_leave_screen.dart';
 import 'package:pulsera/modules/leave/leave_screen.dart';
 import 'package:pulsera/modules/notification/notifications_screen.dart';
@@ -21,6 +22,7 @@ import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 
@@ -56,6 +58,17 @@ class HomeLayout extends StatelessWidget {
           listener: (context, state) {
             if (state is GetUserSuccessState) {
               final user = AppCubit.get(context).userModel;
+
+              // ── Navigation Guard: KIOSK users must NOT access HomeLayout ──
+              if (user?.userType == 'KIOSK') {
+                CacheHelper.saveData(key: 'isKiosk', value: true);
+                navigateAndFinish(
+                  context,
+                  KioskQrScreen(companyId: user!.companyId ?? ''),
+                );
+                return;
+              }
+
               if (user != null && user.companyId != null && user.uId != null) {
                 // Start (or restart) the attendance stream for today.
                 AttendanceCubit.get(context).init(user.uId!);
@@ -64,7 +77,7 @@ class HomeLayout extends StatelessWidget {
                 // Start the leave requests stream.
                 final isAdmin =
                     user.userType == 'Company Owner' ||
-                    user.roleType == 'Hr admin';
+                        user.roleType == 'Hr admin';
                 LeaveCubit.get(
                   context,
                 ).init(user.uId!, user.companyId!, isAdmin: isAdmin);
@@ -120,35 +133,35 @@ class HomeLayout extends StatelessWidget {
                   },
                   child: (cubit.userModel?.image != null && cubit.userModel!.image!.isNotEmpty)
                       ? CircleAvatar(
-                          radius: 25,
-                          backgroundImage: NetworkImage(
-                            cubit.userModel!.image!,
-                          ),
-                        )
+                    radius: 25,
+                    backgroundImage: NetworkImage(
+                      cubit.userModel!.image!,
+                    ),
+                  )
                       : Container(
-                          decoration: BoxDecoration(
-                            shape: BoxShape.circle,
-                            border: Border.all(
-                              color: AppColors.textSecondary,
-                              width: 1,
-                            ),
-                          ),
-                          child: CircleAvatar(
-                            radius: 25,
-                            backgroundColor: AppColors.primary.withValues(
-                              alpha: 0.15,
-                            ),
-                            child: Text(
-                              (cubit.userModel?.firstName ?? 'E')[0]
-                                  .toUpperCase(),
-                              style: const TextStyle(
-                                color: AppColors.primary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 18,
-                              ),
-                            ),
-                          ),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      border: Border.all(
+                        color: AppColors.textSecondary,
+                        width: 1,
+                      ),
+                    ),
+                    child: CircleAvatar(
+                      radius: 25,
+                      backgroundColor: AppColors.primary.withValues(
+                        alpha: 0.15,
+                      ),
+                      child: Text(
+                        (cubit.userModel?.firstName ?? 'E')[0]
+                            .toUpperCase(),
+                        style: const TextStyle(
+                          color: AppColors.primary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 18,
                         ),
+                      ),
+                    ),
+                  ),
                 ),
               ),
               title: Column(
@@ -276,6 +289,7 @@ class HomeLayout extends StatelessWidget {
                   var user = AppCubit.get(context).userModel;
 
                   return AppBar(
+                    backgroundColor: AppColors.grey50,
                     actions: [
                       if (state is ProfileUpdateLoadingState)
                         const Padding(
@@ -337,59 +351,87 @@ class HomeLayout extends StatelessWidget {
                 appBar: appBars[cubit.currentIndex],
                 body: screens[cubit.currentIndex],
 
-                floatingActionButton: SizedBox(
-                  width: 60,
-                  height: 60,
+                floatingActionButton:  Container(
+                  width: 65,
+                  height: 65,
+                  decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      gradient: const LinearGradient(
+                        colors: [Color(0xFF60A5FA), AppColors.primary],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0x4D1D72F2),
+                          blurRadius: 10,
+                          offset: const Offset(0, 4),
+                        )
+                      ]
+                  ),
                   child: FloatingActionButton(
                     shape: const CircleBorder(),
-                    backgroundColor: AppColors.primary,
+                    backgroundColor: Colors.transparent,
+                    elevation: 0,
                     onPressed: () =>
                         navigateTo(context, const TeamMembersScreen()),
                     child: const Icon(IconBroken.User, color: AppColors.white),
                   ),
                 ),
                 floatingActionButtonLocation:
-                    FloatingActionButtonLocation.centerDocked,
-                bottomNavigationBar: BottomAppBar(
-                  shape: const CircularNotchedRectangle(),
-                  notchMargin: 10.0,
-                  clipBehavior: Clip.antiAlias,
-                  padding: EdgeInsets.zero,
-                  color: Colors.transparent,
-                  child: BottomNavigationBar(
-                    backgroundColor: Colors.transparent,
-                    currentIndex: cubit.currentIndex,
-                    onTap: (index) {
-                      if (index != 2) cubit.changeIndex(index);
-                    },
-                    items: const [
-                      BottomNavigationBarItem(
-                        icon: Icon(IconBroken.Home),
-                        label: 'Home',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(IconBroken.Calendar),
-                        label: 'Leave',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: SizedBox(width: 5),
-                        label: '',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(IconBroken.Wallet),
-                        label: 'Payroll',
-                      ),
-                      BottomNavigationBarItem(
-                        icon: Icon(IconBroken.Setting),
-                        label: 'Settings',
-                      ),
-                    ],
+                FloatingActionButtonLocation.centerDocked,
+                bottomNavigationBar: Container(
+                  decoration: BoxDecoration(
+                      boxShadow: [
+                        BoxShadow(
+                            color: Color(0x1A1D72F2),
+                            blurRadius: 10,
+                            offset: const Offset(0, -2)
+                        )
+                      ]
+                  ),
+                  child: BottomAppBar(
+                    shape: const CircularNotchedRectangle(),
+                    notchMargin: 10.0,
+                    elevation: 0,
+                    clipBehavior: Clip.antiAlias,
+                    padding: EdgeInsets.zero,
+                    color: AppColors.grey50,
+                    child: BottomNavigationBar(
+                      backgroundColor:AppColors.grey50,
+                      currentIndex: cubit.currentIndex,
+                      onTap: (index) {
+                        if (index != 2) cubit.changeIndex(index);
+                      },
+                      items: const [
+                        BottomNavigationBarItem(
+                          icon: Icon(IconBroken.Home),
+                          label: 'Home',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(IconBroken.Calendar),
+                          label: 'Leave',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: SizedBox(width: 5),
+                          label: '',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(IconBroken.Wallet),
+                          label: 'Payroll',
+                        ),
+                        BottomNavigationBarItem(
+                          icon: Icon(IconBroken.Setting),
+                          label: 'Settings',
+                        ),
+                      ],
+                    ),
                   ),
                 ),
               );
             },
             fallback: (BuildContext context) =>
-                const Center(child: CircularProgressIndicator()),
+            const Center(child: CircularProgressIndicator()),
           );
         },
       ),

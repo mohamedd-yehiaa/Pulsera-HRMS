@@ -33,3 +33,9 @@ extension AppDateTime on DateTime {
     return DateFormat.Hms().format(this);
   }
 }
+
+extension StringExtension on String {
+  String capitalize() {
+    return "${this[0].toUpperCase()}${this.substring(1).toLowerCase()}";
+  }
+}
