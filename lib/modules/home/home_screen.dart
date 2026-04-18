@@ -3,6 +3,7 @@ import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/models/work_schedule_config.dart';
+import 'package:pulsera/modules/home/qr_scanner_screen.dart';
 import 'package:pulsera/modules/register/register_company_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/styles/theme.dart';
@@ -30,6 +31,24 @@ class HomeScreen extends StatelessWidget {
           listener: (context, state) {
             if (state is AttendanceErrorState) {
               Fluttertoast.showToast(msg: state.error);
+            }
+            // QR validation failed
+            if (state is LocationValidationFailedState) {
+              Fluttertoast.showToast(
+                msg: state.error,
+                toastLength: Toast.LENGTH_LONG,
+                backgroundColor: AppColors.error,
+                textColor: Colors.white,
+              );
+            }
+            // QR validation succeeded
+            if (state is LocationVerifiedState) {
+              Fluttertoast.showToast(
+                msg: 'Location Verified',
+                toastLength: Toast.LENGTH_SHORT,
+                backgroundColor: AppColors.green400,
+                textColor: Colors.white,
+              );
             }
             // Show time-rule feedback message after check-in/out
             if (state is AttendanceSuccessState) {
@@ -477,6 +496,7 @@ Widget _buildSwipeButton(
   final companyId = appCubit.userModel?.companyId ?? '';
   final teamId = appCubit.userModel?.managerId;
   final companyStartTime = appCubit.companyModel?.startTime;
+  final sharedSecret = appCubit.companyModel?.sharedSecret;
 
   // Build schedule config from company model
   WorkScheduleConfig? scheduleConfig;
@@ -501,19 +521,26 @@ Widget _buildSwipeButton(
           activeTrackColor: AppColors.primary.withAlpha(430),
           inactiveThumbColor: AppColors.grey300,
           onSwipe: () {
-            if (uid != null) {
-              final user = appCubit.userModel;
-              final fullName =
-                  '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
-              cubit.performSwipeAction(
-                uid,
-                companyId,
-                teamId: teamId,
-                companyStartTime: companyStartTime,
-                userName: fullName.isNotEmpty ? fullName : null,
-                scheduleConfig: scheduleConfig,
-              );
-            }
+            if (uid == null) return;
+            // Open QR scanner → pass scanned hash to cubit
+            _openScannerAndValidate(
+              context: context,
+              cubit: cubit,
+              sharedSecret: sharedSecret,
+              onSuccess: () {
+                final user = appCubit.userModel;
+                final fullName =
+                    '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+                cubit.performSwipeAction(
+                  uid,
+                  companyId,
+                  teamId: teamId,
+                  companyStartTime: companyStartTime,
+                  userName: fullName.isNotEmpty ? fullName : null,
+                  scheduleConfig: scheduleConfig,
+                );
+              },
+            );
           },
           child: Text(
             cubit.activity?.nextAction.label ?? "Check In",
@@ -532,17 +559,24 @@ Widget _buildSwipeButton(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                if (uid != null) {
-                  final user = appCubit.userModel;
-                  final fullName =
-                      '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
-                  cubit.performBreakAction(
-                    uid,
-                    companyId,
-                    teamId: teamId,
-                    userName: fullName.isNotEmpty ? fullName : null,
-                  );
-                }
+                if (uid == null) return;
+                // Open QR scanner → pass scanned hash to cubit
+                _openScannerAndValidate(
+                  context: context,
+                  cubit: cubit,
+                  sharedSecret: sharedSecret,
+                  onSuccess: () {
+                    final user = appCubit.userModel;
+                    final fullName =
+                        '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+                    cubit.performBreakAction(
+                      uid,
+                      companyId,
+                      teamId: teamId,
+                      userName: fullName.isNotEmpty ? fullName : null,
+                    );
+                  },
+                );
               },
               icon: const Icon(Icons.coffee_outlined),
               label: const Text(
@@ -562,6 +596,32 @@ Widget _buildSwipeButton(
         ],
       ],
     ),
+  );
+}
+
+/// Opens the QR scanner screen and passes the result to the cubit.
+///
+/// Flow: UI opens scanner → scanner returns raw hash → cubit validates → onSuccess
+void _openScannerAndValidate({
+  required BuildContext context,
+  required AttendanceCubit cubit,
+  required String? sharedSecret,
+  required VoidCallback onSuccess,
+}) async {
+  // Navigate to QR scanner and await the scanned hash
+  final scannedHash = await Navigator.push<String?>(
+    context,
+    MaterialPageRoute(builder: (_) => const QrScannerScreen()),
+  );
+
+  // User dismissed scanner without scanning
+  if (scannedHash == null || !context.mounted) return;
+
+  // Pass to cubit — single source of truth for validation
+  cubit.validateAndExecute(
+    scannedHash: scannedHash,
+    sharedSecret: sharedSecret,
+    onSuccess: onSuccess,
   );
 }
 

@@ -43,6 +43,14 @@ class TeamAttendanceErrorState extends AttendanceStates {
   TeamAttendanceErrorState(this.error);
 }
 
+/// QR location validation states — decoupled from attendance logic.
+class LocationScanningState extends AttendanceStates {}
+class LocationVerifiedState extends AttendanceStates {}
+class LocationValidationFailedState extends AttendanceStates {
+  final String error;
+  LocationValidationFailedState(this.error);
+}
+
 
 // -----------------------------------------------------------------------------
 // Auth States
@@ -50,12 +58,23 @@ abstract class AuthStates {}
 
 class AuthInitialState extends AuthStates {}
 class AuthLoadingState extends AuthStates {}
-class AuthSuccessState extends AuthStates {}
+class AuthSuccessState extends AuthStates {
+  final String uId;
+  AuthSuccessState(this.uId);
+}
 class AuthErrorState extends AuthStates {
   final String error;
   AuthErrorState(this.error);
 }
 class AuthChangePasswordVisibilityState extends AuthStates {}
+
+// Reset Password States
+class ResetPasswordLoadingState extends AuthStates {}
+class ResetPasswordSuccessState extends AuthStates {}
+class ResetPasswordErrorState extends AuthStates {
+  final String error;
+  ResetPasswordErrorState(this.error);
+}
 
 // -----------------------------------------------------------------------------
 // Register States
@@ -252,4 +271,29 @@ class NotificationMarkedReadState extends NotificationStates {}
 class NotificationStreamErrorState extends NotificationStates {
   final String error;
   NotificationStreamErrorState(this.error);
+}
+
+// -----------------------------------------------------------------------------
+// Kiosk States
+abstract class KioskStates {}
+
+class KioskInitialState extends KioskStates {}
+class KioskLoadingState extends KioskStates {}
+class KioskCreateSuccessState extends KioskStates {}
+class KioskCreateErrorState extends KioskStates {
+  final String error;
+  KioskCreateErrorState(this.error);
+}
+class KioskFetchLoadingState extends KioskStates {}
+class KioskFetchedState extends KioskStates {}
+class KioskNotFoundState extends KioskStates {}
+class KioskFetchErrorState extends KioskStates {
+  final String error;
+  KioskFetchErrorState(this.error);
+}
+class KioskChangePasswordLoadingState extends KioskStates {}
+class KioskChangePasswordSuccessState extends KioskStates {}
+class KioskChangePasswordErrorState extends KioskStates {
+  final String error;
+  KioskChangePasswordErrorState(this.error);
 }

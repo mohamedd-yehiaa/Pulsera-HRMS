@@ -21,7 +21,7 @@ class AuthCubit extends Cubit<AuthStates> {
       password: password,
     )
         .then((value) {
-      emit(AuthSuccessState());
+      emit(AuthSuccessState(value.user!.uid));
 
     })
         .catchError((error)
@@ -39,5 +39,25 @@ class AuthCubit extends Cubit<AuthStates> {
     isPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined;
 
     emit(AuthChangePasswordVisibilityState());
+  }
+
+  Future<void> sendPasswordResetEmail({required String email}) async {
+    emit(ResetPasswordLoadingState());
+    try {
+      await FirebaseAuth.instance.sendPasswordResetEmail(
+        email: email.trim(),
+      );
+      emit(ResetPasswordSuccessState());
+    } on FirebaseAuthException catch (e) {
+      final msg = switch (e.code) {
+        'user-not-found' => 'No account found with this email',
+        'invalid-email' => 'Invalid email format',
+        'too-many-requests' => 'Too many attempts. Try again later',
+        _ => 'Something went wrong. Please try again',
+      };
+      emit(ResetPasswordErrorState(msg));
+    } catch (_) {
+      emit(ResetPasswordErrorState('Check your internet connection'));
+    }
   }
 }

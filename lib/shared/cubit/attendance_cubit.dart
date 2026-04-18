@@ -2,6 +2,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/services/totp_service.dart';
 import 'package:intl/intl.dart';
 import 'dart:async';
 import '../../models/user_activity_model.dart';
@@ -31,6 +32,12 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
 
   // Guard against double-swipe
   bool _isPerformingAction = false;
+
+  // QR location verification flag — must be true before any Firestore write
+  bool _isLocationVerified = false;
+
+  // Rate-limit: timestamp of last successful validation
+  DateTime? _lastValidationTime;
 
   // Track which user/date the stream is currently for
   String? _currentStreamUserId;
@@ -212,6 +219,57 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   }
 
   // ===========================================================================
+  // QR Location Validation — single source of truth
+  // ===========================================================================
+
+  /// Validates a scanned QR hash against the company's shared secret.
+  ///
+  /// This is the ONLY entry point for QR validation. The UI passes the raw
+  /// scanned hash here; the Cubit decides validity.
+  ///
+  /// Flow:
+  /// 1. If [sharedSecret] is null → block, emit error (no fallback)
+  /// 2. Validate via [TotpService.validate]
+  /// 3. If valid → emit [LocationVerifiedState], call [onSuccess]
+  /// 4. If invalid → emit [LocationValidationFailedState], do NOT call [onSuccess]
+  void validateAndExecute({
+    required String scannedHash,
+    required String? sharedSecret,
+    required VoidCallback onSuccess,
+  }) {
+    // Block: No shared_secret configured
+    if (sharedSecret == null || sharedSecret.isEmpty) {
+      emit(LocationValidationFailedState(
+        'Company must configure QR verification',
+      ));
+      return;
+    }
+
+    // Rate-limit: prevent spam scans (minimum 2 seconds between validations)
+    final now = DateTime.now();
+    if (_lastValidationTime != null &&
+        now.difference(_lastValidationTime!).inSeconds < 2) {
+      return;
+    }
+
+    emit(LocationScanningState());
+
+    final isValid = TotpService.validate(scannedHash, sharedSecret);
+
+    if (!isValid) {
+      _isLocationVerified = false;
+      emit(LocationValidationFailedState('Invalid QR or Expired'));
+      return;
+    }
+
+    // Validation succeeded
+    _isLocationVerified = true;
+    _lastValidationTime = now;
+    emit(LocationVerifiedState());
+    onSuccess();
+  }
+
+  // ===========================================================================
   // Swipe action (check-in/out, breaks) — with double-swipe guard
   // ===========================================================================
 
@@ -235,6 +293,16 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
 
     _isPerformingAction = true;
     _lastActionMessage = null;
+
+    // Guard: no Firestore write without location verification
+    if (!_isLocationVerified) {
+      _isPerformingAction = false;
+      emit(LocationValidationFailedState(
+        'Location verification required',
+      ));
+      return;
+    }
+
     emit(AttendanceActionInProgressState());
 
     try {
@@ -295,6 +363,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
       emit(AttendanceErrorState(e.toString()));
     } finally {
       _isPerformingAction = false;
+      _isLocationVerified = false; // Reset after each action
       // ── Debug: button visibility ──
       debugPrint('[Attendance] After action: nextAction=${_currentActivity?.nextAction}, '
           'canTakeBreak=${_currentActivity?.canTakeBreak}, '
@@ -323,6 +392,16 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     if (!canTakeBreak) return;
 
     _isPerformingAction = true;
+
+    // Guard: no Firestore write without location verification
+    if (!_isLocationVerified) {
+      _isPerformingAction = false;
+      emit(LocationValidationFailedState(
+        'Location verification required',
+      ));
+      return;
+    }
+
     emit(AttendanceActionInProgressState());
 
     try {
@@ -347,6 +426,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
       emit(AttendanceErrorState(e.toString()));
     } finally {
       _isPerformingAction = false;
+      _isLocationVerified = false; // Reset after each action
       debugPrint('[Attendance] After break action: nextAction=${_currentActivity?.nextAction}, '
           'canTakeBreak=${_currentActivity?.canTakeBreak}, '
           'isPerformingAction=$_isPerformingAction');

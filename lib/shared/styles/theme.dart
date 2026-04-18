@@ -53,7 +53,6 @@ final appTheme = ThemeData(
   // datePickerTheme: DatePickerThemeData(),
 
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
-    backgroundColor: Colors.white,
     selectedItemColor: AppColors.primary,
     unselectedItemColor: AppColors.grey800,
     elevation: 0,
@@ -219,5 +218,5 @@ final appTheme = ThemeData(
       color: AppColors.black900,
     ),
   ),
-  scaffoldBackgroundColor: AppColors.background,
+  scaffoldBackgroundColor: AppColors.grey50,
 );

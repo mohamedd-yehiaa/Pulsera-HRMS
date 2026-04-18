@@ -22,6 +22,10 @@ class CompanyModel {
   /// Minimum hours an employee should work per day.
   int? minimumWorkHours;
 
+  /// Shared secret used for TOTP-based QR location validation.
+  /// If null, the company has not configured QR verification.
+  String? sharedSecret;
+
   CompanyModel({
     this.companyId,
     this.ownerId,
@@ -37,6 +41,7 @@ class CompanyModel {
     this.earlyAllowanceMinutes,
     this.lateCutoffMinutes,
     this.minimumWorkHours,
+    this.sharedSecret,
   });
 
   // Receiving data from Firebase (Map -> Model)
@@ -54,6 +59,7 @@ class CompanyModel {
     earlyAllowanceMinutes = json?['earlyAllowanceMinutes'];
     lateCutoffMinutes = json?['lateCutoffMinutes'];
     minimumWorkHours = json?['minimumWorkHours'];
+    sharedSecret = json?['sharedSecret'];
     // Safe casting for the List
     if (json?['workingDays'] != null) {
       workingDays = List<String>.from(json?['workingDays']);
@@ -77,6 +83,7 @@ class CompanyModel {
       if (earlyAllowanceMinutes != null) 'earlyAllowanceMinutes': earlyAllowanceMinutes,
       if (lateCutoffMinutes != null) 'lateCutoffMinutes': lateCutoffMinutes,
       if (minimumWorkHours != null) 'minimumWorkHours': minimumWorkHours,
+      if (sharedSecret != null) 'sharedSecret': sharedSecret,
     };
   }
 }

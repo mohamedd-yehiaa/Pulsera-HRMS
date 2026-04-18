@@ -11,6 +11,8 @@ import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 
+import '../app_extension.dart';
+
 
 class RegisterCubit extends Cubit<RegisterStates> {
   RegisterCubit() : super(RegisterInitialState());
@@ -124,8 +126,8 @@ class RegisterCubit extends Cubit<RegisterStates> {
         uId: value.user!.uid,
         phone: phone,
         email: email,
-        firstName: firstName,
-        lastName: lastName,
+        firstName: firstName.trim().capitalize(),
+        lastName: lastName.trim().capitalize(),
         userType: selectedUserType,
       );
     }).catchError((error) {
@@ -142,8 +144,8 @@ class RegisterCubit extends Cubit<RegisterStates> {
     required String userType,
   }) {
     UserModel model = UserModel(
-      firstName: firstName,
-      lastName: lastName,
+      firstName: firstName.trim().capitalize(),
+      lastName: lastName.trim().capitalize(),
       email: email,
       phone: phone,
       uId: uId,
@@ -239,7 +241,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
     CompanyModel comModel = CompanyModel(
       companyId: companyDocRef.id,
       ownerId: ownerId,
-      organizationName: orgName,
+      organizationName: orgName.trim().capitalize(),
       paidLeavePerMonth: int.parse(paidLeave),
       sickLeavePerMonth: int.parse(sickLeave),
       wfhPerMonth: int.parse(wfhDays),

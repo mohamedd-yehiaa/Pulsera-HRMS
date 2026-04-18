@@ -4,6 +4,8 @@ import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/modules/settings/company_details_screen.dart';
 import 'package:pulsera/modules/settings/edit_profile_screen.dart';
+import 'package:pulsera/modules/settings/generate_qr_code_screen.dart';
+import 'package:pulsera/modules/settings/kiosk_account_section.dart';
 import 'package:pulsera/modules/settings/profile_details_screen.dart';
 import 'package:pulsera/modules/settings/profile_header_widget.dart';
 import 'package:pulsera/modules/settings/profile_menu_item_widget.dart';
@@ -58,7 +60,6 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 32),
 
               // --- Menu Items Section ---
-
               ProfileMenuItemWidget(
                 title: "My Profile",
                 leadingIcon: IconBroken.Profile,
@@ -70,18 +71,51 @@ class SettingsScreen extends StatelessWidget {
                 ProfileMenuItemWidget(
                   title: "My Company",
                   leadingIcon: IconBroken.Work,
-                  onTap: () => navigateTo(context, const CompanyDetailsScreen()),
+                  onTap: () =>
+                      navigateTo(context, const CompanyDetailsScreen()),
                 ),
               ],
 
-              if (user.userType == 'Company Owner') ...[
-                const SizedBox(height: 16),
+              if (user.userType == 'Company Owner' ||
+                  user.roleType == 'Hr admin') ...[
+                const SizedBox(height: 24),
+                const Padding(
+                  padding: EdgeInsets.only(left: 8, bottom: 8),
+                  child: Text(
+                    "Business Tools",
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.grey,
+                    ),
+                  ),
+                ),
                 ProfileMenuItemWidget(
                   title: "Generate QR Code",
                   leadingIcon: IconBroken.Scan,
+
                   onTap: () {
-                    // TODO: Implement QR Navigation
+                    final company = appCubit.companyModel;
+                    navigateTo(
+                      context,
+                      GenerateQrCodeScreen(
+                        companyId: company?.companyId ?? user.companyId ?? '',
+                        sharedSecret: company?.sharedSecret,
+                      ),
+                    );
                   },
+                ),
+              ],
+
+              // --- Kiosk Account Section (Company Owner only) ---
+              if ((user.userType == 'Company Owner' ||
+                      user.roleType == 'Hr admin') &&
+                  user.companyId != null) ...[
+                const SizedBox(height: 24),
+                KioskAccountSection(
+                  companyId: appCubit.companyModel?.companyId ??
+                      user.companyId ?? '',
+                  companyName: appCubit.companyModel?.organizationName,
                 ),
               ],
 
@@ -132,15 +166,16 @@ class SettingsScreen extends StatelessWidget {
 
 /// Helper function to handle the logout sequence
 Future<void> performLogout(
-    BuildContext context, {
-      required ProfileCubit profileCubit,
-      required RegisterCubit registerCubit,
-    }) async {
+  BuildContext context, {
+  required ProfileCubit profileCubit,
+  required RegisterCubit registerCubit,
+}) async {
   try {
     // 1. Clear local cache
     await Future.wait([
       CacheHelper.removeData(key: 'uId'),
       CacheHelper.removeData(key: 'companyId'),
+      CacheHelper.removeData(key: 'isKiosk'),
     ]);
 
     if (!context.mounted) return;
