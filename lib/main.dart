@@ -5,6 +5,7 @@ import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/kiosk/kiosk_qr_screen.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/shared/bloc_observer.dart';
+import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
@@ -25,6 +26,7 @@ import 'package:pulsera/shared/network/remote/team_repository.dart';
 import 'package:pulsera/shared/styles/theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -33,6 +35,7 @@ void main() async {
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await CacheHelper.init();
+  await Supabase.initialize(url: urlSupabase, anonKey: annonKeySupabase);
 
   final uId = CacheHelper.getData(key: 'uId');
   final isKiosk = CacheHelper.getData(key: 'isKiosk') ?? false;

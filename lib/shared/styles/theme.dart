@@ -5,10 +5,10 @@ final borderRadius = BorderRadius.circular(12);
 
 List<BoxShadow> get boxShadow => [
   BoxShadow(
-    color: AppColors.grey300.withValues(alpha: 0.4),
-    offset: Offset(0.0, 4.0), //(x,y)
-    blurRadius: 6.0,
-    spreadRadius: 2.0,
+    color: AppColors.grey300.withValues(alpha: 0.3),
+    offset: Offset(0.0, 2.0), //(x,y)
+    blurRadius: 4.0,
+    spreadRadius: 1.5,
   ),
 ];
 

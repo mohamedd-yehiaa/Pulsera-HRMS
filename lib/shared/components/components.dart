@@ -191,6 +191,7 @@ class HorizontalDate extends StatelessWidget {
                   vertical: 18,
                 ),
                 decoration: BoxDecoration(
+                  boxShadow:boxShadow,
                   color: isSelected ? AppColors.primary : AppColors.white,
                   borderRadius: borderRadius,
                   border: Border.all(color: AppColors.borderColor, width: 1),

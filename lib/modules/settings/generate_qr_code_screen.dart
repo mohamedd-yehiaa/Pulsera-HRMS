@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/services/totp_service.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
@@ -93,6 +94,11 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
         _isGeneratingSecret = false;
         _secondsUntilRefresh = TotpService.timeStepSeconds;
       });
+
+      // Refresh global company cache so all screens see the new sharedSecret
+      if (mounted) {
+        AppCubit.get(context).getCompanyData();
+      }
 
       _generateCurrentHash();
       _startTimer();

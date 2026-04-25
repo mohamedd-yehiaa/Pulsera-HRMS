@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:intl/intl.dart';
 import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/modules/home/qr_scanner_screen.dart';
 import 'package:pulsera/modules/register/register_company_screen.dart';
@@ -50,14 +51,28 @@ class HomeScreen extends StatelessWidget {
                 textColor: Colors.white,
               );
             }
-            // Show time-rule feedback message after check-in/out
-            if (state is AttendanceSuccessState) {
-              final msg = AttendanceCubit.get(context).lastActionMessage;
+            // Show time-rule feedback message after check-in/out (fires ONCE)
+            if (state is AttendanceActionCompletedState) {
+              final msg = state.message;
               if (msg != null && msg.isNotEmpty) {
                 Fluttertoast.showToast(
                   msg: msg,
                   toastLength: Toast.LENGTH_SHORT,
                   backgroundColor: Colors.black87,
+                );
+              }
+              // Reload monthly summary so total days counter updates
+              final appCubit = AppCubit.get(context);
+              final u = appCubit.userModel;
+              final company = appCubit.companyModel;
+              if (u != null && u.uId != null && company != null) {
+                final yearMonth = DateFormat('yyyy-MM').format(DateTime.now());
+                AttendanceCubit.get(context).loadMonthlySummary(
+                  userId: u.uId!,
+                  yearMonth: yearMonth,
+                  companyWorkingDays: company.workingDays ?? [],
+                  companyStartTime: company.startTime ?? '09:00',
+                  lateGracePeriodMinutes: company.gracePeriodMinutes ?? 15,
                 );
               }
             }
@@ -522,11 +537,12 @@ Widget _buildSwipeButton(
           inactiveThumbColor: AppColors.grey300,
           onSwipe: () {
             if (uid == null) return;
-            // Open QR scanner → pass scanned hash to cubit
+            // Open QR scanner → confirmation → execute
             _openScannerAndValidate(
               context: context,
               cubit: cubit,
               sharedSecret: sharedSecret,
+              scheduleConfig: scheduleConfig,
               onSuccess: () {
                 final user = appCubit.userModel;
                 final fullName =
@@ -601,12 +617,14 @@ Widget _buildSwipeButton(
 
 /// Opens the QR scanner screen and passes the result to the cubit.
 ///
-/// Flow: UI opens scanner → scanner returns raw hash → cubit validates → onSuccess
+/// Flow: UI opens scanner → scanner returns raw hash → cubit validates
+/// → If early/late, show confirmation dialog → onSuccess
 void _openScannerAndValidate({
   required BuildContext context,
   required AttendanceCubit cubit,
   required String? sharedSecret,
   required VoidCallback onSuccess,
+  WorkScheduleConfig? scheduleConfig,
 }) async {
   // Navigate to QR scanner and await the scanned hash
   final scannedHash = await Navigator.push<String?>(
@@ -617,12 +635,68 @@ void _openScannerAndValidate({
   // User dismissed scanner without scanning
   if (scannedHash == null || !context.mounted) return;
 
+  // Pre-validate to check if early/late — show confirmation dialog if needed
+  if (scheduleConfig != null) {
+    final preview = cubit.preValidateAction(scheduleConfig: scheduleConfig);
+    if (preview != null && _isEarlyOrLateStatus(preview.status)) {
+      final confirmed = await showDialog<bool>(
+        context: context,
+        barrierDismissible: false,
+        builder: (dialogContext) => AlertDialog(
+          title: Row(
+            children: [
+              Icon(
+                _isLateStatus(preview.status)
+                    ? Icons.warning_amber_rounded
+                    : Icons.access_time,
+                color: _isLateStatus(preview.status)
+                    ? AppColors.orange500
+                    : AppColors.blue600,
+              ),
+              const SizedBox(width: 8),
+              const Text("Confirm Action"),
+            ],
+          ),
+          content: Text(
+            preview.message,
+            style: const TextStyle(fontSize: 15),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text("Cancel"),
+            ),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text("Confirm"),
+            ),
+          ],
+        ),
+      );
+
+      if (confirmed != true || !context.mounted) return;
+    }
+  }
+
   // Pass to cubit — single source of truth for validation
   cubit.validateAndExecute(
     scannedHash: scannedHash,
     sharedSecret: sharedSecret,
     onSuccess: onSuccess,
   );
+}
+
+/// Returns true if the status represents an early or late condition
+/// that warrants a confirmation dialog.
+bool _isEarlyOrLateStatus(String status) {
+  return const {'early', 'late', 'very_late', 'early_leave', 'insufficient_hours'}
+      .contains(status);
+}
+
+/// Returns true if the status represents a late/warning condition.
+bool _isLateStatus(String status) {
+  return const {'late', 'very_late', 'early_leave', 'insufficient_hours'}
+      .contains(status);
 }
 
 // --- Helper Methods ---
