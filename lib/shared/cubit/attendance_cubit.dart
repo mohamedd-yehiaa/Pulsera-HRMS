@@ -46,8 +46,6 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   // Team attendance data (admin view)
   List<Map<String, dynamic>> _teamAttendanceRecords = [];
 
-  // Last action feedback message (from time-rule validation)
-  String? _lastActionMessage;
 
   AttendanceCubit(this._repository) : super(AttendanceInitialState());
 
@@ -273,6 +271,48 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   // Swipe action (check-in/out, breaks) — with double-swipe guard
   // ===========================================================================
 
+  // ===========================================================================
+  // Pre-validation for confirmation UI
+  // ===========================================================================
+
+  /// Pre-validates an attendance action (check-in or check-out) to determine
+  /// if the user is early/late, so the UI can show a confirmation dialog.
+  ///
+  /// Returns a user-facing message and status, or null if no schedule config.
+  /// Does NOT modify state or write to Firestore.
+  ({String status, String message})? preValidateAction({
+    required WorkScheduleConfig? scheduleConfig,
+  }) {
+    if (scheduleConfig == null) return null;
+
+    final nextAction = _currentActivity?.nextAction ?? UserPerformActivty.IN;
+    final timeNow = DateFormat("HH:mm:ss").format(DateTime.now());
+
+    if (nextAction == UserPerformActivty.IN) {
+      final result = AttendanceService.validateCheckInTime(
+        timeNow,
+        scheduleConfig,
+      );
+      return (status: result.status, message: result.message);
+    }
+
+    if (nextAction == UserPerformActivty.OUT) {
+      final checkInTime = _currentActivity?.checkIn?.inTime;
+      if (checkInTime != null) {
+        final result = AttendanceService.validateCheckOutTime(
+          timeNow,
+          checkInTime,
+          scheduleConfig,
+          breakInTimes: _currentActivity?.breakInTime,
+          breakOutTimes: _currentActivity?.breakOutTime,
+        );
+        return (status: result.status, message: result.message);
+      }
+    }
+
+    return null;
+  }
+
   Future<void> performSwipeAction(
     String userId,
     String companyId, {
@@ -292,7 +332,6 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
     if (nextAction == UserPerformActivty.DONE) return;
 
     _isPerformingAction = true;
-    _lastActionMessage = null;
 
     // Guard: no Firestore write without location verification
     if (!_isLocationVerified) {
@@ -317,7 +356,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
         scheduleConfig: scheduleConfig,
       );
 
-      // Generate user-facing message from schedule config
+      // Generate user-facing message from schedule config (emitted once via state)
+      String? feedbackMessage;
       if (scheduleConfig != null) {
         final timeNow = DateFormat("HH:mm:ss").format(DateTime.now());
         if (nextAction == UserPerformActivty.IN) {
@@ -325,7 +365,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
             timeNow,
             scheduleConfig,
           );
-          _lastActionMessage = result.message;
+          feedbackMessage = result.message;
         } else if (nextAction == UserPerformActivty.OUT) {
           final checkInTime = _currentActivity?.checkIn?.inTime;
           if (checkInTime != null) {
@@ -336,7 +376,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
               breakInTimes: _currentActivity?.breakInTime,
               breakOutTimes: _currentActivity?.breakOutTime,
             );
-            _lastActionMessage = result.message;
+            feedbackMessage = result.message;
           }
         }
       }
@@ -359,6 +399,9 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
           );
         }
       }
+
+      // Emit completed state with feedback — fires the toast exactly once
+      emit(AttendanceActionCompletedState(message: feedbackMessage));
     } catch (e) {
       emit(AttendanceErrorState(e.toString()));
     } finally {
@@ -367,8 +410,7 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
       // ── Debug: button visibility ──
       debugPrint('[Attendance] After action: nextAction=${_currentActivity?.nextAction}, '
           'canTakeBreak=${_currentActivity?.canTakeBreak}, '
-          'isPerformingAction=$_isPerformingAction, '
-          'lastMessage=$_lastActionMessage');
+          'isPerformingAction=$_isPerformingAction');
     }
   }
 
@@ -487,16 +529,6 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
   int get monthPaidLeaveDays => _monthPaidLeaveDays;
   bool get isPerformingAction => _isPerformingAction;
   List<Map<String, dynamic>> get teamAttendanceRecords => _teamAttendanceRecords;
-
-  /// Standard getter: Just reads the message without deleting it (fixes your error!)
-  String? get lastActionMessage => _lastActionMessage;
-
-  /// Consumes and clears the last feedback message to prevent infinite UI loops (SnackBar).
-  String? consumeLastActionMessage() {
-    final msg = _lastActionMessage;
-    _lastActionMessage = null;
-    return msg;
-  }
 
   @override
   Future<void> close() {

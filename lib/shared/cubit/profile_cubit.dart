@@ -1,6 +1,5 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,6 +7,7 @@ import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileCubit extends Cubit<ProfileStates> {
   ProfileCubit() : super(ProfileInitialState());
@@ -31,51 +31,47 @@ class ProfileCubit extends Cubit<ProfileStates> {
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
       if (pickedFile != null) {
         profileImage = File(pickedFile.path);
-        print("Image Path: ${pickedFile.path}");
         emit(ProfileImagePickedSuccessState());
       } else {
         print('No image selected.');
       }
     } catch (e) {
-      // Catching platform exceptions (e.g., permission denied)
       emit(ProfileImagePickedErrorState('Error picking image: $e'));
     }
   }
 
-  void uploadProfileImage({required String uId}) {
+  void uploadProfileImage({required String uId}) async {
     if (profileImage == null) return;
 
     emit(ProfileUpdateLoadingState());
 
-    firebase_storage.FirebaseStorage.instance
-        .ref()
-        .child(
-          'users/$uId/profile_pictures/${Uri.file(profileImage!.path).pathSegments.last}',
-        )
-        .putFile(profileImage!)
-        .then((value) {
-          value.ref
-              .getDownloadURL()
-              .then((url) {
-                // After getting the URL, update the user's image field in Firestore
-                _updateUserImage(uId: uId, imageUrl: url);
-              })
-              .catchError((error) {
-                emit(
-                  ProfileErrorState(
-                    "Failed to get download URL: ${error.toString()}",
-                  ),
-                );
-              });
-        })
-        .catchError((error) {
-          emit(
-            ProfileErrorState("Failed to upload image: ${error.toString()}"),
-          );
-        });
-  }
+    try {
+      final fileName = profileImage!.path.split('/').last;
+      final path = 'users/$uId/profile_pictures/$fileName';
 
-  // Private helper to update only the image field in Firestore
+      // 1. Upload the file to the 'profiles' bucket
+      await Supabase.instance.client.storage
+          .from('profiles')
+          .upload(
+        path,
+        profileImage!,
+        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
+      );
+
+      // 2. Get the public URL
+      final String imageUrl = Supabase.instance.client.storage
+          .from('profiles')
+          .getPublicUrl(path);
+
+      // 3. Update your user record in the database
+      _updateUserImage(uId: uId, imageUrl: imageUrl);
+
+    } on StorageException catch (error) {
+      emit(ProfileErrorState("Storage error: ${error.message}"));
+    } catch (error) {
+      emit(ProfileErrorState("An unexpected error occurred: ${error.toString()}"));
+    }
+  }
   void _updateUserImage({required String uId, required String imageUrl}) {
     FirebaseFirestore.instance
         .collection('users')

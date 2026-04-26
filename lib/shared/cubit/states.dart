@@ -35,6 +35,11 @@ class AttendanceValidationErrorState extends AttendanceStates {
 }
 /// Emitted while a swipe action is in progress (prevents double-swipe).
 class AttendanceActionInProgressState extends AttendanceStates {}
+/// Emitted once after a successful attendance action with an optional feedback message.
+class AttendanceActionCompletedState extends AttendanceStates {
+  final String? message;
+  AttendanceActionCompletedState({this.message});
+}
 /// States for admin team attendance view.
 class TeamAttendanceLoadingState extends AttendanceStates {}
 class TeamAttendanceLoadedState extends AttendanceStates {}

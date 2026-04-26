@@ -106,7 +106,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
-                color: AppColors.grey50,
+                color: AppColors.grey100,
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.borderColor),
               ),
@@ -118,8 +118,8 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
                       ),
                     )
                   : cubit.kioskExists
-                      ? _buildKioskExistsView(cubit, state)
-                      : _buildCreateKioskView(cubit, state),
+                  ? _buildKioskExistsView(cubit, state)
+                  : _buildCreateKioskView(cubit, state),
             ),
           ],
         );
@@ -181,10 +181,17 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
           width: double.infinity,
           child: OutlinedButton.icon(
             onPressed: () => _showChangePasswordDialog(context, cubit),
-            icon: const Icon(IconBroken.Lock, size: 18),
+            icon: const Icon(
+              IconBroken.Lock,
+              size: 18,
+              color: AppColors.primary,
+            ),
             label: const Text(
               'Change Password',
-              style: TextStyle(fontWeight: FontWeight.w600),
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                color: AppColors.textPrimary,
+              ),
             ),
             style: OutlinedButton.styleFrom(
               padding: const EdgeInsets.symmetric(vertical: 14),
@@ -207,9 +214,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
       backgroundColor: Colors.transparent,
       builder: (_) => BlocProvider<KioskCubit>.value(
         value: cubit,
-        child: _ChangePasswordSheet(
-          kioskEmail: cubit.kioskEmail ?? '',
-        ),
+        child: _ChangePasswordSheet(kioskEmail: cubit.kioskEmail ?? ''),
       ),
     );
   }
@@ -260,8 +265,10 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
               labelText: 'Kiosk Email',
-              prefixIcon:
-                  const Icon(IconBroken.Message, color: AppColors.blue500),
+              prefixIcon: const Icon(
+                IconBroken.Message,
+                color: AppColors.blue500,
+              ),
               filled: true,
               fillColor: AppColors.grey100,
               border: OutlineInputBorder(
@@ -288,8 +295,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             obscureText: !_isPasswordVisible,
             decoration: InputDecoration(
               labelText: 'Password',
-              prefixIcon:
-                  const Icon(IconBroken.Lock, color: AppColors.blue500),
+              prefixIcon: const Icon(IconBroken.Lock, color: AppColors.blue500),
               suffixIcon: IconButton(
                 icon: Icon(
                   _isPasswordVisible
@@ -346,8 +352,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
                         color: Colors.white,
                       ),
                     )
-                  : const Icon(Icons.desktop_mac_outlined,
-                      color: Colors.white),
+                  : const Icon(Icons.desktop_mac_outlined, color: Colors.white),
               label: Text(
                 isCreating ? 'Creating...' : 'Create Kiosk Account',
                 style: const TextStyle(
@@ -477,9 +482,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   Text(
                     'Change Kiosk Password',
                     style: Theme.of(context).textTheme.headlineSmall!.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: AppColors.textPrimary,
-                        ),
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.textPrimary,
+                    ),
                   ),
                   const SizedBox(height: 8),
 
@@ -494,10 +499,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       const SizedBox(width: 6),
                       Text(
                         widget.kioskEmail,
-                        style:
-                            Theme.of(context).textTheme.bodyMedium!.copyWith(
-                                  color: AppColors.textSecondary,
-                                ),
+                        style: Theme.of(context).textTheme.bodyMedium!.copyWith(
+                          color: AppColors.textSecondary,
+                        ),
                       ),
                     ],
                   ),
@@ -509,7 +513,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                     label: 'Current Password',
                     isVisible: _showCurrentPassword,
                     onToggle: () => setState(
-                        () => _showCurrentPassword = !_showCurrentPassword),
+                      () => _showCurrentPassword = !_showCurrentPassword,
+                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please enter the current password';
@@ -544,7 +549,8 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                     label: 'Confirm New Password',
                     isVisible: _showConfirmPassword,
                     onToggle: () => setState(
-                        () => _showConfirmPassword = !_showConfirmPassword),
+                      () => _showConfirmPassword = !_showConfirmPassword,
+                    ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Please confirm the new password';
@@ -565,8 +571,9 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                       onPressed: isLoading ? null : _submit,
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,
-                        disabledBackgroundColor:
-                            AppColors.primary.withValues(alpha: 0.4),
+                        disabledBackgroundColor: AppColors.primary.withValues(
+                          alpha: 0.4,
+                        ),
                         foregroundColor: AppColors.white,
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(14),
@@ -584,9 +591,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                             )
                           : Text(
                               'Update Password',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleMedium!
+                              style: Theme.of(context).textTheme.titleMedium!
                                   .copyWith(
                                     color: AppColors.white,
                                     fontWeight: FontWeight.bold,
