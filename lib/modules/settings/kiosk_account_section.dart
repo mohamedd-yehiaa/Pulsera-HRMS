@@ -379,11 +379,6 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
 // Change Password Bottom Sheet
 // =============================================================================
 
-/// A stateful bottom sheet for changing the kiosk account password.
-///
-/// Uses [BlocConsumer] to react to [KioskCubit] states. Contains three fields:
-/// current password, new password, and confirm new password, with full
-/// client-side validation and Firebase error handling.
 class _ChangePasswordSheet extends StatefulWidget {
   final String kioskEmail;
 

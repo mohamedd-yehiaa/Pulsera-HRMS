@@ -52,22 +52,6 @@ class TeamRepository {
   }
 
   /// Fetches all employees assigned to this manager within the same company.
-  // Future<List<MemberModel>> getTeamMembers({
-  //   required String managerId,
-  //   required String companyId,
-  // }) async {
-  //   // final snapshot = await _firestore
-  //   //     .collection('users')
-  //   //     .where('managerId', isEqualTo: managerId)
-  //   //     .where('companyId', isEqualTo: companyId)
-  //   //     .get();
-  //   final doc = await _firestore.collection('teams').doc(managerId).get();
-  //
-  //   return snapshot.docs
-  //       .map((doc) => UserModel.fromJson(doc.data()))
-  //       .toList();
-  //
-  // }
   Future<MemberModel?> getFullTeamData({
     required String managerId,
   }) async {

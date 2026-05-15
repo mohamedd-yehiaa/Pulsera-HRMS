@@ -468,7 +468,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                   context,
                   title: "Total",
                   value: "${myData.monthlyVacationDays ?? 0}",
-                  subtitle: "days/year",
+                  subtitle: "days/Month",
                   color: AppColors.primary,
                   icon: IconBroken.Calendar,
                 ),
