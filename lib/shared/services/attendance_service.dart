@@ -143,16 +143,7 @@ class AttendanceService {
   /// [approvedLeaveDates] — set of 'yyyy-MM-dd' strings for approved leave
   /// days. Attendance records on these dates are excluded from workedDays
   /// to prevent double-counting (leave is already counted as a paid day).
-  ///
-  /// Keys returned:
-  /// - `daysWorked` (int)
-  /// - `lateDays` (int)
-  /// - `lateMinutes` (int)
-  /// - `overtimeMinutes` (int)
-  /// - `overtimeDays` (int)
-  /// - `earlyLeaveDays` (int)
-  /// - `earlyLeaveMinutes` (int)
-  /// - `missingCheckoutDays` (int)
+
   static Map<String, dynamic> analyseAttendance({
     required List<Map<String, dynamic>> attendanceDocs,
     required String companyStartTime,

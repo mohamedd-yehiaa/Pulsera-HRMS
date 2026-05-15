@@ -10,7 +10,6 @@ import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
-
 import '../app_extension.dart';
 
 
@@ -22,7 +21,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   // Class Properties
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
-  IconData suffix = Icons.visibility_off_outlined;
+  IconData suffix = Icons.visibility_outlined;
   bool isPassword = true;
   String selectedUserType = "Employee";
   TimeOfDay? startTime;
@@ -96,7 +95,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   // UI Support Methods
   void changePasswordVisibility() {
     isPassword = !isPassword;
-    suffix = isPassword ? Icons.visibility_off_outlined : Icons.visibility_outlined;
+    suffix = isPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined;
     emit(RegisterChangePasswordVisibilityState());
   }
 

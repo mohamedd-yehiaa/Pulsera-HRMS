@@ -215,7 +215,7 @@ class _LoginFormBody extends StatelessWidget {
             Center(
               child: Image(
                 fit: BoxFit.contain,
-                height: 250,
+                height: 200,
                 image: const AssetImage('assets/images/logo.png'),
               ),
             ),
