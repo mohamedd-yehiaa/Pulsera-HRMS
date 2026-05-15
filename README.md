@@ -9,12 +9,14 @@
 
 ![Version](https://img.shields.io/badge/version-1.0.0-success)
 
+<img width="1720" height="1080" alt="PULSERA UI" src="https://github.com/user-attachments/assets/d778526c-cda8-41a4-b130-77facf123e56" />
 
 </div>
 
 ## 📖 Table of Contents
 - [About The Project](#about-the-project)
 - [Key Features](#key-features)
+- [App Interface](#app-interface)
 - [System Architecture](#system-architecture)
 - [Built With](#built-with)
 - [Getting Started](#getting-started)
@@ -38,10 +40,34 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 ## ✨ Key Features
 
 * **👥 Employee Management:** Seamlessly add, update, and delete employee profiles. Enforce robust access control by assigning system roles such as Admin, Manager, and Employee.
-* **⏱️ Attendance Management:** Employees can quickly check in and out using the app. The system centrally records all time logs and generates comprehensive monthly attendance reports.
-* **🏖️ Leave Management:** A streamlined workflow allows employees to smoothly apply for annual, sick, or emergency leave. Managers can instantly review, approve, or reject requests while the system automatically tracks remaining leave balances.
-* **💰 Automated Payroll:** Eliminates manual errors by automatically computing monthly salaries based on configured attendance rules. It accurately processes deductions for absences and additions for bonuses, generating clear, itemized payroll summaries.
+* **⏱️ Cryptographic Attendance Management:** Eliminates "buddy punching" and location spoofing using a custom Time-Based One-Time Password (TOTP) algorithm. Employees scan a dynamic, offline-capable QR code at a physical kiosk that refreshes every 5 seconds.
+* **🏖️ Leave Management:** A streamlined workflow allows employees to apply for annual, sick, or emergency leave smoothly. Managers can instantly review, approve, or reject requests while the system automatically tracks remaining leave balances.
+* **💰 Automated Payroll Engine:** Dynamically converts base salaries into exact hourly rates based on logged attendance. It automatically calculates overtime bonuses, enforces lateness deductions, and generates clear, itemized payslips
 * **🔒 Security:** Enterprise-grade security featuring secure user authentication, role-based access control (RBAC), and fully encrypted communication between the application client and the database.
+
+---
+
+<a id="app-interface"></a>
+## 📸 App Interface
+
+<table align="center">
+  <tr>
+    <th align="center">Attendance Verification</th>
+    <th align="center">Leave Management</th>
+    <th align="center">Automated Payroll</th>
+  </tr>
+  <tr>
+    <td align="center" valign="middle">
+      <img src="https://github.com/user-attachments/assets/b7f7689f-6ff5-4c9a-b966-5f62b6739657" alt="Attendance Verification UI" width="380"/>
+    </td>
+    <td align="center" valign="middle">
+      <img src="https://github.com/user-attachments/assets/9ffe2e19-7e33-46fc-ae94-930ed594102b" alt="Leave Management UI" width="380"/>
+    </td>
+    <td align="center" valign="middle">
+      <img src="https://github.com/user-attachments/assets/1db04b3e-dc7f-4fc1-a117-ec543892196b" alt="Automated Payroll UI" width="195"/>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -51,18 +77,31 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 *Cross-platform deployment supporting iOS, Android, and Desktop environments.*
 
 ### Diagrams
-* **Use Case Diagram:** `[Placeholder: Insert Use Case Diagram Here reflecting Actor interactions per role]`
-* **Activity Diagram:** `[Placeholder: Insert Activity Diagram Here for Leave Request and Payroll workflows]`
-* **Sequence Diagram:** `[Placeholder: Insert Sequence Diagram Here illustrating standard Authentication and Data Retrieval flows]`
-* **Class Diagram:** `[Placeholder: Insert Class Diagram Here detailing the primary domain models and system architecture]`
+* **Use Case Diagram:**
 
+  <img width="700" height="500" alt="useCase Diagram" src="https://github.com/user-attachments/assets/4e668a22-d802-4a0d-a76b-35f94b7e2d2f" />
+
+* **Activity Diagram:**
+
+  <img width="700" height="500" alt="Activity Diagram" src="https://github.com/user-attachments/assets/13b1e1ee-ee05-49e0-8e8b-5c74180115fe" />
+
+* **Sequence Diagram:**
+
+    <img width="700" height="500" alt="Sequence Diagram" src="https://github.com/user-attachments/assets/035dae9c-782b-4819-a6b1-224f26ed8e43" />
+
+* **Class Diagram:**
+
+    <img width="700" height="500" alt="Class Diagram" src="https://github.com/user-attachments/assets/4f765ca8-b164-44d4-999c-274b4d8e72c7" />
+    
 ---
 
 <a id="built-with"></a>
 ## 🛠️ Built With
 
 * **Frontend:** Google Flutter framework (Dart) 
-* **Architecture:** Cross-platform capability (iOS, Android, Desktop)
+* **Architecture:** Clean Architecture & Repository Pattern
+* **State Management:** Bloc / Cubit Pattern
+* **Backend & Storage:** Firebase (Firestore, Authentication) & Supabase
 
 ---
 
