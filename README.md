@@ -21,7 +21,7 @@
 - [Built With](#built-with)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
-  - [Installation](#installation)
+  - [Installation & Backend Setup](#installation--backend-setup)
 - [Usage](#usage)
 - [Contact & Acknowledgments](#contact--acknowledgments)
 
@@ -118,19 +118,29 @@ Ensure you have the following installed on your local machine:
 * **IDE:** Android Studio, Xcode, or Visual Studio Code configured with the Flutter and Dart plugins.
 * **Connected Device:** An active emulator, simulator, or a physical device connected via USB/Wi-Fi to deploy the application.
 
-<a id="installation"></a>
-### Installation
+<a id="installation--backend-setup"></a>
+### Installation & Backend Setup
+
+For security purposes, this repository does not include the backend API keys or native configuration files. You must link the project to your own Firebase and Supabase instances.
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/Mohamed-Yehiaaa/Pulsera.git
-2. Navigate to the project directory:
+   git clone https://github.com/mohamedd-yehiaa/Pulsera-HRMS.git
+2. **Navigate to the project directory:**
    ```bash
    cd pulsera
-4. Install dependencies: Fetch all required Dart packages and plugins.
+3. **Install dependencies:** Fetch all required Dart packages and plugins.
    ```bash
    flutter pub get
-6. Run the application: Launch the app on your connected device or emulator.
+4. **Configure Firebase:** Create a project in your Firebase Console, install the FlutterFire CLI, and run the configuration command to generate your native keys:
+   ```bash
+   flutterfire configure
+5. **Configure Environment Variables:** Create a new file named `.env` in the root directory of the project (this file is gitignored) and add your external configurations:
+   ```env
+   SERVER_CLIENT_ID=YOUR_SERVER_CLIENT_ID
+   SUPABASE_URL=YOUR_SUPABASE_URL
+   SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+6. **Run the application:** Launch the app on your connected device or emulator.
    ```bash
    flutter run
    
@@ -154,3 +164,13 @@ Developer: Mohamed Yehia Ali
 (Student ID: 22511402)
 Information Technology and Computing Department, Arab Open University - Egypt.
 
+*Pulsera was entirely developed as a solo graduation project.*
+
+### Dedication & Acknowledgments
+
+**To my Mother:** This work is dedicated to my mother, whom I will always love. Although she is not here to see it, her spirit and belief in me were my motivation. I hope I made her proud, as her memory is in every late night and every line of code.
+
+**Acknowledgments:**
+* **Dr. Ramadan Babers:** For his invaluable mentorship, guidance, and supervision throughout the development of this project.
+* **My Maternal Aunt:** For her unwavering support and deep belief in my academic journey.
+* **My Sister:** For her constant encouragement and motivation to help me achieve my goals.
