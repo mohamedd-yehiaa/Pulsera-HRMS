@@ -1,3 +1,4 @@
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
@@ -6,7 +7,6 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/models/working_days_model.dart';
-import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
@@ -33,7 +33,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
-     serverClientId: serverClientId,
+     serverClientId: dotenv.env['serverClientId']??'' ,
     ).then((_) {
 
       _googleSignIn.authenticate().then((googleAccount) {

@@ -1,11 +1,11 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/kiosk/kiosk_qr_screen.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/shared/bloc_observer.dart';
-import 'package:pulsera/shared/components/api_keys.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/auth_cubit.dart';
@@ -31,11 +31,12 @@ import 'firebase_options.dart';
 
 void main() async {
   WidgetsBinding widgetsBinding = WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await CacheHelper.init();
-  await Supabase.initialize(url: urlSupabase, anonKey: annonKeySupabase);
+  await Supabase.initialize(url:dotenv.env['urlSupabase']??'' , anonKey:dotenv.env['annonKeySupabase']??'' );
 
   final uId = CacheHelper.getData(key: 'uId');
   final isKiosk = CacheHelper.getData(key: 'isKiosk') ?? false;
