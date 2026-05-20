@@ -5,7 +5,7 @@
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
 
-[![Flutter Build](https://github.com/Mohamed-Yehiaaa/pulsera/actions/workflows/flutter-build.yml/badge.svg)](https://github.comMohamed-Yehiaaa/pulsera/actions/workflows/flutter-build.yml)
+[![Flutter Build](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/flutter-build.yml/badge.svg)](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/flutter-build.yml)
 
 ![Version](https://img.shields.io/badge/version-1.0.0-success)
 
@@ -58,13 +58,13 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
   </tr>
   <tr>
     <td align="center" valign="middle">
-      <img src="https://github.com/user-attachments/assets/b7f7689f-6ff5-4c9a-b966-5f62b6739657" alt="Attendance Verification UI" width="380"/>
+      <img src="https://github.com/user-attachments/assets/b7f7689f-6ff5-4c9a-b966-5f62b6739657" alt="Attendance Verification UI" width="380" height="400"/>
     </td>
     <td align="center" valign="middle">
-      <img src="https://github.com/user-attachments/assets/9ffe2e19-7e33-46fc-ae94-930ed594102b" alt="Leave Management UI" width="380"/>
+      <img src="https://github.com/user-attachments/assets/c325ea61-be85-4fc9-9e7c-c6b84599a5a4" alt="Leave Management UI"  width="380" height="400"/>
     </td>
     <td align="center" valign="middle">
-      <img src="https://github.com/user-attachments/assets/1db04b3e-dc7f-4fc1-a117-ec543892196b" alt="Automated Payroll UI" width="195"/>
+      <img src="https://github.com/user-attachments/assets/1db04b3e-dc7f-4fc1-a117-ec543892196b" alt="Automated Payroll UI" width="190" height="400"/>
     </td>
   </tr>
 </table>
