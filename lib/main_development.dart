@@ -36,8 +36,7 @@ void main() async {
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await CacheHelper.init();
-  await Supabase.initialize(url:dotenv.env['urlSupabase']??'' , anonKey:dotenv.env['annonKeySupabase']??'' );
-
+  await Supabase.initialize(url:dotenv.env['SUPABASE_URL']??'' , anonKey:dotenv.env['SUPABASE_ANON_KEY']??'' );
   final uId = CacheHelper.getData(key: 'uId');
   final isKiosk = CacheHelper.getData(key: 'isKiosk') ?? false;
 
