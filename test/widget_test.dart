@@ -7,7 +7,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:pulsera/main.dart';
+import 'package:pulsera/main_development.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 
 void main() {

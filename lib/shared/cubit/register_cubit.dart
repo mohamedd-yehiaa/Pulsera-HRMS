@@ -33,7 +33,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
     _googleSignIn.initialize(
-     serverClientId: dotenv.env['serverClientId']??'' ,
+     serverClientId: dotenv.env['SERVER_CLIENT_ID']??'' ,
     ).then((_) {
 
       _googleSignIn.authenticate().then((googleAccount) {
