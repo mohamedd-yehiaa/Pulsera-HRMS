@@ -5,6 +5,10 @@ on:
     branches:
       - master
 
+# Silences the GitHub Actions Node 20 deprecation warning
+env:
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
 jobs:
   distribute_to_firebase:
     runs-on: ubuntu-latest
@@ -12,10 +16,10 @@ jobs:
       - name: Checkout my repo code
         uses: actions/checkout@v4
 
-      - name: Set up JDK 20
+      - name: Set up JDK 17
         uses: actions/setup-java@v4
         with:
-          java-version: '20'
+          java-version: '17'
           distribution: 'temurin'
 
       - name: Install Flutter
@@ -28,7 +32,7 @@ jobs:
         with:
           ruby-version: "4.0.5"
           bundler-cache: true
-          working-directory: android
+          working-directory: ./android
 
       # Ensures Flutter dependencies are fetched before building
       - name: Install Flutter Dependencies
@@ -36,12 +40,13 @@ jobs:
 
       # Fixes Linux permission error before running Gradle builds
       - name: Make gradlew executable
-        run: chmod +x android/gradlew
+        run: chmod +x ./android/gradlew
 
       - name: Distribute App with Fastlane
         env:
           FIREBASE_CLI_TOKEN: ${{ secrets.FIREBASE_CLI_TOKEN }}
           FIREBASE_APP_ID: ${{ secrets.FIREBASE_APP_ID }}
         run: |
+          bundle install
           bundle exec fastlane android firebase_distribution
-        working-directory: android
+        working-directory: ./android
