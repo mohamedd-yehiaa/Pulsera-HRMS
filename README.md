@@ -1,11 +1,9 @@
 <div align="center">
 
-# Pulsera
+# PULSERA
 **A Flutter-Based Human Resource Management System**
 
-![License](https://img.shields.io/badge/License-MIT-blue.svg)
-[![Flutter Build](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/workflows/android_fastlane_app_distribution_workflow.yaml/badge.svg)](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/workflows/android_fastlane_app_distribution_workflow.yaml)
-![Version](https://img.shields.io/badge/version-1.0.0-success)
+![License](https://img.shields.io/badge/License-MIT-blue.svg) [![CI/CD](https://img.shields.io/github/actions/workflow/status/mohamedd-yehiaa/Pulsera-HRMS/android_fastlane_app_distribution_workflow.yaml?branch=master&label=CI/CD)](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/workflows/android_fastlane_app_distribution_workflow.yaml) ![Version](https://img.shields.io/badge/dynamic/yaml?url=https%3A%2F%2Fraw.githubusercontent.com%2Fmohamedd-yehiaa%2FPulsera-HRMS%2Fmaster%2Fpubspec.yaml&query=%24.version&label=version&color=success)
 
 <img width="1720" height="1080" alt="PULSERA UI" src="https://github.com/user-attachments/assets/d778526c-cda8-41a4-b130-77facf123e56" />
 
