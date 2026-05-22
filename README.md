@@ -4,9 +4,7 @@
 **A Flutter-Based Human Resource Management System**
 
 ![License](https://img.shields.io/badge/License-MIT-blue.svg)
-
-[![Flutter Build](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/flutter-build.yml/badge.svg)](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/flutter-build.yml)
-
+[![Flutter Build](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/workflows/android_fastlane_app_distribution_workflow.yaml/badge.svg)](https://github.com/mohamedd-yehiaa/Pulsera-HRMS/actions/workflows/android_fastlane_app_distribution_workflow.yaml)
 ![Version](https://img.shields.io/badge/version-1.0.0-success)
 
 <img width="1720" height="1080" alt="PULSERA UI" src="https://github.com/user-attachments/assets/d778526c-cda8-41a4-b130-77facf123e56" />
@@ -19,6 +17,7 @@
 - [App Interface](#app-interface)
 - [System Architecture](#system-architecture)
 - [Built With](#built-with)
+- [CI/CD & Deployment Pipeline](#cicd--deployment-pipeline)
 - [Getting Started](#getting-started)
   - [Prerequisites](#prerequisites)
   - [Installation & Backend Setup](#installation--backend-setup)
@@ -42,7 +41,7 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 * **👥 Employee Management:** Seamlessly add, update, and delete employee profiles. Enforce robust access control by assigning system roles such as Admin, Manager, and Employee.
 * **⏱️ Cryptographic Attendance Management:** Eliminates "buddy punching" and location spoofing using a custom Time-Based One-Time Password (TOTP) algorithm. Employees scan a dynamic, offline-capable QR code at a physical kiosk that refreshes every 5 seconds.
 * **🏖️ Leave Management:** A streamlined workflow allows employees to apply for annual, sick, or emergency leave smoothly. Managers can instantly review, approve, or reject requests while the system automatically tracks remaining leave balances.
-* **💰 Automated Payroll Engine:** Dynamically converts base salaries into exact hourly rates based on logged attendance. It automatically calculates overtime bonuses, enforces lateness deductions, and generates clear, itemized payslips
+* **💰 Automated Payroll Engine:** Dynamically converts base salaries into exact hourly rates based on logged attendance. It automatically calculates overtime bonuses, enforces lateness deductions, and generates clear, itemized payslips.
 * **🔒 Security:** Enterprise-grade security featuring secure user authentication, role-based access control (RBAC), and fully encrypted communication between the application client and the database.
 
 ---
@@ -105,8 +104,36 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 ---
 
+<a id="cicd--deployment-pipeline"></a>
+## 🚀 CI/CD & Deployment Pipeline
+
+This project utilizes an automated Continuous Integration and Continuous Deployment (CI/CD) pipeline built with **GitHub Actions** and **Fastlane** to streamline production building and cloud distribution.
+
+### Workflow Overview
+Whenever code is pushed to the `master` branch, the workflow automatically triggers the following pipeline:
+1. **Environment Setup:** Configures JDK 17, Ruby (with cached Bundler gems), and the specialized Flutter environment.
+2. **Configuration Injection:** Securely decodes and injects environment variables (`.env`), Firebase options (`firebase_options.dart`), and Android credentials (`google-services.json`) via GitHub Secrets.
+3. **Build Execution:** Runs a clean production build using production flavors:
+   `flutter build apk --release --flavor production -t lib/main_production.dart --no-tree-shake-icons`
+4. **Firebase App Distribution:** Fastlane handles the generated release APK and instantly deploys the artifact to registered testers.
+
+### Local Setup for CI/CD Secrets
+If you are replicating this pipeline in your own fork, you must configure the following **GitHub Actions Secrets** (`Settings > Secrets and variables > Actions`):
+
+| Secret Name | Description | Format |
+| :--- | :--- | :--- |
+| `FIREBASE_APP_ID` | Your production Firebase Application ID | Plain Text |
+| `FIREBASE_CLI_TOKEN` | Authentication token generated via `firebase login:ci` | Plain Text |
+| `DOT_ENV_BASE64` | Your local production `.env` environment file | Base64 Encoded |
+| `FIREBASE_OPTIONS_BASE64` | The auto-generated `firebase_options.dart` file | Base64 Encoded |
+| `GOOGLE_SERVICES_JSON` | The Android Firebase `google-services.json` file | Base64 Encoded |
+
+> 💡 **Tip:** To generate the Base64 strings cleanly without breaking file formatting, use `base64 -i <filename> | pbcopy` on Mac/Linux or `[convert]::ToBase64String((Get-Content -path "<filename>" -Encoding byte)) \| Set-Clipboard` in Windows PowerShell.
+
+---
+
 <a id="getting-started"></a>
-## 🚀 Getting Started
+## ⚙️ Getting Started
 
 Follow these simple instructions to set up your local development environment and get Pulsera up and running.
 
@@ -125,7 +152,7 @@ For security purposes, this repository does not include the backend API keys or 
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/mohamedd-yehiaa/Pulsera-HRMS.git
+   git clone [https://github.com/mohamedd-yehiaa/Pulsera-HRMS.git](https://github.com/mohamedd-yehiaa/Pulsera-HRMS.git)
 2. **Navigate to the project directory:**
    ```bash
    cd pulsera
