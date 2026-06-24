@@ -4,7 +4,12 @@ class LeaveTotalCountModel {
   int? totalLeaveBalance;
   int? totalLeavePending;
 
-  LeaveTotalCountModel({this.totalLeaveCancelled, this.totalLeaveApproved, this.totalLeaveBalance, this.totalLeavePending});
+  LeaveTotalCountModel({
+    this.totalLeaveCancelled,
+    this.totalLeaveApproved,
+    this.totalLeaveBalance,
+    this.totalLeavePending,
+  });
 
   LeaveTotalCountModel.fromJson(Map<String, dynamic> json) {
     totalLeaveCancelled = json['totalLeaveCancelled'];

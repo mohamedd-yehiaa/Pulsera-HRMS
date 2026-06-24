@@ -1,15 +1,16 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/modules/leave/apply_leave_screen.dart';
 import 'package:pulsera/modules/notification/notifications_screen.dart';
 import 'package:pulsera/modules/payroll/payroll_config_screen.dart';
-import 'package:pulsera/modules/settings/profile_details_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/components/constants.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 
@@ -17,33 +18,31 @@ import 'package:pulsera/shared/styles/icon_broken.dart';
 ///
 /// Replaces per-screen AppBars with a unified bar that shows:
 /// - Page title (derived from current tab)
-/// - Welcome text + user avatar
-/// - Notification badge
+/// - Welcome text (Home tab only)
+/// - Notification badge (Home tab only)
 /// - Context-specific actions (e.g. payroll config, leave apply, profile upload)
 class TopBarWidget extends StatelessWidget {
   final int currentIndex;
   final AppCubit cubit;
+  late final currentUser = cubit.userModel;
+  late final isManager = currentUser?.userType == "Company Owner";
 
-  const TopBarWidget({
-    super.key,
-    required this.currentIndex,
-    required this.cubit,
-  });
+  TopBarWidget({super.key, required this.currentIndex, required this.cubit});
 
-  String get _pageTitle {
+  String _pageTitle(BuildContext context) {
     switch (currentIndex) {
       case 0:
-        return 'Home';
+        return S.of(context).navHome;
       case 1:
-        return 'All Leaves';
+        return S.of(context).allLeaves;
       case 2:
-        return 'Team';
+        return isManager ? S.of(context).myTeam : S.of(context).teamInfo;
       case 3:
-        return 'Payroll History';
+        return S.of(context).payrollHistory;
       case 4:
-        return 'Settings';
+        return S.of(context).navProfile;
       default:
-        return 'Home';
+        return S.of(context).navHome;
     }
   }
 
@@ -52,7 +51,7 @@ class TopBarWidget extends StatelessWidget {
     return Container(
       height: 64,
       padding: const EdgeInsets.symmetric(horizontal: 24),
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         border: Border(
           bottom: BorderSide(color: AppColors.dividerColor, width: 1),
@@ -62,83 +61,95 @@ class TopBarWidget extends StatelessWidget {
         children: [
           // ── Page title ──
           Text(
-            _pageTitle,
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            _pageTitle(context),
+            style: Theme.of(
+              context,
+            ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
-
           const Spacer(),
 
           // ── Context actions ──
           ..._buildContextActions(context),
 
-          const SizedBox(width: 8),
+          // ── HOME SCREEN ONLY ITEMS ──
+          if (currentIndex == 0) ...[
+            const SizedBox(width: 8),
 
-          // ── Notification bell ──
-          BlocBuilder<NotificationCubit, NotificationStates>(
-            builder: (notifContext, notifState) {
-              final notifCubit = NotificationCubit.get(notifContext);
-              return Stack(
-                children: [
-                  IconButton(
-                    iconSize: 24,
-                    icon: const Icon(IconBroken.Notification),
-                    onPressed: () {
-                      navigateTo(context, const NotificationsScreen());
-                    },
+            // ── Welcome Text ──
+            Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              crossAxisAlignment:
+                  CrossAxisAlignment.start, // Aligns both texts to the right
+              children: [
+                Text(
+                  "${S.of(context).welcomeBack} $hiEmoji",
+                  style: const TextStyle(
+                    fontSize: 14,
+                    color:
+                        AppColors.textPrimary, // Primary color for welcome text
+                    fontWeight: FontWeight.bold,
                   ),
-                  if (notifCubit.unreadCount > 0)
-                    Positioned(
-                      right: 4,
-                      top: 4,
-                      child: Container(
-                        padding: const EdgeInsets.all(4),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '${notifCubit.unreadCount}',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 10,
-                            fontWeight: FontWeight.bold,
+                ),
+                const SizedBox(
+                  height: 2,
+                ), // Adds a tiny bit of breathing room between the lines
+                Text(
+                  "${cubit.userModel?.firstName ?? ''} ${cubit.userModel?.lastName ?? ''}",
+                  style: const TextStyle(
+                    fontSize: 12, // Smaller font size for username
+                    color:
+                        AppColors.textSecondary, // Secondary color for username
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(width: 16),
+
+            // ── Notification bell (Moved to the far right) ──
+            BlocBuilder<NotificationCubit, NotificationStates>(
+              builder: (notifContext, notifState) {
+                final notifCubit = NotificationCubit.get(notifContext);
+                return Stack(
+                  children: [
+                    IconButton(
+                      iconSize: 24,
+                      icon: const Icon(IconBroken.Notification),
+                      onPressed: () {
+                        navigateTo(context, const NotificationsScreen());
+                      },
+                    ),
+                    if (notifCubit.unreadCount > 0)
+                      Positioned(
+                        right: 4,
+                        top: 4,
+                        child: Container(
+                          padding: const EdgeInsets.all(4),
+                          decoration: const BoxDecoration(
+                            color: Colors.red,
+                            shape: BoxShape.circle,
+                          ),
+                          child: Text(
+                            '${notifCubit.unreadCount}',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                ],
-              );
-            },
-          ),
-
-          const SizedBox(width: 8),
-
-          // ── User avatar ──
-          GestureDetector(
-            onTap: () => navigateTo(context, const ProfileDetailsScreen()),
-            child: Row(
-              children: [
-                Text(
-                  "Welcome $hiEmoji ${cubit.userModel?.firstName ?? ''}",
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-                const SizedBox(width: 10),
-                _buildAvatar(),
-              ],
+                  ],
+                );
+              },
             ),
-          ),
+          ],
         ],
       ),
     );
   }
 
   // ── Context-specific actions per tab ────────────────────────────────────────
-
   List<Widget> _buildContextActions(BuildContext context) {
     switch (currentIndex) {
       case 1: // Leave → Add leave button
@@ -146,7 +157,27 @@ class TopBarWidget extends StatelessWidget {
           IconButton(
             onPressed: () => navigateTo(context, const ApplyLeaveScreen()),
             icon: const Icon(IconBroken.Plus, color: AppColors.primary),
-            tooltip: 'Apply Leave',
+            tooltip: S.of(context).applyLeave,
+          ),
+        ];
+      case 2: // Team Tab: Add the Refresh Button here
+        return [
+          IconButton(
+            onPressed: () {
+              final appCubit = AppCubit.get(context);
+              final user = appCubit.userModel;
+              if (user == null) return;
+
+              final teamCubit = TeamCubit.get(context);
+
+              if (user.userType == 'Company Owner') {
+                teamCubit.loadFullTeam(managerId: user.uId ?? '');
+              } else {
+                teamCubit.loadMyManager(user.managerId);
+                teamCubit.loadFullTeam(managerId: user.managerId ?? '');
+              }
+            },
+            icon: const Icon(Icons.refresh, color: AppColors.primary),
           ),
         ];
       case 3: // Payroll → Config for Company Owner
@@ -159,7 +190,7 @@ class TopBarWidget extends StatelessWidget {
                 color: AppColors.primary,
                 size: 22,
               ),
-              tooltip: 'Payroll Settings',
+              tooltip: S.of(context).payrollSettings,
             ),
           ];
         }
@@ -187,9 +218,9 @@ class TopBarWidget extends StatelessWidget {
                   onPressed: () {
                     profileCubit.uploadProfileImage(uId: user!.uId!);
                   },
-                  child: const Text(
-                    'Save Photo',
-                    style: TextStyle(
+                  child: Text(
+                    S.of(context).uploadPhoto,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       color: AppColors.primary,
                     ),
@@ -202,9 +233,9 @@ class TopBarWidget extends StatelessWidget {
                   onPressed: () {
                     profileCubit.removeProfileImage(uId: user.uId!);
                   },
-                  child: const Text(
-                    'Remove Photo',
-                    style: TextStyle(
+                  child: Text(
+                    S.of(context).removePhoto,
+                    style: const TextStyle(
                       color: Colors.red,
                       fontWeight: FontWeight.bold,
                     ),
@@ -219,29 +250,5 @@ class TopBarWidget extends StatelessWidget {
       default:
         return [];
     }
-  }
-
-  // ── User avatar ─────────────────────────────────────────────────────────────
-
-  Widget _buildAvatar() {
-    if (cubit.userModel?.image != null && cubit.userModel!.image!.isNotEmpty) {
-      return CircleAvatar(
-        radius: 18,
-        backgroundImage: NetworkImage(cubit.userModel!.image!),
-      );
-    }
-
-    return CircleAvatar(
-      radius: 18,
-      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-      child: Text(
-        (cubit.userModel?.firstName ?? 'U')[0].toUpperCase(),
-        style: const TextStyle(
-          color: AppColors.primary,
-          fontWeight: FontWeight.bold,
-          fontSize: 14,
-        ),
-      ),
-    );
   }
 }

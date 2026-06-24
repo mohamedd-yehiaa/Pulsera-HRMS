@@ -2,10 +2,11 @@ import 'dart:async';
 import 'dart:math';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/services/totp_service.dart';
 import 'package:pulsera/shared/styles/colors.dart';
-import 'package:pulsera/shared/styles/icon_broken.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 
 /// Admin-only screen that generates and displays a rotating QR code
@@ -105,8 +106,8 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
 
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('QR verification configured successfully!'),
+          SnackBar(
+            content: Text(S.of(context).qrConfiguredSuccess),
             backgroundColor: AppColors.green400,
           ),
         );
@@ -116,7 +117,7 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Failed to configure: $e'),
+            content: Text(S.of(context).failedToConfigure(e.toString())),
             backgroundColor: AppColors.error,
           ),
         );
@@ -129,13 +130,10 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        leading: IconButton(
-          icon: const Icon(IconBroken.Arrow___Left_2, size: 28),
-          onPressed: () => Navigator.pop(context),
-        ),
-        title: const Text(
-          'QR Code Generator',
-          style: TextStyle(fontWeight: FontWeight.bold),
+        leading: backButton(context),
+        title: Text(
+          S.of(context).qrCodeGenerator,
+          style: const TextStyle(fontWeight: FontWeight.bold),
         ),
         centerTitle: true,
         elevation: 0,
@@ -172,9 +170,9 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
-            'QR Verification Not Configured',
-            style: TextStyle(
+          Text(
+            S.of(context).qrVerificationNotConfigured,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -182,9 +180,9 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Generate a shared secret to enable QR-based location verification for your employees.',
-            style: TextStyle(
+          Text(
+            S.of(context).qrVerificationDescription,
+            style: const TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
               height: 1.5,
@@ -208,7 +206,9 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
                     )
                   : const Icon(Icons.security, color: Colors.white),
               label: Text(
-                _isGeneratingSecret ? 'Configuring...' : 'Enable QR Verification',
+                _isGeneratingSecret
+                    ? S.of(context).configuring
+                    : S.of(context).enableQrVerification,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 16,
@@ -275,9 +275,9 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
                         ),
                       ),
                       const SizedBox(width: 8),
-                      const Text(
-                        'Active',
-                        style: TextStyle(
+                      Text(
+                        S.of(context).active,
+                        style: const TextStyle(
                           color: AppColors.green400,
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -321,28 +321,29 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
               borderRadius: BorderRadius.circular(16),
               border: Border.all(color: AppColors.primary.withAlpha(30)),
             ),
-            child: const Column(
+            child: Column(
               children: [
                 Row(
                   children: [
-                    Icon(Icons.info_outline, color: AppColors.primary, size: 20),
-                    SizedBox(width: 8),
+                    const Icon(
+                      Icons.info_outline,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
+                    const SizedBox(width: 8),
                     Text(
-                      'Instructions',
-                      style: TextStyle(
+                      S.of(context).instructionsLabel,
+                      style: const TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
                       ),
                     ),
                   ],
                 ),
-                SizedBox(height: 8),
+                const SizedBox(height: 8),
                 Text(
-                  'Display this screen at your office entrance. '
-                  'Employees must scan this QR code before checking in, '
-                  'taking breaks, or checking out. The code refreshes '
-                  'every 5 seconds for security.',
-                  style: TextStyle(
+                  S.of(context).qrDisplayInstructions,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                     height: 1.5,
@@ -366,14 +367,18 @@ class _GenerateQrCodeScreenState extends State<GenerateQrCodeScreen> {
             Icon(
               Icons.timer_outlined,
               size: 16,
-              color: progress < 0.4 ? AppColors.orange500 : AppColors.textSecondary,
+              color: progress < 0.4
+                  ? AppColors.orange500
+                  : AppColors.textSecondary,
             ),
             const SizedBox(width: 6),
             Text(
-              'Refreshes in ${_secondsUntilRefresh}s',
+              S.of(context).refreshesInSeconds(_secondsUntilRefresh),
               style: TextStyle(
                 fontSize: 13,
-                color: progress < 0.4 ? AppColors.orange500 : AppColors.textSecondary,
+                color: progress < 0.4
+                    ? AppColors.orange500
+                    : AppColors.textSecondary,
                 fontWeight: FontWeight.w500,
               ),
             ),

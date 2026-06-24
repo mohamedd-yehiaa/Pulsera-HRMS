@@ -388,6 +388,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
             toUserId: teamId,
             fromUserName: userName,
             message: '$userName checked in.',
+            messageKey: 'notifCheckIn',
+            messageParams: {'name': userName},
             type: 'attendance_checkin',
           );
         } else if (nextAction == UserPerformActivty.OUT) {
@@ -395,6 +397,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
             toUserId: teamId,
             fromUserName: userName,
             message: '$userName checked out.',
+            messageKey: 'notifCheckOut',
+            messageParams: {'name': userName},
             type: 'attendance_checkout',
           );
         }
@@ -461,6 +465,8 @@ class AttendanceCubit extends Cubit<AttendanceStates> {
           toUserId: teamId,
           fromUserName: userName,
           message: '$userName is on a break.',
+          messageKey: 'notifBreakIn',
+          messageParams: {'name': userName},
           type: 'attendance_breakin',
         );
       }

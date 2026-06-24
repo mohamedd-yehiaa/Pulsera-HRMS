@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/shared/components/components.dart';
 import '../../models/user_activity_model.dart';
@@ -21,7 +22,7 @@ class UserActivityView extends StatelessWidget {
         if (userActivityModel!.checkIn != null) ...[
           ActivityCard(
             iconData: IconBroken.Login ,
-            title: "Check In",
+            title: S.of(context).checkIn,
             dateTime: _safeParseDateTime(
               userActivityModel!.createdAt,
               userActivityModel!.checkIn!.inTime,
@@ -32,6 +33,7 @@ class UserActivityView extends StatelessWidget {
 
         // 2. Break Times (In/Out)
         _buildBreakList(
+          context,
           userActivityModel?.breakInTime ?? [],
           userActivityModel?.breakOutTime ?? [],
         ),
@@ -41,7 +43,7 @@ class UserActivityView extends StatelessWidget {
           const SizedBox(height: 16),
           ActivityCard(
             iconData: IconBroken.Logout, // Changed to logout icon for clarity
-            title: "Check Out",
+            title: S.of(context).checkOut,
             dateTime: _safeParseDateTime(
               userActivityModel!.createdAt,
               userActivityModel!.outTime!.outTime,
@@ -53,7 +55,7 @@ class UserActivityView extends StatelessWidget {
     );
   }
 
-  Widget _buildBreakList(List<String> inTimes, List<String> outTimes) {
+  Widget _buildBreakList(BuildContext context, List<String> inTimes, List<String> outTimes) {
     // Assuming mergeBreakInBreakOutTimes is a global helper or defined in components.dart
     var newList = mergeBreakInBreakOutTimes(inTimes, outTimes);
 
@@ -67,7 +69,7 @@ class UserActivityView extends StatelessWidget {
             iconData: isBreakIn
                 ? Icons.coffee_outlined
                 : Icons.coffee_maker_outlined,
-            title: isBreakIn ? "Break In" : "Break Out",
+            title: isBreakIn ? S.of(context).breakIn : S.of(context).breakOut,
             dateTime: _safeParseDateTime(
               userActivityModel!.createdAt,
               newList[index],

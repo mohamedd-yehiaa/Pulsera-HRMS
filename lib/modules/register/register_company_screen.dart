@@ -2,6 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
@@ -13,6 +14,7 @@ import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
+import 'package:pulsera/shared/app_extension.dart';
 
 class RegisterCompanyScreen extends StatelessWidget {
   final formKey = GlobalKey<FormState>();
@@ -40,12 +42,11 @@ class RegisterCompanyScreen extends StatelessWidget {
           AppCubit.get(context).getUserData();
 
           Fluttertoast.showToast(
-            msg: 'Company Registered Successfully',
+            msg: S.of(context).companyRegisteredSuccessfully,
             backgroundColor: Colors.green,
             textColor: Colors.white,
           );
           navigateAndFinish(context, HomeLayout());
-
         }
 
         if (state is CreateCompanyErrorState) {
@@ -62,13 +63,12 @@ class RegisterCompanyScreen extends StatelessWidget {
 
         return Scaffold(
           appBar: AppBar(
-            title: Text('Organization Setup',style: Theme.of(context).textTheme.titleLarge,),
-            leading: IconButton(
-              onPressed: () => Navigator.pop(context),
-              icon: const Icon(
-                IconBroken.Arrow___Left_2,
-              ),
+            title: Text(
+              S.of(context).organizationSetup,
+              style: Theme.of(context).textTheme.titleLarge,
             ),
+            // Used your RTL-aware backButton helper instead of a hardcoded left arrow
+            leading: backButton(context),
           ),
           body: SingleChildScrollView(
             child: Padding(
@@ -81,7 +81,7 @@ class RegisterCompanyScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          "Organization Details",
+                          S.of(context).organizationDetails,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(width: 10),
@@ -100,11 +100,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                       type: TextInputType.text,
                       validator: (String? value) {
                         if (value == null || value.isEmpty) {
-                          return "This field can't be empty";
+                          return S.of(context).fieldCantBeEmpty;
                         }
                         return null;
                       },
-                      label: const Text('Organization Name'),
+                      label: Text(S.of(context).organizationName),
                       prefix: IconBroken.Work,
                     ),
                     const SizedBox(height: 16.0),
@@ -113,8 +113,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: paidLeaveTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Per Month Paid Leave'),
+                      // FIX: Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).perMonthPaidLeave),
                       prefix: IconBroken.Document,
                     ),
                     const SizedBox(height: 16.0),
@@ -123,8 +126,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: casualSickTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Per Month Sick/Casual Leave'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).perMonthSickCasualLeave),
                       prefix: IconBroken.Info_Square,
                     ),
                     const SizedBox(height: 16.0),
@@ -133,8 +139,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: wfhTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Per Month Work From Home'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).perMonthWorkFromHome),
                       prefix: IconBroken.Home,
                     ),
                     const SizedBox(height: 16.0),
@@ -146,10 +155,12 @@ class RegisterCompanyScreen extends StatelessWidget {
                         isStart: true,
                         context: context,
                       ),
-
+                      // Chained .localizeDigits() to safely translate time strings
                       label: registerCubit.startTime == null
-                          ? "Select start time"
-                          : formatTimeOfDay(registerCubit.startTime!),
+                          ? S.of(context).selectStartTime
+                          : formatTimeOfDay(
+                              registerCubit.startTime!,
+                            ).localizeDigits(context),
                       suffixIcon: const Icon(
                         IconBroken.Time_Circle,
                         size: 22,
@@ -165,9 +176,12 @@ class RegisterCompanyScreen extends StatelessWidget {
                         isStart: false,
                         context: context,
                       ),
+                      // Chained .localizeDigits() to safely translate time strings
                       label: registerCubit.endTime == null
-                          ? "Select end time"
-                          : formatTimeOfDay(registerCubit.endTime!),
+                          ? S.of(context).selectEndTime
+                          : formatTimeOfDay(
+                              registerCubit.endTime!,
+                            ).localizeDigits(context),
                       suffixIcon: const Icon(
                         IconBroken.Time_Circle,
                         size: 22,
@@ -191,7 +205,7 @@ class RegisterCompanyScreen extends StatelessWidget {
                           registerCubit.workingDaysList.length,
                           (index) => ChoiceChip(
                             label: Text(
-                              registerCubit.workingDaysList[index].label,
+                              getLocalizedDay(context, registerCubit.workingDaysList[index].code),
                               style: TextStyle(
                                 color:
                                     registerCubit
@@ -217,7 +231,7 @@ class RegisterCompanyScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          "Attendance Rules",
+                          S.of(context).attendanceRules,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(width: 10),
@@ -233,8 +247,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: gracePeriodTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Grace Period (minutes)'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).gracePeriodMinutes),
                       prefix: IconBroken.Time_Circle,
                     ),
                     const SizedBox(height: 16.0),
@@ -242,8 +259,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: earlyAllowanceTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Early Check-in Allowance (minutes)'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).earlyCheckInAllowance),
                       prefix: IconBroken.Time_Circle,
                     ),
                     const SizedBox(height: 16.0),
@@ -251,8 +271,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: lateCutoffTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Late Cut-off (minutes)'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).lateCutoffMinutes),
                       prefix: IconBroken.Time_Circle,
                     ),
                     const SizedBox(height: 16.0),
@@ -260,8 +283,11 @@ class RegisterCompanyScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: minimumWorkHoursTC,
                       type: TextInputType.number,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                      label: const Text('Minimum Work Hours'),
+                      // Allowed Arabic digits
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
+                      label: Text(S.of(context).minimumWorkHours),
                       prefix: IconBroken.Time_Circle,
                     ),
                     const SizedBox(height: 16.0),
@@ -278,29 +304,46 @@ class RegisterCompanyScreen extends StatelessWidget {
                               if (registerCubit.startTime == null ||
                                   registerCubit.endTime == null) {
                                 Fluttertoast.showToast(
-                                  msg: "Please select working hours",
+                                  msg: S.of(context).pleaseSelectWorkingHours,
                                 );
                                 return;
                               }
                               registerCubit.registerCompany(
                                 orgName: organizationTC.text,
-                                paidLeave: paidLeaveTC.text,
-                                sickLeave: casualSickTC.text,
-                                wfhDays: wfhTC.text,
+                                // Sanitized all fields to strictly English digits before sending to backend
+                                paidLeave: paidLeaveTC.text.toEnglishDigits(),
+                                sickLeave: casualSickTC.text.toEnglishDigits(),
+                                wfhDays: wfhTC.text.toEnglishDigits(),
                                 startTime: registerCubit.startTime,
                                 endTime: registerCubit.endTime,
                                 workingDaysList: registerCubit.workingDaysList,
                                 ownerId: FirebaseAuth.instance.currentUser!.uid,
-                                gracePeriodMinutes: int.tryParse(gracePeriodTC.text) ?? 15,
-                                earlyAllowanceMinutes: int.tryParse(earlyAllowanceTC.text) ?? 30,
-                                lateCutoffMinutes: int.tryParse(lateCutoffTC.text) ?? 120,
-                                minimumWorkHours: int.tryParse(minimumWorkHoursTC.text) ?? 6,
+                                gracePeriodMinutes:
+                                    int.tryParse(
+                                      gracePeriodTC.text.toEnglishDigits(),
+                                    ) ??
+                                    15,
+                                earlyAllowanceMinutes:
+                                    int.tryParse(
+                                      earlyAllowanceTC.text.toEnglishDigits(),
+                                    ) ??
+                                    30,
+                                lateCutoffMinutes:
+                                    int.tryParse(
+                                      lateCutoffTC.text.toEnglishDigits(),
+                                    ) ??
+                                    120,
+                                minimumWorkHours:
+                                    int.tryParse(
+                                      minimumWorkHoursTC.text.toEnglishDigits(),
+                                    ) ??
+                                    6,
                               );
                             }
                           },
-                          child: const Text(
-                            "Register Organization",
-                            style: TextStyle(
+                          child: Text(
+                            S.of(context).registerOrganization,
+                            style: const TextStyle(
                               fontSize: 18,
                               fontWeight: FontWeight.bold,
                               color: Colors.white,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:flutter_native_splash/flutter_native_splash.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -18,6 +19,7 @@ import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/cubit/localization_cubit.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/network/remote/attendance_repository.dart';
 import 'package:pulsera/shared/network/remote/notification_repository.dart';
@@ -26,7 +28,6 @@ import 'package:pulsera/shared/network/remote/team_repository.dart';
 import 'package:pulsera/shared/styles/theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -36,7 +37,7 @@ void main() async {
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
   await CacheHelper.init();
-  await Supabase.initialize(url:dotenv.env['SUPABASE_URL']??'' , anonKey:dotenv.env['SUPABASE_ANON_KEY']??'' );
+
   final uId = CacheHelper.getData(key: 'uId');
   final isKiosk = CacheHelper.getData(key: 'isKiosk') ?? false;
 
@@ -68,6 +69,7 @@ void main() async {
 class Pulsera extends StatelessWidget {
   final Widget startWidget;
   const Pulsera({super.key, required this.startWidget});
+
   @override
   Widget build(BuildContext context) {
     return MultiBlocProvider(
@@ -94,14 +96,35 @@ class Pulsera extends StatelessWidget {
         ),
         BlocProvider(create: (context) => TeamCubit(TeamRepository())),
         BlocProvider(create: (context) => KioskCubit()),
+        BlocProvider(
+          create: (context) => LocalizationCubit()..getSavedLanguage(),
+        ),
       ],
       child: BlocConsumer<AppCubit, AppStates>(
         listener: (context, state) {},
-        builder: (context, state) => MaterialApp(
-          debugShowCheckedModeBanner: false,
-          theme: appTheme,
-          home: startWidget,
-        ),
+        builder: (context, state) =>
+            BlocBuilder<LocalizationCubit, LocalizationStates>(
+              // 1. Force a rebuild specifically when the language state fires
+              buildWhen: (previous, current) => current is ChangeLanguageState,
+              builder: (context, localeState) {
+
+                // 2. Safely determine the current locale
+                Locale currentLocale = LocalizationCubit.get(context).locale;
+                if (localeState is ChangeLanguageState) {
+                  currentLocale = Locale(localeState.locale);
+                }
+
+                return MaterialApp(
+                  debugShowCheckedModeBanner: false,
+                  theme: appTheme,
+                  // 3. Pass the caught locale directly to MaterialApp
+                  locale: currentLocale,
+                  localizationsDelegates: S.localizationsDelegates,
+                  supportedLocales: S.supportedLocales,
+                  home: startWidget,
+                );
+              },
+            ),
       ),
     );
   }

@@ -144,6 +144,8 @@ class ApplyLeaveCubit extends Cubit<ApplyLeaveStates> {
         toUserId: managerId!,
         fromUserName: userFullName,
         message: '$userFullName submitted a leave request for $totalDays days.',
+        messageKey: 'notifLeaveSubmitted',
+        messageParams: {'name': userFullName, 'days': totalDays.toString()},
         type: 'leave_submitted',
         leaveId: leaveId,
       );

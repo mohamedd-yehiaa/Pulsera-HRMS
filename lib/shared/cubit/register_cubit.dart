@@ -12,7 +12,6 @@ import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import '../app_extension.dart';
 
-
 class RegisterCubit extends Cubit<RegisterStates> {
   RegisterCubit() : super(RegisterInitialState());
 
@@ -23,6 +22,8 @@ class RegisterCubit extends Cubit<RegisterStates> {
   final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
   IconData suffix = Icons.visibility_outlined;
   bool isPassword = true;
+  IconData confirmSuffix = Icons.visibility_outlined;
+  bool isConfirmPassword = true;
   String selectedUserType = "Employee";
   TimeOfDay? startTime;
   TimeOfDay? endTime;
@@ -32,40 +33,49 @@ class RegisterCubit extends Cubit<RegisterStates> {
   //userRegister and userCreate
   void signInWithGoogle() {
     emit(GoogleSignInLoadingState());
-    _googleSignIn.initialize(
-     serverClientId: dotenv.env['SERVER_CLIENT_ID']??'' ,
-    ).then((_) {
+    _googleSignIn
+        .initialize(serverClientId: dotenv.env['SERVER_CLIENT_ID'] ?? '')
+        .then((_) {
+          _googleSignIn
+              .authenticate()
+              .then((googleAccount) {
+                final googleAuth = googleAccount.authentication;
 
-      _googleSignIn.authenticate().then((googleAccount) {
+                final credential = GoogleAuthProvider.credential(
+                  accessToken: null,
+                  idToken: googleAuth.idToken,
+                );
 
-        final googleAuth = googleAccount.authentication;
-
-        final credential = GoogleAuthProvider.credential(
-          accessToken: null,
-          idToken: googleAuth.idToken,
-        );
-
-        // Sign in to Firebase with the credential
-        _auth.signInWithCredential(credential).then((userCredential) {
-          emit(GoogleSignInSuccessState());
-          if (userCredential.user != null) {
-            createUserInFirestore(userCredential.user!);
-          }
-        }).catchError((error) {
-          emit(GoogleSignInErrorState(error.toString()));
+                // Sign in to Firebase with the credential
+                _auth
+                    .signInWithCredential(credential)
+                    .then((userCredential) {
+                      emit(GoogleSignInSuccessState());
+                      if (userCredential.user != null) {
+                        createUserInFirestore(userCredential.user!);
+                      }
+                    })
+                    .catchError((error) {
+                      emit(GoogleSignInErrorState(error.toString()));
+                    });
+              })
+              .catchError((error) {
+                emit(GoogleSignInErrorState(error.toString()));
+              });
+        })
+        .catchError((error) {
+          emit(
+            GoogleSignInErrorState(
+              "Initialization failed: ${error.toString()}",
+            ),
+          );
         });
-
-      }).catchError((error) {
-        emit(GoogleSignInErrorState(error.toString()));
-      });
-
-    }).catchError((error) {
-      emit(GoogleSignInErrorState("Initialization failed: ${error.toString()}"));
-    });
   }
 
   void createUserInFirestore(User user) {
-    final userDoc = FirebaseFirestore.instance.collection('users').doc(user.uid);
+    final userDoc = FirebaseFirestore.instance
+        .collection('users')
+        .doc(user.uid);
     UserModel googleModel = UserModel(
       uId: user.uid,
       firstName: user.displayName?.split(' ').first ?? '',
@@ -76,26 +86,42 @@ class RegisterCubit extends Cubit<RegisterStates> {
       isEmailVerified: true,
     );
 
-    userDoc.get().then((doc) {
-      if (!doc.exists) {
-        userDoc.set(googleModel.toMap())
-            .then((value) {
-          emit(CreateUserSuccessState());
-        }).catchError((error) {
+    userDoc
+        .get()
+        .then((doc) {
+          if (!doc.exists) {
+            userDoc
+                .set(googleModel.toMap())
+                .then((value) {
+                  emit(CreateUserSuccessState());
+                })
+                .catchError((error) {
+                  emit(CreateUserErrorState(error.toString()));
+                });
+          } else {
+            emit(CreateUserSuccessState());
+          }
+        })
+        .catchError((error) {
           emit(CreateUserErrorState(error.toString()));
         });
-      } else {
-        emit(CreateUserSuccessState());
-      }
-    }).catchError((error) {
-      emit(CreateUserErrorState(error.toString()));
-    });
   }
-// ================================================================================
+
+  // ================================================================================
   // UI Support Methods
   void changePasswordVisibility() {
     isPassword = !isPassword;
-    suffix = isPassword ? Icons.visibility_outlined : Icons.visibility_off_outlined;
+    suffix = isPassword
+        ? Icons.visibility_outlined
+        : Icons.visibility_off_outlined;
+    emit(RegisterChangePasswordVisibilityState());
+  }
+
+  void changeConfirmPasswordVisibility() {
+    isConfirmPassword = !isConfirmPassword;
+    confirmSuffix = isConfirmPassword
+        ? Icons.visibility_outlined
+        : Icons.visibility_off_outlined;
     emit(RegisterChangePasswordVisibilityState());
   }
 
@@ -116,22 +142,20 @@ class RegisterCubit extends Cubit<RegisterStates> {
     emit(RegisterLoadingState());
 
     FirebaseAuth.instance
-        .createUserWithEmailAndPassword(
-      email: email,
-      password: password,
-    )
+        .createUserWithEmailAndPassword(email: email, password: password)
         .then((value) {
-      userCreate(
-        uId: value.user!.uid,
-        phone: phone,
-        email: email,
-        firstName: firstName.trim().capitalize(),
-        lastName: lastName.trim().capitalize(),
-        userType: selectedUserType,
-      );
-    }).catchError((error) {
-      emit(RegisterErrorState(error.toString()));
-    });
+          userCreate(
+            uId: value.user!.uid,
+            phone: phone,
+            email: email,
+            firstName: firstName.trim().capitalize(),
+            lastName: lastName.trim().capitalize(),
+            userType: selectedUserType,
+          );
+        })
+        .catchError((error) {
+          emit(RegisterErrorState(error.toString()));
+        });
   }
 
   void userCreate({
@@ -157,11 +181,11 @@ class RegisterCubit extends Cubit<RegisterStates> {
         .doc(uId)
         .set(model.toMap())
         .then((value) {
-      emit(CreateUserSuccessState());
-    })
+          emit(CreateUserSuccessState());
+        })
         .catchError((error) {
-      emit(CreateUserErrorState(error.toString()));
-    });
+          emit(CreateUserErrorState(error.toString()));
+        });
   }
 
   final workingDaysMapping = <String, int>{
@@ -175,23 +199,23 @@ class RegisterCubit extends Cubit<RegisterStates> {
   };
 
   List<WorkingDaysModel> workingDaysList =
-  [
-    "Friday",
-    "Saturday",
-    "Sunday",
-    "Monday",
-    "Tuesday",
-    "Wednesday",
-    "Thursday",
-  ]
-      .map(
-        (day) => WorkingDaysModel(
-      label: day,
-      code: day.toUpperCase(),
-      isSelected: false,
-    ),
-  )
-      .toList();
+      [
+            "Friday",
+            "Saturday",
+            "Sunday",
+            "Monday",
+            "Tuesday",
+            "Wednesday",
+            "Thursday",
+          ]
+          .map(
+            (day) => WorkingDaysModel(
+              label: day,
+              code: day.toUpperCase(),
+              isSelected: false,
+            ),
+          )
+          .toList();
 
   // 1. Get the uppercase codes of selected days
   late List<String> selectedDayCodes = workingDaysList
@@ -208,7 +232,6 @@ class RegisterCubit extends Cubit<RegisterStates> {
     emit(CreateCompanyChangeWorkingDaysState());
   }
 
-
   void registerCompany({
     required String orgName,
     required String paidLeave,
@@ -223,7 +246,6 @@ class RegisterCubit extends Cubit<RegisterStates> {
     int lateCutoffMinutes = 120,
     int minimumWorkHours = 6,
   }) {
-
     // Convert the List of Objects into a List of Strings
     List<String> selectedDayValues = workingDaysList
         .where((day) => day.isSelected)
@@ -236,7 +258,9 @@ class RegisterCubit extends Cubit<RegisterStates> {
     }
     emit(CreateCompanyLoadingState());
 
-    var companyDocRef = FirebaseFirestore.instance.collection('companies').doc();
+    var companyDocRef = FirebaseFirestore.instance
+        .collection('companies')
+        .doc();
     CompanyModel comModel = CompanyModel(
       companyId: companyDocRef.id,
       ownerId: ownerId,
@@ -251,24 +275,25 @@ class RegisterCubit extends Cubit<RegisterStates> {
       earlyAllowanceMinutes: earlyAllowanceMinutes,
       lateCutoffMinutes: lateCutoffMinutes,
       minimumWorkHours: minimumWorkHours,
-
     );
 
     companyDocRef
         .set(comModel.toMap())
         .then((value) {
-      // Wait for the user doc update before emitting success
-      // to avoid a race condition where getUserData() fetches stale data.
-      return FirebaseFirestore.instance
-          .collection('users')
-          .doc(ownerId)
-          .update({'companyId': companyDocRef.id});
-    }).then((_) async {
-      await CacheHelper.saveData(key: 'companyId', value: companyDocRef.id);
-      emit(CreateCompanySuccessState(companyDocRef.id));
-    }).catchError((error) {
-      emit(CreateCompanyErrorState(error.toString()));
-    });
+          // Wait for the user doc update before emitting success
+          // to avoid a race condition where getUserData() fetches stale data.
+          return FirebaseFirestore.instance
+              .collection('users')
+              .doc(ownerId)
+              .update({'companyId': companyDocRef.id});
+        })
+        .then((_) async {
+          await CacheHelper.saveData(key: 'companyId', value: companyDocRef.id);
+          emit(CreateCompanySuccessState(companyDocRef.id));
+        })
+        .catchError((error) {
+          emit(CreateCompanyErrorState(error.toString()));
+        });
   }
 
   Future<void> openTimePicker({
@@ -294,6 +319,7 @@ class RegisterCubit extends Cubit<RegisterStates> {
       emit(CreateCompanyTimeChangedState());
     }
   }
+
   void resetRegistrationData() {
     startTimeTC.clear();
     endTimeTC.clear();

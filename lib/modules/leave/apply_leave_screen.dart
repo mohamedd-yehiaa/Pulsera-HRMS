@@ -1,8 +1,10 @@
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/apply_leave_cubit.dart';
@@ -16,6 +18,7 @@ class ApplyLeaveScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     var user = AppCubit.get(context).userModel;
+    final bool isArabic = Directionality.of(context) == TextDirection.rtl;
 
     return Scaffold(
       backgroundColor: Colors.white,
@@ -25,7 +28,7 @@ class ApplyLeaveScreen extends StatelessWidget {
         child: BlocConsumer<ApplyLeaveCubit, ApplyLeaveStates>(
           listener: (context, state) {
             if (state is ApplyLeaveSuccessState) {
-              Fluttertoast.showToast(msg: "Leave Request Submitted");
+              Fluttertoast.showToast(msg: S.of(context).leaveRequestSubmitted);
               Navigator.pop(context);
             }
             if (state is ApplyLeaveErrorState) {
@@ -40,6 +43,10 @@ class ApplyLeaveScreen extends StatelessWidget {
           },
           builder: (context, state) {
             var cubit = ApplyLeaveCubit.get(context);
+            final locale = Localizations.localeOf(context).toString();
+            final String suffix = (!isArabic && (cubit.totalDays ?? 0) > 1)
+                ? 's'
+                : '';
 
             return SafeArea(
               child: Column(
@@ -51,7 +58,11 @@ class ApplyLeaveScreen extends StatelessWidget {
                     ),
                     child: Row(
                       children: [
-                        title(context, "Apply Leave", IconBroken.Edit),
+                        title(
+                          context,
+                          S.of(context).applyLeave,
+                          IconBroken.Edit,
+                        ),
                         const Spacer(),
                         IconButton(
                           onPressed: () => Navigator.pop(context),
@@ -89,8 +100,8 @@ class ApplyLeaveScreen extends StatelessWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Remaining Vacation Days",
+                                    Text(
+                                      S.of(context).remainingVacationDays,
                                       style: TextStyle(
                                         color: Colors.white70,
                                         fontSize: 13,
@@ -98,7 +109,8 @@ class ApplyLeaveScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(height: 4),
                                     Text(
-                                      "${cubit.remainingVacationDays} days",
+                                      "${cubit.remainingVacationDays} ${S.of(context).daysLeft}"
+                                          .localizeDigits(context),
                                       style: const TextStyle(
                                         color: Colors.white,
                                         fontSize: 22,
@@ -142,15 +154,16 @@ class ApplyLeaveScreen extends StatelessWidget {
                                 Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    const Text(
-                                      "Assigned To",
+                                    Text(
+                                      S.of(context).assignedTo,
                                       style: TextStyle(
                                         color: Colors.grey,
                                         fontSize: 12,
                                       ),
                                     ),
                                     Text(
-                                      cubit.teamAdmin?.fullName ?? "Team Admin",
+                                      cubit.teamAdmin?.fullName ??
+                                          S.of(context).teamAdmin,
                                       style: const TextStyle(
                                         fontWeight: FontWeight.bold,
                                         fontSize: 15,
@@ -171,8 +184,8 @@ class ApplyLeaveScreen extends StatelessWidget {
                               color: AppColors.error.withValues(alpha: 0.08),
                               borderRadius: BorderRadius.circular(12),
                             ),
-                            child: const Text(
-                              "You are not assigned to any team. Contact your manager.",
+                            child: Text(
+                              S.of(context).notAssignedToTeam,
                               style: TextStyle(color: AppColors.error),
                             ),
                           ),
@@ -184,10 +197,10 @@ class ApplyLeaveScreen extends StatelessWidget {
                           onPressed: () =>
                               cubit.setDate(context, isStart: true),
                           label: cubit.leaveStartDate == null
-                              ? "Select start date"
-                              : DateFormat(
-                                  'dd MMM yyyy',
-                                ).format(cubit.leaveStartDate!),
+                              ? S.of(context).selectStartDate
+                              : DateFormat('dd MMM yyyy', locale)
+                                    .format(cubit.leaveStartDate!)
+                                    .localizeDigits(context),
                           suffixIcon: const Icon(
                             IconBroken.Calendar,
                             color: AppColors.blue600,
@@ -199,10 +212,10 @@ class ApplyLeaveScreen extends StatelessWidget {
                           onPressed: () =>
                               cubit.setDate(context, isStart: false),
                           label: cubit.leaveEndDate == null
-                              ? "Select end date"
-                              : DateFormat(
-                                  'dd MMM yyyy',
-                                ).format(cubit.leaveEndDate!),
+                              ? S.of(context).selectEndDate
+                              : DateFormat('dd MMM yyyy', locale)
+                                    .format(cubit.leaveEndDate!)
+                                    .localizeDigits(context),
                           suffixIcon: const Icon(
                             IconBroken.Calendar,
                             color: AppColors.blue600,
@@ -231,8 +244,12 @@ class ApplyLeaveScreen extends StatelessWidget {
                                   size: 18,
                                 ),
                                 const SizedBox(width: 8),
+
                                 Text(
-                                  "Total: ${cubit.totalDays} day${cubit.totalDays! > 1 ? 's' : ''}",
+                                  S
+                                      .of(context)
+                                      .totalNDays(cubit.totalDays!, suffix)
+                                      .localizeDigits(context),
                                   style: const TextStyle(
                                     color: AppColors.blue600,
                                     fontWeight: FontWeight.bold,
@@ -248,10 +265,10 @@ class ApplyLeaveScreen extends StatelessWidget {
                         DefaultFormField(
                           controller: cubit.leavereasonTC,
                           type: TextInputType.multiline,
-                          label: const Text("Reason for leave"),
+                          label: Text(S.of(context).reasonForLeave),
                           prefix: IconBroken.Document,
                           validator: (value) =>
-                              value!.isEmpty ? "Required" : null,
+                              value!.isEmpty ? S.of(context).required : null,
                         ),
 
                         const SizedBox(height: 40),
@@ -268,9 +285,9 @@ class ApplyLeaveScreen extends StatelessWidget {
                                       companyId: user?.companyId,
                                       userModel: user,
                                     ),
-                              child: const Text(
-                                "Submit Request",
-                                style: TextStyle(color: Colors.white),
+                              child: Text(
+                                S.of(context).submitRequest,
+                                style: const TextStyle(color: Colors.white),
                               ),
                             ),
                           ),

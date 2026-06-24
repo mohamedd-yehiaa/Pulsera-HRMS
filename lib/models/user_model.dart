@@ -11,8 +11,6 @@ class UserModel {
   String? managerId;
   String? roleType;
 
-
-
   UserModel({
     required this.firstName,
     required this.lastName,
@@ -27,8 +25,7 @@ class UserModel {
     this.roleType,
   });
 
-  UserModel.fromJson(Map<String, dynamic> json)
-  {
+  UserModel.fromJson(Map<String, dynamic> json) {
     email = json['email'];
     firstName = json['firstName'];
     lastName = json['lastName'];
@@ -42,20 +39,19 @@ class UserModel {
     roleType = json['roleType'];
   }
 
-  Map<String, dynamic> toMap()
-  {
+  Map<String, dynamic> toMap() {
     return {
-      'firstName':firstName,
-      'lastName':lastName,
-      'email':email,
-      'phone':phone,
-      'uId':uId,
-      'image':image,
-      'companyId':companyId,
-      'isEmailVerified':isEmailVerified,
-      'userType':userType,
-      'managerId':managerId,
-      'roleType':roleType,
+      'firstName': firstName,
+      'lastName': lastName,
+      'email': email,
+      'phone': phone,
+      'uId': uId,
+      'image': image,
+      'companyId': companyId,
+      'isEmailVerified': isEmailVerified,
+      'userType': userType,
+      'managerId': managerId,
+      'roleType': roleType,
     };
   }
 }

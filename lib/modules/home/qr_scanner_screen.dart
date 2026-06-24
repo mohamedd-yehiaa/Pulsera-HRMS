@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:mobile_scanner/mobile_scanner.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 
@@ -46,7 +47,8 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
     // Return the raw scanned hash to the caller (Cubit validates)
     // Show brief feedback overlay, then pop
     setState(() {
-      _scanResult = true; // We show a "Scanned" indicator; cubit decides validity
+      _scanResult =
+          true; // We show a "Scanned" indicator; cubit decides validity
     });
 
     Future.delayed(const Duration(milliseconds: 400), () {
@@ -63,10 +65,7 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       body: Stack(
         children: [
           // Camera feed
-          MobileScanner(
-            controller: _controller,
-            onDetect: _onDetect,
-          ),
+          MobileScanner(controller: _controller, onDetect: _onDetect),
 
           // Dark overlay with cutout window
           _buildOverlay(),
@@ -118,11 +117,11 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
               ),
               child: Text(
                 _scanResult != null
-                    ? 'QR Scanned!'
-                    : 'Point your camera at the QR code',
+                    ? S.of(context).qrScannedExclamation
+                    : S.of(context).pointCameraAtQr,
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  color:  AppColors.white,
+                  color: AppColors.white,
                   fontSize: 16,
                   fontWeight: FontWeight.w500,
                   shadows: [Shadow(blurRadius: 8, color: Colors.black54)],
@@ -200,30 +199,47 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
         children: [
           // Top-left
           Positioned(
-            top: 0, left: 0,
+            top: 0,
+            left: 0,
             child: _bracket(color, bracketLength, bracketWidth, topLeft: true),
           ),
           // Top-right
           Positioned(
-            top: 0, right: 0,
+            top: 0,
+            right: 0,
             child: _bracket(color, bracketLength, bracketWidth, topRight: true),
           ),
           // Bottom-left
           Positioned(
-            bottom: 0, left: 0,
-            child: _bracket(color, bracketLength, bracketWidth, bottomLeft: true),
+            bottom: 0,
+            left: 0,
+            child: _bracket(
+              color,
+              bracketLength,
+              bracketWidth,
+              bottomLeft: true,
+            ),
           ),
           // Bottom-right
           Positioned(
-            bottom: 0, right: 0,
-            child: _bracket(color, bracketLength, bracketWidth, bottomRight: true),
+            bottom: 0,
+            right: 0,
+            child: _bracket(
+              color,
+              bracketLength,
+              bracketWidth,
+              bottomRight: true,
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _bracket(Color color, double length, double width, {
+  Widget _bracket(
+    Color color,
+    double length,
+    double width, {
     bool topLeft = false,
     bool topRight = false,
     bool bottomLeft = false,
@@ -235,13 +251,17 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
       decoration: BoxDecoration(
         border: Border(
           top: (topLeft || topRight)
-              ? BorderSide(color: color, width: width) : BorderSide.none,
+              ? BorderSide(color: color, width: width)
+              : BorderSide.none,
           bottom: (bottomLeft || bottomRight)
-              ? BorderSide(color: color, width: width) : BorderSide.none,
+              ? BorderSide(color: color, width: width)
+              : BorderSide.none,
           left: (topLeft || bottomLeft)
-              ? BorderSide(color: color, width: width) : BorderSide.none,
+              ? BorderSide(color: color, width: width)
+              : BorderSide.none,
           right: (topRight || bottomRight)
-              ? BorderSide(color: color, width: width) : BorderSide.none,
+              ? BorderSide(color: color, width: width)
+              : BorderSide.none,
         ),
         borderRadius: BorderRadius.only(
           topLeft: topLeft ? const Radius.circular(12) : Radius.zero,
@@ -261,14 +281,18 @@ class _QrScannerScreenState extends State<QrScannerScreen> {
           color: Colors.black87,
           borderRadius: BorderRadius.circular(16),
         ),
-        child: const Column(
+        child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(Icons.qr_code_scanner, color: AppColors.green400, size: 48),
-            SizedBox(height: 12),
+            const Icon(
+              Icons.qr_code_scanner,
+              color: AppColors.green400,
+              size: 48,
+            ),
+            const SizedBox(height: 12),
             Text(
-              'QR Scanned',
-              style: TextStyle(
+              S.of(context).qrScanned,
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,

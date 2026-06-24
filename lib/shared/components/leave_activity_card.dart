@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/leave_activity_model.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 
@@ -31,7 +33,6 @@ class LeaveActivityCard extends StatelessWidget {
     final bool isPending = item.leaveStatus == LeaveActivityState.pending;
     final bool isApproved = item.leaveStatus == LeaveActivityState.approved;
 
-
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
@@ -39,7 +40,7 @@ class LeaveActivityCard extends StatelessWidget {
         color: Colors.white,
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha:0.05),
+            color: Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -57,15 +58,17 @@ class LeaveActivityCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Date",
-                      style: TextStyle(color: Colors.grey, fontSize: 13),
+                    Text(
+                      S.of(context).date,
+                      style: const TextStyle(color: Colors.grey, fontSize: 13),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "${formatDate(item.fromdate)} - ${formatDate(item.todate)}",
+                      "${formatDate(item.fromdate, context)} - ${formatDate(item.todate, context)}",
                       style: const TextStyle(
-                          fontWeight: FontWeight.bold, fontSize: 15),
+                        fontWeight: FontWeight.bold,
+                        fontSize: 15,
+                      ),
                     ),
                   ],
                 ),
@@ -73,20 +76,24 @@ class LeaveActivityCard extends StatelessWidget {
               Container(
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(8),
-                  color: item.leaveStatus?.getColor.withValues(alpha:0.1) ??
-                      Colors.grey.withValues(alpha:0.1),
+                  color:
+                      item.leaveStatus?.getColor.withValues(alpha: 0.1) ??
+                      Colors.grey.withValues(alpha: 0.1),
                 ),
-                padding:
-                const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 6,
+                ),
                 child: Text(
-                  item.leaveStatus?.getName ?? "-",
+                  // Replaced .getName with .getLocalizedName(context)
+                  item.leaveStatus?.getLocalizedName(context) ?? "-",
                   style: TextStyle(
                     color: item.leaveStatus?.getColor ?? Colors.grey,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
                 ),
-              )
+              ),
             ],
           ),
 
@@ -98,14 +105,28 @@ class LeaveActivityCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTitleAndSubTitle("Total Days", "$days Days"),
-              _buildTitleAndSubTitle(
-                "Employee",
-                item.user?.fullName ?? "-",
+              Expanded(
+                flex: 2,
+                child: _buildTitleAndSubTitle(
+                  S.of(context).totalDaysLabel,
+                  S.of(context).nDays(days),
+                ),
               ),
-              _buildTitleAndSubTitle(
-                "Approval",
-                item.approvalTo?.fullName ?? "-",
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: _buildTitleAndSubTitle(
+                  S.of(context).employee,
+                  item.user?.fullName ?? "-",
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                flex: 3,
+                child: _buildTitleAndSubTitle(
+                  S.of(context).approval,
+                  item.approvalTo?.fullName ?? "-",
+                ),
               ),
             ],
           ),
@@ -115,7 +136,7 @@ class LeaveActivityCard extends StatelessWidget {
             const SizedBox(height: 12),
             const Divider(color: AppColors.grey100, height: 1),
             const SizedBox(height: 12),
-            _buildTitleAndSubTitle("Reason", item.leaveReason!),
+            _buildTitleAndSubTitle(S.of(context).reason, item.leaveReason!),
           ],
 
           // Approve/Reject Buttons (Admin only, pending only)
@@ -125,25 +146,25 @@ class LeaveActivityCard extends StatelessWidget {
               children: [
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => approveRejectTap
-                        ?.call(LeaveActivityState.approved),
+                    onPressed: () =>
+                        approveRejectTap?.call(LeaveActivityState.approved),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.green500,
                       side: const BorderSide(color: AppColors.green500),
                     ),
-                    child: const Text("Approve"),
+                    child: Text(S.of(context).approve),
                   ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
                   child: OutlinedButton(
-                    onPressed: () => approveRejectTap
-                        ?.call(LeaveActivityState.rejected),
+                    onPressed: () =>
+                        approveRejectTap?.call(LeaveActivityState.rejected),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.error,
                       side: const BorderSide(color: AppColors.error),
                     ),
-                    child: const Text("Reject"),
+                    child: Text(S.of(context).reject),
                   ),
                 ),
               ],
@@ -158,7 +179,7 @@ class LeaveActivityCard extends StatelessWidget {
               child: OutlinedButton.icon(
                 onPressed: () => _showCancelConfirmation(context, isApproved),
                 icon: const Icon(Icons.cancel_outlined, size: 18),
-                label: const Text("Cancel Leave"),
+                label: Text(S.of(context).cancelLeave),
                 style: OutlinedButton.styleFrom(
                   foregroundColor: AppColors.orange500,
                   side: const BorderSide(color: AppColors.orange500),
@@ -174,10 +195,11 @@ class LeaveActivityCard extends StatelessWidget {
             const Divider(color: AppColors.grey100, height: 1),
             const SizedBox(height: 12),
             _buildTitleAndSubTitle(
-              "Rejected Reason",
+              S.of(context).rejectedReason,
               item.rejectedReason!,
+              maxLines: null,
             ),
-          ]
+          ],
         ],
       ),
     );
@@ -185,17 +207,17 @@ class LeaveActivityCard extends StatelessWidget {
 
   void _showCancelConfirmation(BuildContext context, bool isApproved) {
     final message = isApproved
-        ? "Are you sure you want to cancel this approved leave? Your vacation days will be restored."
-        : "Are you sure you want to cancel this pending leave request?";
+        ? S.of(context).cancelApprovedLeaveMessage
+        : S.of(context).cancelPendingLeaveMessage;
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Cancel Leave"),
+        title: Text(S.of(context).cancelLeave),
         content: Text(message),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("No"),
+            child: Text(S.of(context).no),
           ),
           ElevatedButton(
             onPressed: () {
@@ -205,30 +227,44 @@ class LeaveActivityCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.orange500,
             ),
-            child: const Text("Yes, Cancel",
-                style: TextStyle(color: Colors.white)),
+            child: Text(
+              S.of(context).yesCancel,
+              style: const TextStyle(color: Colors.white),
+            ),
           ),
         ],
       ),
     );
   }
 
-  Widget _buildTitleAndSubTitle(String label, String subTitle) {
+  Widget _buildTitleAndSubTitle(
+    String label,
+    String subTitle, {
+    int? maxLines = 1,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label,
-            style: const TextStyle(color: Colors.grey, fontSize: 13)),
+        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 13)),
         const SizedBox(height: 4),
-        Text(subTitle,
-            style:
-            const TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+        Text(
+          subTitle,
+          style: const TextStyle(fontWeight: FontWeight.w600, fontSize: 14),
+        ),
       ],
     );
   }
 
-  String formatDate(DateTime? date) {
-    if (date == null) return '.';
-    return DateFormat('dd MMM yyyy').format(date);
+  String formatDate(DateTime? date, BuildContext context) {
+    if (date == null) return '-';
+
+    // 1. Grab the locale
+    final locale = Localizations.localeOf(context).toString();
+
+    // 2. Format with locale (so 'Jun' becomes 'يونيو') and localize the digits
+    return DateFormat(
+      'dd MMM yyyy',
+      locale,
+    ).format(date).localizeDigits(context);
   }
 }

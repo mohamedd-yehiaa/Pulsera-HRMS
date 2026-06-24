@@ -1,11 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/attendance_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
+import 'package:pulsera/shared/styles/theme.dart';
 
 /// Admin screen to view and edit a specific employee's attendance.
 class EmployeeAttendanceScreen extends StatefulWidget {
@@ -47,7 +50,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
       appBar: AppBar(
         leading: backButton(context),
         title: Text(
-          "${widget.employeeName}'s Attendance",
+          S.of(context).employeeAttendanceTitle(widget.employeeName),
           style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
@@ -93,16 +96,16 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   Expanded(
                     child: _buildTimeCard(
                       context,
-                      title: "Check In",
+                      title: S.of(context).checkIn,
                       time: activity?.checkIn?.inTime ?? "--:--",
                       icon: IconBroken.Login,
                       onEdit: activity?.checkIn != null
                           ? () => _showEditTimeDialog(
-                                context,
-                                cubit,
-                                'checkIn',
-                                activity!.checkIn!.inTime ?? '',
-                              )
+                              context,
+                              cubit,
+                              'checkIn',
+                              activity!.checkIn!.inTime ?? '',
+                            )
                           : null,
                     ),
                   ),
@@ -110,16 +113,16 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   Expanded(
                     child: _buildTimeCard(
                       context,
-                      title: "Check Out",
+                      title: S.of(context).checkOut,
                       time: activity?.outTime?.outTime ?? "--:--",
                       icon: IconBroken.Logout,
                       onEdit: activity?.outTime != null
                           ? () => _showEditTimeDialog(
-                                context,
-                                cubit,
-                                'outTime',
-                                activity!.outTime!.outTime ?? '',
-                              )
+                              context,
+                              cubit,
+                              'outTime',
+                              activity!.outTime!.outTime ?? '',
+                            )
                           : null,
                     ),
                   ),
@@ -132,7 +135,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                 children: [
                   Expanded(
                     child: _buildInfoCard(
-                      "Break Time",
+                      context,
+                      S.of(context).breakTime,
                       cubit.breakTime,
                       Icons.coffee_outlined,
                     ),
@@ -140,7 +144,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   const SizedBox(width: 12),
                   Expanded(
                     child: _buildInfoCard(
-                      "Worked Hours",
+                      context,
+                      S.of(context).workedHours,
                       cubit.workingTime,
                       Icons.timer_outlined,
                     ),
@@ -150,13 +155,13 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               const SizedBox(height: 12),
 
               // Time-rule details
-              _buildTimeRuleCards(activity),
-
+              _buildTimeRuleCards(context, activity),
               // Worked minutes (persisted)
               if (activity?.workedMinutes != null)
                 _buildInfoCard(
-                  "Persisted Worked Minutes",
-                  "${activity!.workedMinutes} min",
+                  context,
+                  S.of(context).persistedWorkedMinutes,
+                  S.of(context).nMin('${activity!.workedMinutes}'),
                   IconBroken.Time_Circle,
                 ),
 
@@ -164,15 +169,15 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
               // Break details
               if ((activity?.breakInTime?.isNotEmpty ?? false)) ...[
-                const Text(
-                  "Break Details",
-                  style: TextStyle(
+                Text(
+                  S.of(context).breakDetails,
+                  style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
                 const SizedBox(height: 8),
-                _buildBreakList(activity!),
+                _buildBreakList(context, activity!),
               ],
 
               const SizedBox(height: 24),
@@ -184,7 +189,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   child: OutlinedButton.icon(
                     onPressed: () => _showEditStatusDialog(context, cubit),
                     icon: const Icon(Icons.edit_outlined),
-                    label: const Text("Edit Attendance Status"),
+                    label: Text(S.of(context).editAttendanceStatus),
                     style: OutlinedButton.styleFrom(
                       foregroundColor: AppColors.primary,
                       padding: const EdgeInsets.symmetric(vertical: 14),
@@ -250,56 +255,73 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
   Widget _buildLegacyStatusBadge(String status) {
     final color = status == 'late' ? AppColors.orange500 : AppColors.green400;
+    // FIX: Using switch to localize the legacy status from the backend
+    final String localizedStatus = switch (status) {
+      'present' => S.of(context).present,
+      'late' => S.of(context).lateLabel,
+      'absent' => S.of(context).absent,
+      _ => status.toUpperCase(),
+    };
+
     return _buildStatusBadge(
-      status.toUpperCase(),
+      localizedStatus,
       color,
       status == 'late' ? Icons.warning_amber_rounded : Icons.check_circle,
     );
   }
 
   // Time-rule detail cards
-  Widget _buildTimeRuleCards(dynamic activity) {
+  Widget _buildTimeRuleCards(BuildContext context, dynamic activity) {
     if (activity == null) return const SizedBox();
 
     final List<Widget> cards = [];
 
     if (activity.lateMinutes != null && activity.lateMinutes > 0) {
-      cards.add(_buildDetailCard(
-        Icons.warning_amber_rounded,
-        AppColors.orange500,
-        "Late",
-        "${activity.lateMinutes} min",
-      ));
+      cards.add(
+        _buildDetailCard(
+          context,
+          Icons.warning_amber_rounded,
+          AppColors.orange500,
+          S.of(context).lateLabel,
+          S.of(context).nMin('${activity.lateMinutes}'),
+        ),
+      );
     }
     if (activity.earlyLeaveMinutes != null && activity.earlyLeaveMinutes > 0) {
-      cards.add(_buildDetailCard(
-        Icons.exit_to_app,
-        AppColors.orange500,
-        "Early Leave",
-        "${activity.earlyLeaveMinutes} min",
-      ));
+      cards.add(
+        _buildDetailCard(
+          context,
+          Icons.exit_to_app,
+          AppColors.orange500,
+          S.of(context).earlyLeaveLabel,
+          S.of(context).nMin('${activity.earlyLeaveMinutes}'),
+        ),
+      );
     }
     if (activity.overtimeMinutes != null && activity.overtimeMinutes > 0) {
-      cards.add(_buildDetailCard(
-        Icons.trending_up,
-        AppColors.primary,
-        "Overtime",
-        "${activity.overtimeMinutes} min",
-      ));
+      cards.add(
+        _buildDetailCard(
+          context,
+          Icons.trending_up,
+          AppColors.primary,
+          S.of(context).overtimeLabel,
+          S.of(context).nMin('${activity.overtimeMinutes}'),
+        ),
+      );
     }
 
     if (cards.isEmpty) return const SizedBox();
 
-    return Column(
-      children: [
-        const SizedBox(height: 12),
-        ...cards,
-      ],
-    );
+    return Column(children: [const SizedBox(height: 12), ...cards]);
   }
 
   Widget _buildDetailCard(
-      IconData icon, Color color, String label, String value) {
+    BuildContext context,
+    IconData icon,
+    Color color,
+    String label,
+    String value,
+  ) {
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Container(
@@ -313,13 +335,24 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
           children: [
             Icon(icon, color: color, size: 18),
             const SizedBox(width: 8),
-            Text(label,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.w600, fontSize: 13)),
+            Text(
+              label,
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
+              ),
+            ),
             const Spacer(),
-            Text(value,
-                style: TextStyle(
-                    color: color, fontWeight: FontWeight.bold, fontSize: 14)),
+            Text(
+              // Catching numbers passed into detail cards
+              value.localizeDigits(context),
+              style: TextStyle(
+                color: color,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
           ],
         ),
       ),
@@ -328,20 +361,20 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
 
   String _checkInStatusLabel(String status) {
     return switch (status) {
-      'early' => 'Early Check-in',
-      'on_time' => 'On Time',
-      'late' => 'Late',
-      'very_late' => 'Very Late',
+      'early' => S.of(context).earlyCheckInLabel,
+      'on_time' => S.of(context).statusOnTime,
+      'late' => S.of(context).lateLabel,
+      'very_late' => S.of(context).statusVeryLate,
       _ => status.toUpperCase(),
     };
   }
 
   String _checkOutStatusLabel(String status) {
     return switch (status) {
-      'early_leave' => 'Early Leave',
-      'completed' => 'Completed',
-      'overtime' => 'Overtime',
-      'insufficient_hours' => 'Insufficient Hours',
+      'early_leave' => S.of(context).earlyLeaveLabel,
+      'completed' => S.of(context).statusCompleted,
+      'overtime' => S.of(context).overtimeLabel,
+      'insufficient_hours' => S.of(context).statusInsufficientHours,
       _ => status.toUpperCase(),
     };
   }
@@ -373,14 +406,19 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   // Date selector
   // ===========================================================================
   Widget _buildDateSelector(BuildContext context) {
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    // Retrieve the locale from context
+    final locale = Localizations.localeOf(context).toString();
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         IconButton(
-          onPressed: () => _changeDate(
-            _selectedDate.subtract(const Duration(days: 1)),
+          onPressed: () =>
+              _changeDate(_selectedDate.subtract(const Duration(days: 1))),
+          icon: Icon(
+            isRtl ? IconBroken.Arrow___Right_2 : IconBroken.Arrow___Left_2,
           ),
-          icon: const Icon(IconBroken.Arrow___Left_2),
         ),
         GestureDetector(
           onTap: () async {
@@ -399,23 +437,25 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
               borderRadius: BorderRadius.circular(10),
             ),
             child: Text(
-              DateFormat('EEE, MMM d, yyyy').format(_selectedDate),
-              style: const TextStyle(
-                fontWeight: FontWeight.bold,
-                fontSize: 15,
-              ),
+              // Inject locale into DateFormat and localize the digits
+              DateFormat(
+                'EEE, MMM d, yyyy',
+                locale,
+              ).format(_selectedDate).localizeDigits(context),
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
             ),
           ),
         ),
         IconButton(
-          onPressed: _selectedDate.isBefore(
-            DateTime.now().subtract(const Duration(days: 1)),
-          )
-              ? () => _changeDate(
-                    _selectedDate.add(const Duration(days: 1)),
-                  )
+          onPressed:
+              _selectedDate.isBefore(
+                DateTime.now().subtract(const Duration(days: 1)),
+              )
+              ? () => _changeDate(_selectedDate.add(const Duration(days: 1)))
               : null,
-          icon: const Icon(IconBroken.Arrow___Right_2),
+          icon: Icon(
+            isRtl ? IconBroken.Arrow___Left_2 : IconBroken.Arrow___Right_2,
+          ),
         ),
       ],
     );
@@ -433,11 +473,7 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   }) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+      decoration: boxDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -453,11 +489,11 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
             ],
           ),
           const SizedBox(height: 8),
-          Text(title,
-              style: TextStyle(color: AppColors.grey700, fontSize: 12)),
+          Text(title, style: TextStyle(color: AppColors.grey700, fontSize: 12)),
           const SizedBox(height: 4),
           Text(
-            time,
+            // FIX: Localize time formatting
+            time.localizeDigits(context),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
@@ -465,24 +501,25 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
     );
   }
 
-  Widget _buildInfoCard(String title, String value, IconData icon) {
+  Widget _buildInfoCard(
+    BuildContext context,
+    String title,
+    String value,
+    IconData icon,
+  ) {
     return Container(
       padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: Colors.grey[50],
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.grey[200]!),
-      ),
+      decoration: boxDecoration,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
           const SizedBox(height: 8),
-          Text(title,
-              style: TextStyle(color: AppColors.grey700, fontSize: 12)),
+          Text(title, style: TextStyle(color: AppColors.grey700, fontSize: 12)),
           const SizedBox(height: 4),
           Text(
-            value,
+            // FIX: Catch raw minute strings
+            value.localizeDigits(context),
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
           ),
         ],
@@ -493,11 +530,12 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   // ===========================================================================
   // Break list
   // ===========================================================================
-  Widget _buildBreakList(dynamic activity) {
+  Widget _buildBreakList(BuildContext context, dynamic activity) {
     final breakIns = activity.breakInTime as List<String>? ?? [];
     final breakOuts = activity.breakOutTime as List<String>? ?? [];
-    final pairCount =
-        breakIns.length < breakOuts.length ? breakIns.length : breakOuts.length;
+    final pairCount = breakIns.length < breakOuts.length
+        ? breakIns.length
+        : breakOuts.length;
 
     return Column(
       children: List.generate(pairCount, (i) {
@@ -505,19 +543,25 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
           padding: const EdgeInsets.only(bottom: 8),
           child: Container(
             padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(
-              color: Colors.grey[50],
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[200]!),
-            ),
+            decoration: boxDecoration,
             child: Row(
               children: [
-                const Icon(Icons.coffee_outlined, size: 18, color: Colors.brown),
+                const Icon(
+                  Icons.coffee_outlined,
+                  size: 18,
+                  color: Colors.brown,
+                ),
                 const SizedBox(width: 8),
-                Text("Break ${i + 1}:",
-                    style: const TextStyle(fontWeight: FontWeight.w500)),
+                Text(
+                  S.of(context).breakN(i + 1).localizeDigits(context),
+                  style: const TextStyle(fontWeight: FontWeight.w500),
+                ),
                 const SizedBox(width: 8),
-                Text("${breakIns[i]} → ${breakOuts[i]}"),
+                // Added textDirection LTR so the arrow direction makes logical sense regardless of language
+                Text(
+                  "${breakIns[i]} → ${breakOuts[i]}".localizeDigits(context),
+                  textDirection: TextDirection.ltr,
+                ),
               ],
             ),
           ),
@@ -540,32 +584,44 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: Text("Edit ${field == 'checkIn' ? 'Check-In' : 'Check-Out'} Time"),
+        title: Text(
+          field == 'checkIn'
+              ? S.of(context).editCheckInTime
+              : S.of(context).editCheckOutTime,
+        ),
         content: TextField(
           controller: controller,
-          decoration: const InputDecoration(
-            labelText: "Time (HH:mm:ss)",
+          decoration: InputDecoration(
+            labelText: S.of(context).timeFormatHint,
             hintText: "09:00:00",
           ),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(S.of(context).cancel),
           ),
           TextButton(
             onPressed: () {
               Navigator.pop(ctx);
-              final newTime = controller.text.trim();
+              // Convert arabic keyboard entry to native english strings before saving to database
+              final newTime = controller.text.toEnglishDigits().trim();
               if (newTime.isEmpty) return;
 
               Map<String, dynamic> updates = {};
               if (field == 'checkIn') {
-                updates['checkIn'] = {'inTime': newTime, 'msg': 'Modified by admin'};
+                updates['checkIn'] = {
+                  'inTime': newTime,
+                  'msg': 'Modified by admin',
+                };
               } else {
-                updates['outTime'] = {'outTime': newTime, 'msg': 'Modified by admin'};
+                updates['outTime'] = {
+                  'outTime': newTime,
+                  'msg': 'Modified by admin',
+                };
               }
 
+              // This uses a fixed format explicitly for the API Call
               cubit.updateEmployeeAttendance(
                 userId: widget.employeeId,
                 date: DateFormat('yyyy-MM-dd').format(_selectedDate),
@@ -578,7 +634,10 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                 () => _loadAttendance(),
               );
             },
-            child: const Text("Save", style: TextStyle(color: AppColors.primary)),
+            child: Text(
+              S.of(context).save,
+              style: const TextStyle(color: AppColors.primary),
+            ),
           ),
         ],
       ),
@@ -588,11 +647,25 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
   void _showEditStatusDialog(BuildContext context, AttendanceCubit cubit) {
     String? selectedStatus = cubit.activity?.status;
 
+    // Helper to get translated labels for the edit dialog
+    String _getLocalizedStatus(String status) {
+      switch (status) {
+        case 'present':
+          return S.of(context).present;
+        case 'late':
+          return S.of(context).lateLabel;
+        case 'absent':
+          return S.of(context).absent;
+        default:
+          return status;
+      }
+    }
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          title: const Text("Edit Attendance Status"),
+          title: Text(S.of(context).editAttendanceStatus),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -600,7 +673,8 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                 RadioListTile<String>(
                   value: status,
                   groupValue: selectedStatus,
-                  title: Text(status[0].toUpperCase() + status.substring(1)),
+                  // FIX: Applied localized string instead of toUpperCase() English hack
+                  title: Text(_getLocalizedStatus(status)),
                   onChanged: (v) => setDialogState(() => selectedStatus = v),
                 ),
             ],
@@ -608,12 +682,13 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(ctx),
-              child: const Text("Cancel"),
+              child: Text(S.of(context).cancel),
             ),
             TextButton(
               onPressed: () {
                 Navigator.pop(ctx);
                 if (selectedStatus != null) {
+                  // This explicit string is safe as it is what the API expects
                   cubit.updateEmployeeAttendance(
                     userId: widget.employeeId,
                     date: DateFormat('yyyy-MM-dd').format(_selectedDate),
@@ -625,8 +700,10 @@ class _EmployeeAttendanceScreenState extends State<EmployeeAttendanceScreen> {
                   );
                 }
               },
-              child: const Text("Save",
-                  style: TextStyle(color: AppColors.primary)),
+              child: Text(
+                S.of(context).save,
+                style: const TextStyle(color: AppColors.primary),
+              ),
             ),
           ],
         ),

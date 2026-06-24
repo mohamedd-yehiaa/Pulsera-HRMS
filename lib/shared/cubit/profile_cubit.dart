@@ -1,13 +1,14 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_storage/firebase_storage.dart' as firebase_storage;
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:pulsera/models/company_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/shared/components/helper_functions.dart';
 import 'package:pulsera/shared/cubit/states.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ProfileCubit extends Cubit<ProfileStates> {
   ProfileCubit() : super(ProfileInitialState());
@@ -26,60 +27,92 @@ class ProfileCubit extends Cubit<ProfileStates> {
 
   File? profileImage;
   final ImagePicker _picker = ImagePicker();
-  Future<void> getProfileImage() async {
+
+  Future<void> getProfileImage(BuildContext context) async {
     try {
+      // 1. Pick the image
       final pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+
       if (pickedFile != null) {
-        profileImage = File(pickedFile.path);
-        emit(ProfileImagePickedSuccessState());
+        // 2. Safety check: Ensure the widget is still mounted before using context
+        if (!context.mounted) return;
+
+        // 3. Crop the image immediately after picking
+        final CroppedFile? croppedFile = await ImageCropper().cropImage(
+          sourcePath: pickedFile.path,
+          maxWidth: 512,
+          maxHeight: 512,
+          compressQuality: 90,
+          compressFormat: ImageCompressFormat.jpg,
+          uiSettings: [
+            AndroidUiSettings(
+              toolbarTitle: 'Edit Profile Picture',
+              toolbarColor: Colors.blue,
+              toolbarWidgetColor: Colors.white,
+              cropStyle: CropStyle.circle,
+              lockAspectRatio: true,
+              aspectRatioPresets: [CropAspectRatioPreset.square],
+            ),
+            IOSUiSettings(
+              title: 'Edit Profile Picture',
+              cropStyle: CropStyle.circle,
+              aspectRatioLockEnabled: true,
+              resetAspectRatioEnabled: false,
+              aspectRatioPresets: [CropAspectRatioPreset.square],
+            ),
+            WebUiSettings(context: context, initialAspectRatio: 1.0),
+
+          ],
+        );
+
+        // 4. Update state if cropped successfully
+        if (croppedFile != null) {
+          profileImage = File(croppedFile.path);
+          emit(ProfileImagePickedSuccessState());
+        } else {
+          print('Image cropping was canceled by the user.');
+        }
       } else {
         print('No image selected.');
       }
     } catch (e) {
-      emit(ProfileImagePickedErrorState('Error picking image: $e'));
+      emit(ProfileImagePickedErrorState('Error picking/cropping image: $e'));
     }
   }
 
-  void uploadProfileImage({required String uId}) async {
+  Future<void> uploadProfileImage({required String uId}) async {
     if (profileImage == null) return;
 
     emit(ProfileUpdateLoadingState());
 
     try {
-      final fileName = profileImage!.path.split('/').last;
+      final fileName = Uri.file(profileImage!.path).pathSegments.last;
       final path = 'users/$uId/profile_pictures/$fileName';
 
-      // 1. Upload the file to the 'profiles' bucket
-      await Supabase.instance.client.storage
-          .from('profiles')
-          .upload(
-        path,
-        profileImage!,
-        fileOptions: const FileOptions(cacheControl: '3600', upsert: true),
-      );
+      final ref = firebase_storage.FirebaseStorage.instance.ref().child(path);
+      await ref.putFile(profileImage!);
+      final String imageUrl = await ref.getDownloadURL();
 
-      // 2. Get the public URL
-      final String imageUrl = Supabase.instance.client.storage
-          .from('profiles')
-          .getPublicUrl(path);
-
-      // 3. Update your user record in the database
       _updateUserImage(uId: uId, imageUrl: imageUrl);
-
-    } on StorageException catch (error) {
+    } on firebase_storage.FirebaseException catch (error) {
       emit(ProfileErrorState("Storage error: ${error.message}"));
     } catch (error) {
-      emit(ProfileErrorState("An unexpected error occurred: ${error.toString()}"));
+      emit(
+        ProfileErrorState("An unexpected error occurred: ${error.toString()}"),
+      );
     }
   }
+
   void _updateUserImage({required String uId, required String imageUrl}) {
     FirebaseFirestore.instance
         .collection('users')
         .doc(uId)
         .update({'image': imageUrl})
         .then((value) {
-          // Clear the local file after successful upload so the UI refreshes to the NetworkImage
-          profileImage = null;
+          profileImage = null; // Clear local file after successful upload
+          if (user != null) {
+            user!.image = imageUrl;
+          }
           emit(ProfileUpdateSuccessState());
         })
         .catchError((error) {
@@ -93,11 +126,8 @@ class ProfileCubit extends Cubit<ProfileStates> {
     FirebaseFirestore.instance
         .collection('users')
         .doc(uId)
-        .update({
-          'image': '', // Set to empty string
-        })
+        .update({'image': ''})
         .then((value) {
-          // Update local model so UI refreshes
           user?.image = null;
           emit(ProfileUpdateSuccessState());
         })
@@ -110,12 +140,10 @@ class ProfileCubit extends Cubit<ProfileStates> {
     emit(ProfileUpdateLoadingState());
     List<String> nameParts = userNameTC.text.trim().split(' ');
     String firstName = nameParts[0];
-    String lastName;
-    if (nameParts.length > 1) {
-      lastName = nameParts.sublist(1).join(' ');
-    } else {
-      lastName = '';
-    }
+    String lastName = nameParts.length > 1
+        ? nameParts.sublist(1).join(' ')
+        : '';
+
     FirebaseFirestore.instance
         .collection('users')
         .doc(uId)

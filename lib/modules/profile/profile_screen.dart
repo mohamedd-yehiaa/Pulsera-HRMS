@@ -2,23 +2,28 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
-import 'package:pulsera/modules/settings/company_details_screen.dart';
-import 'package:pulsera/modules/settings/edit_profile_screen.dart';
-import 'package:pulsera/modules/settings/generate_qr_code_screen.dart';
-import 'package:pulsera/modules/settings/kiosk_account_section.dart';
-import 'package:pulsera/modules/settings/profile_details_screen.dart';
-import 'package:pulsera/modules/settings/profile_header_widget.dart';
-import 'package:pulsera/modules/settings/profile_menu_item_widget.dart';
+import 'package:pulsera/modules/profile/company_details_screen.dart';
+import 'package:pulsera/modules/profile/edit_profile_screen.dart';
+import 'package:pulsera/modules/profile/generate_qr_code_screen.dart';
+import 'package:pulsera/modules/profile/kiosk_account_section.dart';
+import 'package:pulsera/modules/profile/profile_details_screen.dart';
+import 'package:pulsera/modules/profile/profile_header_widget.dart';
+import 'package:pulsera/modules/profile/profile_menu_item_widget.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
+import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
+import 'package:pulsera/shared/cubit/localization_cubit.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
+import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 
-class SettingsScreen extends StatelessWidget {
-  const SettingsScreen({super.key});
+import '../../l10n/app_localizations.dart';
+
+class ProfileScreen extends StatelessWidget {
+  const ProfileScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
@@ -51,7 +56,7 @@ class SettingsScreen extends StatelessWidget {
                       navigateTo(context, const EditProfileScreen());
                     },
                     onUploadImage: () {
-                      profileCubit.getProfileImage();
+                      profileCubit.getProfileImage(context);
                     },
                   );
                 },
@@ -61,7 +66,7 @@ class SettingsScreen extends StatelessWidget {
 
               // --- Menu Items Section ---
               ProfileMenuItemWidget(
-                title: "My Profile",
+                title: S.of(context).myProfile,
                 leadingIcon: IconBroken.Profile,
                 onTap: () => navigateTo(context, const ProfileDetailsScreen()),
               ),
@@ -69,21 +74,37 @@ class SettingsScreen extends StatelessWidget {
               if (user.companyId != null) ...[
                 const SizedBox(height: 16),
                 ProfileMenuItemWidget(
-                  title: "My Company",
+                  title: S.of(context).myCompany,
                   leadingIcon: IconBroken.Work,
                   onTap: () =>
                       navigateTo(context, const CompanyDetailsScreen()),
                 ),
               ],
+              const SizedBox(height: 16),
+              BlocBuilder<LocalizationCubit, LocalizationStates>(
+                builder: (context, localeState) {
+                  final locale = LocalizationCubit.get(
+                    context,
+                  ).locale.languageCode;
+                  return ProfileMenuItemWidget(
+                    title: S.of(context).language,
+                    subtitle: locale == 'ar' ? 'العربية' : 'English',
+                    leadingIcon: Icons.language_outlined,
+                    onTap: () {
+                      _showLanguageSelector(context);
+                    },
+                  );
+                },
+              ),
 
               if (user.userType == 'Company Owner' ||
                   user.roleType == 'Hr admin') ...[
                 const SizedBox(height: 24),
-                const Padding(
-                  padding: EdgeInsets.only(left: 8, bottom: 8),
+                Padding(
+                  padding: const EdgeInsets.only(left: 8, bottom: 8),
                   child: Text(
-                    "Business Tools",
-                    style: TextStyle(
+                    S.of(context).businessTools,
+                    style: const TextStyle(
                       fontSize: 14,
                       fontWeight: FontWeight.bold,
                       color: Colors.grey,
@@ -91,7 +112,7 @@ class SettingsScreen extends StatelessWidget {
                   ),
                 ),
                 ProfileMenuItemWidget(
-                  title: "Generate QR Code",
+                  title: S.of(context).generateQrCode,
                   leadingIcon: IconBroken.Scan,
 
                   onTap: () {
@@ -113,8 +134,8 @@ class SettingsScreen extends StatelessWidget {
                   user.companyId != null) ...[
                 const SizedBox(height: 24),
                 KioskAccountSection(
-                  companyId: appCubit.companyModel?.companyId ??
-                      user.companyId ?? '',
+                  companyId:
+                      appCubit.companyModel?.companyId ?? user.companyId ?? '',
                   companyName: appCubit.companyModel?.organizationName,
                 ),
               ],
@@ -122,15 +143,71 @@ class SettingsScreen extends StatelessWidget {
               const SizedBox(height: 16),
 
               ProfileMenuItemWidget(
-                title: "Log out",
+                title: S.of(context).logout,
                 leadingIcon: IconBroken.Logout,
                 isDestructive: true,
                 onTap: () {
                   _showLogoutDialog(context);
                 },
               ),
+              const SizedBox(height: 16),
             ],
           ),
+        );
+      },
+    );
+  }
+
+  void _showLanguageSelector(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext bottomSheetContext) {
+        return BlocBuilder<LocalizationCubit, LocalizationStates>(
+          builder: (context, state) {
+            final cubit = LocalizationCubit.get(context);
+            final currentLang = cubit.locale.languageCode;
+            return SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(vertical: 20),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      S.of(context).selectLanguage,
+                      style: TextStyle(
+                        fontSize: 18,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    ListTile(
+                      title: const Text("English"),
+                      trailing: currentLang == 'en'
+                          ? const Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                      onTap: () {
+                        cubit.changeLanguage('en');
+                        Navigator.pop(bottomSheetContext);
+                      },
+                    ),
+                    ListTile(
+                      title: const Text("العربية"),
+                      trailing: currentLang == 'ar'
+                          ? const Icon(Icons.check, color: AppColors.primary)
+                          : null,
+                      onTap: () {
+                        cubit.changeLanguage('ar');
+                        Navigator.pop(bottomSheetContext);
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
     );
@@ -140,12 +217,12 @@ class SettingsScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text("Logout"),
-        content: const Text("Are you sure you want to logout?"),
+        title: Text(S.of(context).logout),
+        content: Text(S.of(context).logoutConfirmation),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text("Cancel"),
+            child: Text(S.of(context).cancel),
           ),
           TextButton(
             onPressed: () {
@@ -156,7 +233,10 @@ class SettingsScreen extends StatelessWidget {
                 registerCubit: RegisterCubit.get(context),
               );
             },
-            child: const Text("Logout", style: TextStyle(color: Colors.red)),
+            child: Text(
+              S.of(context).logout,
+              style: const TextStyle(color: Colors.red),
+            ),
           ),
         ],
       ),
@@ -191,6 +271,7 @@ Future<void> performLogout(
     // 3. Clean up specific cubits
     profileCubit.resetProfileData();
     registerCubit.resetRegistrationData();
+    NotificationCubit.get(context).clearStream();
 
     // 4. Navigate back to Login and clear stack
     navigateAndFinish(context, LoginScreen());

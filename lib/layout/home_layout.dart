@@ -9,33 +9,14 @@ import 'package:pulsera/layout/widgets/top_bar_widget.dart';
 import 'package:pulsera/modules/home/home_screen.dart';
 import 'package:pulsera/modules/leave/leave_screen.dart';
 import 'package:pulsera/modules/payroll/payroll_screen.dart';
-import 'package:pulsera/modules/settings/settings_screen.dart';
+import 'package:pulsera/modules/profile/profile_screen.dart';
 import 'package:pulsera/modules/team/team_members_screen.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/utils/responsive_breakpoints.dart';
 
-/// Root layout of the authenticated app.
-///
-/// Responsibilities (and nothing more):
-/// - Scaffold with responsive navigation (bottom nav / sidebar / top bar)
-/// - Switching between screens via [IndexedStack]
-///
-/// All business-logic reactions live in [HomeBlocListeners].
-/// All per-tab AppBars live in [HomeAppBars].
 class HomeLayout extends StatelessWidget {
   const HomeLayout({super.key});
-
-  /// The screens displayed in the body — order matches AppCubit.currentIndex.
-  /// Index 2 is the Team screen (on desktop/tablet) or a no-op placeholder
-  /// (on mobile, where the FAB navigates to TeamMembersScreen via push).
-  static const List<Widget> _screens = [
-    HomeScreen(), // 0
-    LeaveScreen(), // 1
-    TeamMembersScreen(), // 2  (sidebar only — mobile uses FAB push)
-    PayrollScreen(), // 3
-    SettingsScreen(), // 4
-  ];
 
   @override
   Widget build(BuildContext context) {
@@ -51,14 +32,34 @@ class HomeLayout extends StatelessWidget {
               final isDesktop = Breakpoints.isDesktop(context);
               final isTablet = Breakpoints.isTablet(context);
 
+              // 1. Move _screens inside the builder so we can dynamically wrap the ProfileScreen
+              final List<Widget> screens = [
+                const HomeScreen(), // 0
+                const LeaveScreen(), // 1
+                const TeamMembersScreen(), // 2
+                const PayrollScreen(), // 3
+
+                // 4. We wrap ONLY the Profile screen in a NestedScrollView
+                //    so its AppBar scrolls without touching ProfileScreen.dart
+                isMobile
+                    ? SafeArea( // SafeArea ensures it doesn't hide under the battery icon
+                  child: NestedScrollView(
+                    headerSliverBuilder: (context, innerBoxIsScrolled) => [
+                      SliverToBoxAdapter(
+                        child: HomeAppBars.forIndex(4, context, cubit),
+                      ),
+                    ],
+                    body: const ProfileScreen(),
+                  ),
+                )
+                    : const ProfileScreen(),
+              ];
+
               return Scaffold(
-                // AppBar only on mobile — desktop/tablet use TopBarWidget
-                appBar: isMobile
-                    ? HomeAppBars.forIndex(
-                        cubit.currentIndex,
-                        context,
-                        cubit,
-                      )
+                // 2. Show the normal, fixed AppBar for tabs 0, 1, 2, and 3.
+                //    But hide it for tab 4, because our NestedScrollView is handling it above.
+                appBar: (isMobile && cubit.currentIndex != 4)
+                    ? HomeAppBars.forIndex(cubit.currentIndex, context, cubit)
                     : null,
 
                 body: Row(
@@ -91,7 +92,7 @@ class HomeLayout extends StatelessWidget {
                               ),
                               child: IndexedStack(
                                 index: cubit.currentIndex,
-                                children: _screens,
+                                children: screens, // 3. Use the dynamic screens list here
                               ),
                             ),
                           ),
@@ -112,14 +113,14 @@ class HomeLayout extends StatelessWidget {
                 // ── Bottom nav (mobile only) ──
                 bottomNavigationBar: isMobile
                     ? BottomNavWidget(
-                        currentIndex: cubit.currentIndex,
-                        onTap: (index) => cubit.changeIndex(index),
-                      )
+                  currentIndex: cubit.currentIndex,
+                  onTap: (index) => cubit.changeIndex(index),
+                )
                     : null,
               );
             },
             fallback: (BuildContext context) =>
-                const Center(child: CircularProgressIndicator()),
+            const Center(child: CircularProgressIndicator()),
           );
         },
       ),

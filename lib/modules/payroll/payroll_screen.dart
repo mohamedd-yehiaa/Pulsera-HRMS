@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:pulsera/models/payroll_model.dart';
 import 'package:pulsera/modules/payroll/generate_payroll_screen.dart';
 import 'package:pulsera/modules/payroll/payslip_detail_screen.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_cubit.dart';
@@ -53,6 +55,8 @@ class _PayrollScreenState extends State<PayrollScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Directionality.of(context);
+    Localizations.localeOf(context);
     final user = AppCubit.get(context).userModel;
     final isAuthorized = PayrollCubit.isPayrollAuthorized(user?.userType);
 
@@ -62,7 +66,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
           Fluttertoast.showToast(msg: state.error);
         }
         if (state is PayrollGeneratedSuccessState) {
-          Fluttertoast.showToast(msg: 'Payroll generated successfully!');
+          Fluttertoast.showToast(msg: S.of(context).payrollGenerated);
           _loadPayrolls();
         }
       },
@@ -78,22 +82,19 @@ class _PayrollScreenState extends State<PayrollScreen> {
               // --- Action Buttons (Admin / HR Admin) ---
               if (isAuthorized)
                 Padding(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Row(
-
                     children: [
                       Expanded(
                         flex: 2,
                         child: ElevatedButton.icon(
                           icon: const Icon(IconBroken.Plus, size: 20),
-                          label: const Text(
-                            'Generate',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                          label: Text(
+                            S.of(context).generate,
+                            style: const TextStyle(fontWeight: FontWeight.bold),
                           ),
                           onPressed: () {
-                            navigateTo(
-                                context, const GeneratePayrollScreen());
+                            navigateTo(context, const GeneratePayrollScreen());
                           },
                         ),
                       ),
@@ -105,22 +106,22 @@ class _PayrollScreenState extends State<PayrollScreen> {
 
               // --- Payroll list ---
               Expanded(
-                child: state is PayrollLoadingState ||
-                    state is PayrollGeneratingState
+                child:
+                    state is PayrollLoadingState ||
+                        state is PayrollGeneratingState
                     ? const Center(child: CircularProgressIndicator())
                     : cubit.payrolls.isEmpty
                     ? _buildEmptyState()
                     : ListView.builder(
-                  padding:
-                  const EdgeInsets.symmetric(horizontal: 16),
-                  itemCount: cubit.payrolls.length,
-                  itemBuilder: (context, index) {
-                    return _buildPayrollCard(
-                      context,
-                      cubit.payrolls[index],
-                    );
-                  },
-                ),
+                        padding: const EdgeInsets.symmetric(horizontal: 16),
+                        itemCount: cubit.payrolls.length,
+                        itemBuilder: (context, index) {
+                          return _buildPayrollCard(
+                            context,
+                            cubit.payrolls[index],
+                          );
+                        },
+                      ),
               ),
             ],
           ),
@@ -133,12 +134,18 @@ class _PayrollScreenState extends State<PayrollScreen> {
   // Month Selector
   // ---------------------------------------------------------------------------
   Widget _buildMonthSelector(BuildContext context, PayrollCubit cubit) {
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    final locale = Localizations.localeOf(context).toString();
     return Padding(
       padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
       child: Row(
         children: [
+          // PREVIOUS MONTH BUTTON (Appears on the RIGHT in Arabic)
           IconButton(
-            icon: const Icon(IconBroken.Arrow___Left_2),
+            icon: Icon(
+              // If Arabic, point Right. If English, point Left.
+              isRtl ? IconBroken.Arrow___Right_2 : IconBroken.Arrow___Left_2,
+            ),
             onPressed: () {
               final newMonth = DateTime(
                 cubit.selectedMonth.year,
@@ -148,16 +155,22 @@ class _PayrollScreenState extends State<PayrollScreen> {
               _loadPayrolls();
             },
           ),
+
           Expanded(
             child: Center(
               child: Text(
-                DateFormat('MMMM yyyy').format(cubit.selectedMonth),
+                DateFormat('MMMM yyyy', locale).format(cubit.selectedMonth).localizeDigits(context),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
           ),
+
+          // NEXT MONTH BUTTON (Appears on the LEFT in Arabic)
           IconButton(
-            icon: const Icon(IconBroken.Arrow___Right_2),
+            icon: Icon(
+              // If Arabic, point Left. If English, point Right.
+              isRtl ? IconBroken.Arrow___Left_2 : IconBroken.Arrow___Right_2,
+            ),
             onPressed: () {
               final newMonth = DateTime(
                 cubit.selectedMonth.year,
@@ -183,7 +196,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
           Icon(IconBroken.Wallet, size: 64, color: AppColors.grey300),
           const SizedBox(height: 16),
           Text(
-            'No payroll records found',
+            S.of(context).noPayrollRecords,
             style: TextStyle(
               fontSize: 16,
               color: AppColors.grey500,
@@ -192,7 +205,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
           ),
           const SizedBox(height: 8),
           Text(
-            'Generate payroll to see records here',
+            S.of(context).generatePayrollHint,
             style: TextStyle(fontSize: 13, color: AppColors.grey300),
           ),
         ],
@@ -205,6 +218,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
   // ---------------------------------------------------------------------------
   Widget _buildPayrollCard(BuildContext context, PayrollModel payroll) {
     final isFormer = payroll.employeeStatus == 'Former Employee';
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
 
     return GestureDetector(
       onTap: () {
@@ -216,7 +230,6 @@ class _PayrollScreenState extends State<PayrollScreen> {
         padding: const EdgeInsets.all(16),
         decoration: boxDecoration,
         child: Row(
-
           children: [
             // --- Avatar / Icon ---
             Container(
@@ -230,8 +243,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
               ),
               child: Icon(
                 IconBroken.Wallet,
-                color:
-                isFormer ? AppColors.orange500 : AppColors.primary,
+                color: isFormer ? AppColors.orange500 : AppColors.primary,
               ),
             ),
             const SizedBox(width: 14),
@@ -246,10 +258,8 @@ class _PayrollScreenState extends State<PayrollScreen> {
                     children: [
                       Flexible(
                         child: Text(
-                          payroll.employeeName ?? 'Employee',
-                          style: Theme.of(context)
-                              .textTheme
-                              .titleSmall
+                          payroll.employeeName ?? S.of(context).employee,
+                          style: Theme.of(context).textTheme.titleSmall
                               ?.copyWith(fontWeight: FontWeight.bold),
                           overflow: TextOverflow.ellipsis,
                         ),
@@ -258,13 +268,15 @@ class _PayrollScreenState extends State<PayrollScreen> {
                         const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(
-                              horizontal: 6, vertical: 2),
+                            horizontal: 6,
+                            vertical: 2,
+                          ),
                           decoration: BoxDecoration(
                             color: AppColors.orange500.withAlpha(30),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            'Former',
+                            S.of(context).former,
                             style: TextStyle(
                               color: AppColors.orange500,
                               fontSize: 9,
@@ -277,11 +289,10 @@ class _PayrollScreenState extends State<PayrollScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    payroll.month ?? '',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.grey500),
+                    (payroll.month ?? '').localizeDigits(context),
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                   ),
                 ],
               ),
@@ -292,7 +303,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
               crossAxisAlignment: CrossAxisAlignment.end,
               children: [
                 Text(
-                  '\$${payroll.finalSalary?.toStringAsFixed(2) ?? '0.00'}',
+                  payroll.finalSalary.formatMoney(context),
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold,
                     color: AppColors.success,
@@ -300,7 +311,7 @@ class _PayrollScreenState extends State<PayrollScreen> {
                 ),
                 const SizedBox(height: 4),
                 Icon(
-                  IconBroken.Arrow___Right_2,
+                  isRtl?IconBroken.Arrow___Left_2 : IconBroken.Arrow___Right_2,
                   size: 16,
                   color: AppColors.grey300,
                 ),

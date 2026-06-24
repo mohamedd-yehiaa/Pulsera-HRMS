@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 
 void showSuccessSnack(String msg) {
   Fluttertoast.showToast(
@@ -75,4 +76,17 @@ TimeOfDay parseTimeOfDay(String timeString) {
     return TimeOfDay(hour: hour, minute: minute);
   }
   return const TimeOfDay(hour: 9, minute: 0); // Default fallback
+}
+
+String getLocalizedDay(BuildContext context, String code) {
+  switch (code) {
+    case 'MONDAY': return S.of(context).monday;
+    case 'TUESDAY': return S.of(context).tuesday;
+    case 'WEDNESDAY': return S.of(context).wednesday;
+    case 'THURSDAY': return S.of(context).thursday;
+    case 'FRIDAY': return S.of(context).friday;
+    case 'SATURDAY': return S.of(context).saturday;
+    case 'SUNDAY': return S.of(context).sunday;
+    default: return code;
+  }
 }

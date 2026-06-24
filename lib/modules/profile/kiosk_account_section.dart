@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/shared/cubit/kiosk_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
@@ -57,7 +58,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
       listener: (context, state) {
         if (state is KioskCreateSuccessState) {
           Fluttertoast.showToast(
-            msg: 'Kiosk account created successfully!',
+            msg: S.of(context).kioskAccountCreatedSuccess,
             backgroundColor: AppColors.green400,
             textColor: Colors.white,
           );
@@ -65,14 +66,14 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
         }
         if (state is KioskCreateErrorState) {
           Fluttertoast.showToast(
-            msg: 'Error: ${state.error}',
+            msg: S.of(context).errorPrefix(state.error),
             backgroundColor: AppColors.error,
             textColor: Colors.white,
           );
         }
         if (state is KioskChangePasswordSuccessState) {
           Fluttertoast.showToast(
-            msg: 'Password updated successfully!',
+            msg: S.of(context).passwordUpdatedSuccessfully,
             backgroundColor: AppColors.green400,
             textColor: Colors.white,
           );
@@ -91,11 +92,11 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Padding(
-              padding: EdgeInsets.only(left: 8, bottom: 8),
+            Padding(
+              padding: const EdgeInsets.only(left: 8, bottom: 8),
               child: Text(
-                'Kiosk Account',
-                style: TextStyle(
+                S.of(context).kioskAccount,
+                style: const TextStyle(
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   color: Colors.grey,
@@ -152,9 +153,9 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
-                    'Kiosk Account Active',
-                    style: TextStyle(
+                  Text(
+                    S.of(context).kioskAccountActive,
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 15,
                       color: AppColors.textPrimary,
@@ -186,9 +187,9 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
               size: 18,
               color: AppColors.primary,
             ),
-            label: const Text(
-              'Change Password',
-              style: TextStyle(
+            label: Text(
+              S.of(context).changePassword,
+              style: const TextStyle(
                 fontWeight: FontWeight.w600,
                 color: AppColors.textPrimary,
               ),
@@ -244,10 +245,10 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Create a dedicated account for kiosk devices.',
-                  style: TextStyle(
+                  S.of(context).createDedicatedKioskAccount,
+                  style: const TextStyle(
                     fontSize: 13,
                     color: AppColors.textSecondary,
                     height: 1.4,
@@ -264,7 +265,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             controller: _emailController,
             keyboardType: TextInputType.emailAddress,
             decoration: InputDecoration(
-              labelText: 'Kiosk Email',
+              labelText: S.of(context).kioskEmail,
               prefixIcon: const Icon(
                 IconBroken.Message,
                 color: AppColors.blue500,
@@ -278,10 +279,10 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter an email';
+                return S.of(context).pleaseEnterAnEmail;
               }
               if (!value.contains('@')) {
-                return 'Please enter a valid email';
+                return S.of(context).pleaseEnterAValidEmail;
               }
               return null;
             },
@@ -294,7 +295,7 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             controller: _passwordController,
             obscureText: !_isPasswordVisible,
             decoration: InputDecoration(
-              labelText: 'Password',
+              labelText: S.of(context).password,
               prefixIcon: const Icon(IconBroken.Lock, color: AppColors.blue500),
               suffixIcon: IconButton(
                 icon: Icon(
@@ -316,10 +317,10 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
             ),
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please enter a password';
+                return S.of(context).pleaseEnterAPassword;
               }
               if (value.length < 6) {
-                return 'Password must be at least 6 characters';
+                return S.of(context).passwordMinSixChars;
               }
               return null;
             },
@@ -354,7 +355,9 @@ class _KioskAccountSectionState extends State<KioskAccountSection> {
                     )
                   : const Icon(Icons.desktop_mac_outlined, color: Colors.white),
               label: Text(
-                isCreating ? 'Creating...' : 'Create Kiosk Account',
+                isCreating
+                    ? S.of(context).creating
+                    : S.of(context).createKioskAccount,
                 style: const TextStyle(
                   fontWeight: FontWeight.bold,
                   fontSize: 15,
@@ -475,7 +478,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
 
                   // ── Title ──
                   Text(
-                    'Change Kiosk Password',
+                    S.of(context).changeKioskPassword,
                     style: Theme.of(context).textTheme.headlineSmall!.copyWith(
                       fontWeight: FontWeight.bold,
                       color: AppColors.textPrimary,
@@ -505,14 +508,14 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   // ── Current Password ──
                   _buildPasswordField(
                     controller: _currentPasswordController,
-                    label: 'Current Password',
+                    label: S.of(context).currentPassword,
                     isVisible: _showCurrentPassword,
                     onToggle: () => setState(
                       () => _showCurrentPassword = !_showCurrentPassword,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter the current password';
+                        return S.of(context).pleaseEnterCurrentPassword;
                       }
                       return null;
                     },
@@ -522,16 +525,16 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   // ── New Password ──
                   _buildPasswordField(
                     controller: _newPasswordController,
-                    label: 'New Password',
+                    label: S.of(context).newPassword,
                     isVisible: _showNewPassword,
                     onToggle: () =>
                         setState(() => _showNewPassword = !_showNewPassword),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please enter a new password';
+                        return S.of(context).pleaseEnterNewPassword;
                       }
                       if (value.length < 6) {
-                        return 'Password must be at least 6 characters';
+                        return S.of(context).passwordMinSixChars;
                       }
                       return null;
                     },
@@ -541,17 +544,17 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                   // ── Confirm New Password ──
                   _buildPasswordField(
                     controller: _confirmPasswordController,
-                    label: 'Confirm New Password',
+                    label: S.of(context).confirmNewPassword,
                     isVisible: _showConfirmPassword,
                     onToggle: () => setState(
                       () => _showConfirmPassword = !_showConfirmPassword,
                     ),
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Please confirm the new password';
+                        return S.of(context).pleaseConfirmNewPassword;
                       }
                       if (value != _newPasswordController.text) {
-                        return 'Passwords do not match';
+                        return S.of(context).passwordsDoNotMatch;
                       }
                       return null;
                     },
@@ -585,7 +588,7 @@ class _ChangePasswordSheetState extends State<_ChangePasswordSheet> {
                               ),
                             )
                           : Text(
-                              'Update Password',
+                              S.of(context).updatePassword,
                               style: Theme.of(context).textTheme.titleMedium!
                                   .copyWith(
                                     color: AppColors.white,

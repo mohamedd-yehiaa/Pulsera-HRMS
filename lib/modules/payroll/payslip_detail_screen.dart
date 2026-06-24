@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart' hide TextDirection;
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:pulsera/models/payroll_model.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/payroll_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
@@ -15,8 +18,8 @@ class PayslipDetailScreen extends StatelessWidget {
 
     if (payroll == null) {
       return Scaffold(
-        appBar: AppBar(title: const Text('Payslip')),
-        body: const Center(child: Text('No payroll selected')),
+        appBar: AppBar(title: Text(S.of(context).payslip)),
+        body: Center(child: Text(S.of(context).noPayrollSelected)),
       );
     }
 
@@ -25,7 +28,7 @@ class PayslipDetailScreen extends StatelessWidget {
       appBar: AppBar(
         leading: backButton(context),
         title: Text(
-          'Payslip Details',
+          S.of(context).payslipDetails,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
@@ -40,19 +43,19 @@ class PayslipDetailScreen extends StatelessWidget {
             const SizedBox(height: 20),
 
             // --- Attendance Summary ---
-            _buildSectionTitle(context, 'Attendance Summary'),
+            _buildSectionTitle(context, S.of(context).attendanceSummary),
             const SizedBox(height: 12),
             _buildAttendanceSummary(context, payroll),
             const SizedBox(height: 20),
 
             // --- Earnings Breakdown ---
-            _buildSectionTitle(context, 'Earnings'),
+            _buildSectionTitle(context, S.of(context).earnings),
             const SizedBox(height: 12),
             _buildEarningsCard(context, payroll),
             const SizedBox(height: 20),
 
             // --- Deductions Breakdown ---
-            _buildSectionTitle(context, 'Deductions'),
+            _buildSectionTitle(context, S.of(context).deductions),
             const SizedBox(height: 12),
             _buildDeductionsCard(context, payroll),
             const SizedBox(height: 20),
@@ -97,7 +100,7 @@ class PayslipDetailScreen extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  payroll.employeeName ?? 'Employee',
+                  payroll.employeeName ?? S.of(context).employee,
                   style: const TextStyle(
                     color: AppColors.white,
                     fontSize: 18,
@@ -107,15 +110,17 @@ class PayslipDetailScreen extends StatelessWidget {
               ),
               if (isFormer)
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 8,
+                    vertical: 4,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.orange500.withAlpha(200),
                     borderRadius: BorderRadius.circular(8),
                   ),
-                  child: const Text(
-                    'Former Employee',
-                    style: TextStyle(
+                  child: Text(
+                    S.of(context).formerEmployee,
+                    style: const TextStyle(
                       color: AppColors.white,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
@@ -126,25 +131,32 @@ class PayslipDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 8),
           Text(
-            'Period: ${payroll.month ?? 'N/A'}',
+            S
+                .of(context)
+                .period((payroll.month ?? 'N/A').localizeDigits(context)),
             style: TextStyle(
               color: AppColors.white.withAlpha(200),
               fontSize: 14,
             ),
           ),
           const SizedBox(height: 4),
-          Row(
+          Wrap(
+            spacing: 16,
+            runSpacing: 4,
             children: [
               Text(
-                'Base Salary: \$${payroll.basicSalary?.toStringAsFixed(2) ?? '0.00'}',
+                S
+                    .of(context)
+                    .baseSalary(payroll.basicSalary.formatMoney(context)),
                 style: TextStyle(
                   color: AppColors.white.withAlpha(200),
                   fontSize: 12,
                 ),
               ),
-              const SizedBox(width: 16),
               Text(
-                'Daily Rate: \$${payroll.dailySalary?.toStringAsFixed(2) ?? '0.00'}',
+                S
+                    .of(context)
+                    .dailyRate(payroll.dailySalary.formatMoney(context)),
                 style: TextStyle(
                   color: AppColors.white.withAlpha(180),
                   fontSize: 12,
@@ -154,7 +166,9 @@ class PayslipDetailScreen extends StatelessWidget {
           ),
           const SizedBox(height: 4),
           Text(
-            'Generated: ${_formatDate(payroll.generatedDate)}',
+            S
+                .of(context)
+                .generated(_formatDate(payroll.generatedDate, context)),
             style: TextStyle(
               color: AppColors.white.withAlpha(180),
               fontSize: 12,
@@ -170,12 +184,13 @@ class PayslipDetailScreen extends StatelessWidget {
   // ---------------------------------------------------------------------------
   Widget _buildSectionTitle(BuildContext context, String title) {
     return Align(
-      alignment: Alignment.centerLeft,
+      // The crucial fix to make titles dynamically pin Right or Left
+      alignment: AlignmentDirectional.centerStart,
       child: Text(
         title,
-        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-              fontWeight: FontWeight.bold,
-            ),
+        style: Theme.of(
+          context,
+        ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
       ),
     );
   }
@@ -184,6 +199,9 @@ class PayslipDetailScreen extends StatelessWidget {
   // Attendance Summary (6 stats)
   // ---------------------------------------------------------------------------
   Widget _buildAttendanceSummary(BuildContext context, PayrollModel payroll) {
+    final bool isArabic = Directionality.of(context) == TextDirection.rtl;
+    final String minSuffix = isArabic ? 'د' : 'm';
+
     return Column(
       children: [
         Row(
@@ -193,7 +211,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 IconBroken.Calendar,
                 '${payroll.totalWorkingDays ?? 0}',
-                'Working Days',
+                S.of(context).workingDays,
               ),
             ),
             const SizedBox(width: 10),
@@ -202,7 +220,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 IconBroken.Tick_Square,
                 '${payroll.workedDays ?? 0}',
-                'Worked',
+                S.of(context).workedDays,
               ),
             ),
             const SizedBox(width: 10),
@@ -211,7 +229,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 IconBroken.Shield_Done,
                 '${payroll.paidVacationDays ?? 0}',
-                'Paid Leave',
+                S.of(context).paidLeave,
               ),
             ),
           ],
@@ -224,7 +242,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 IconBroken.Close_Square,
                 '${payroll.unapprovedAbsenceDays ?? 0}',
-                'Absences',
+                S.of(context).absences,
               ),
             ),
             const SizedBox(width: 10),
@@ -232,8 +250,8 @@ class PayslipDetailScreen extends StatelessWidget {
               child: _buildStatCard(
                 context,
                 IconBroken.Time_Circle,
-                '${payroll.lateMinutes ?? 0}m',
-                'Late',
+                '${payroll.lateMinutes ?? 0} $minSuffix',
+                S.of(context).late,
               ),
             ),
             const SizedBox(width: 10),
@@ -241,8 +259,8 @@ class PayslipDetailScreen extends StatelessWidget {
               child: _buildStatCard(
                 context,
                 IconBroken.Time_Square,
-                '${payroll.overtimeMinutes ?? 0}m',
-                'Overtime',
+                '${payroll.overtimeMinutes ?? 0} $minSuffix',
+                S.of(context).overtime,
               ),
             ),
           ],
@@ -254,8 +272,8 @@ class PayslipDetailScreen extends StatelessWidget {
               child: _buildStatCard(
                 context,
                 Icons.exit_to_app,
-                '${payroll.earlyLeaveMinutes ?? 0}m',
-                'Early Leave',
+                '${payroll.earlyLeaveMinutes ?? 0} $minSuffix',
+                S.of(context).earlyLeave,
               ),
             ),
             const SizedBox(width: 10),
@@ -264,7 +282,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 Icons.warning_amber_rounded,
                 '${payroll.missingCheckoutDays ?? 0}',
-                'No Checkout',
+                S.of(context).noCheckout,
               ),
             ),
             const SizedBox(width: 10),
@@ -273,7 +291,7 @@ class PayslipDetailScreen extends StatelessWidget {
                 context,
                 Icons.payments_outlined,
                 '${payroll.totalPayableDays ?? (payroll.workedDays ?? 0) + (payroll.paidVacationDays ?? 0)}',
-                'Payable Days',
+                S.of(context).payableDays,
               ),
             ),
           ],
@@ -293,22 +311,22 @@ class PayslipDetailScreen extends StatelessWidget {
         children: [
           _buildLineItem(
             context,
-            'Worked Days Salary',
-            '+\$${payroll.workedDaysSalary?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).workedDaysSalary,
+            payroll.workedDaysSalary.formatMoney(context, prefix: '+'),
             AppColors.success,
           ),
           const Divider(height: 24),
           _buildLineItem(
             context,
-            'Paid Vacation Salary',
-            '+\$${payroll.paidVacationSalary?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).paidVacationSalary,
+            payroll.paidVacationSalary.formatMoney(context, prefix: '+'),
             AppColors.success,
           ),
           const Divider(height: 24),
           _buildLineItem(
             context,
-            'Overtime Bonus',
-            '+\$${payroll.overtimeBonus?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).overtimeBonus,
+            payroll.overtimeBonus.formatMoney(context, prefix: '+'),
             AppColors.success,
           ),
         ],
@@ -327,22 +345,22 @@ class PayslipDetailScreen extends StatelessWidget {
         children: [
           _buildLineItem(
             context,
-            'Absence Deduction',
-            '-\$${payroll.absenceDeduction?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).absenceDeduction,
+            payroll.absenceDeduction.formatMoney(context, prefix: '-'),
             AppColors.error,
           ),
           const Divider(height: 24),
           _buildLineItem(
             context,
-            'Late Deduction',
-            '-\$${payroll.lateDeduction?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).lateDeduction,
+            payroll.lateDeduction.formatMoney(context, prefix: '-'),
             AppColors.error,
           ),
           const Divider(height: 24),
           _buildLineItem(
             context,
-            'Early Leave Deduction',
-            '-\$${payroll.earlyLeaveDeduction?.toStringAsFixed(2) ?? '0.00'}',
+            S.of(context).earlyLeaveDeduction,
+            payroll.earlyLeaveDeduction.formatMoney(context, prefix: '-'),
             AppColors.error,
           ),
         ],
@@ -366,17 +384,17 @@ class PayslipDetailScreen extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            'Net Salary',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            S.of(context).netSalary,
+            style: Theme.of(
+              context,
+            ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
           ),
           Text(
-            '\$${payroll.finalSalary?.toStringAsFixed(2) ?? '0.00'}',
+            payroll.finalSalary.formatMoney(context),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                  color: AppColors.success,
-                ),
+              fontWeight: FontWeight.bold,
+              color: AppColors.success,
+            ),
           ),
         ],
       ),
@@ -396,12 +414,13 @@ class PayslipDetailScreen extends StatelessWidget {
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: Theme.of(context).textTheme.bodyMedium),
+        // No redundant localizeDigits here, formatMoney handles it upstream!
         Text(
           value,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: valueColor,
-              ),
+            fontWeight: FontWeight.bold,
+            color: valueColor,
+          ),
         ),
       ],
     );
@@ -420,18 +439,19 @@ class PayslipDetailScreen extends StatelessWidget {
         children: [
           Icon(icon, color: AppColors.primary, size: 20),
           const SizedBox(height: 6),
+          // Localize the raw integers and durations passed into the card
           Text(
-            value,
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                  fontWeight: FontWeight.bold,
-                ),
+            value.localizeDigits(context),
+            style: Theme.of(
+              context,
+            ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 2),
           Text(
             label,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: AppColors.grey500,
-                ),
+            style: Theme.of(
+              context,
+            ).textTheme.labelSmall?.copyWith(color: AppColors.grey500),
             textAlign: TextAlign.center,
           ),
         ],
@@ -439,11 +459,13 @@ class PayslipDetailScreen extends StatelessWidget {
     );
   }
 
-  String _formatDate(String? isoDate) {
+  String _formatDate(String? isoDate, BuildContext context) {
     if (isoDate == null) return 'N/A';
     try {
       final date = DateTime.parse(isoDate);
-      return '${date.day}/${date.month}/${date.year}';
+      final locale = Localizations.localeOf(context).toString();
+      // localize the generated string output
+      return DateFormat.yMMMd(locale).format(date).localizeDigits(context);
     } catch (_) {
       return isoDate;
     }

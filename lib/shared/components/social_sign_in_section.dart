@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import '../styles/colors.dart';
 
 /// Reusable social sign-in section with divider and Google button.
@@ -24,7 +25,7 @@ class SocialSignInSection extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Text(
-                'Or continue with social account',
+                S.of(context).orContinueWithSocial,
                 style: Theme.of(context).textTheme.bodySmall!.copyWith(
                       color: AppColors.textSecondary,
                       fontWeight: FontWeight.w500,
@@ -60,7 +61,7 @@ class SocialSignInSection extends StatelessWidget {
                 ),
                 const SizedBox(width: 12),
                 Text(
-                  'Google',
+                  S.of(context).google,
                   style: Theme.of(context).textTheme.titleMedium!.copyWith(
                         color: AppColors.grey700,
                         fontWeight: FontWeight.w600,
