@@ -3,6 +3,7 @@ import 'package:pulsera/shared/styles/colors.dart';
 
 class ProfileMenuItemWidget extends StatelessWidget {
   final String title;
+  final String? subtitle;
   final IconData leadingIcon;
   final VoidCallback onTap;
   final bool isDestructive;
@@ -10,6 +11,7 @@ class ProfileMenuItemWidget extends StatelessWidget {
   const ProfileMenuItemWidget({
     super.key,
     required this.title,
+    this.subtitle,
     required this.leadingIcon,
     required this.onTap,
     this.isDestructive = false,
@@ -22,14 +24,14 @@ class ProfileMenuItemWidget extends StatelessWidget {
       leading: Container(
         padding: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: isDestructive 
-              ? AppColors.red500.withValues(alpha: 0.1) 
-              : AppColors.grey100,
+          color: isDestructive
+              ? AppColors.red500.withValues(alpha: 0.1)
+              : AppColors.blue500.withValues(alpha: 0.1),
           shape: BoxShape.circle,
         ),
         child: Icon(
           leadingIcon,
-          color: isDestructive ? AppColors.red500 : AppColors.textPrimary,
+          color: isDestructive ? AppColors.red500 : AppColors.blue500,
         ),
       ),
       title: Text(
@@ -40,6 +42,15 @@ class ProfileMenuItemWidget extends StatelessWidget {
           color: isDestructive ? AppColors.red500 : AppColors.textPrimary,
         ),
       ),
+      subtitle: subtitle != null
+          ? Text(
+              subtitle!,
+              style: const TextStyle(
+                fontSize: 13,
+                color: AppColors.textSecondary,
+              ),
+            )
+          : null,
       trailing: const Icon(
         Icons.arrow_forward_ios,
         size: 16,

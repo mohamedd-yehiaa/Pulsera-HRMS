@@ -1,11 +1,11 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
-
 import '../../shared/components/auth_branding_panel.dart';
 import '../../shared/components/auth_footer_link.dart';
 import '../../shared/components/auth_form_container.dart';
@@ -26,6 +26,7 @@ class RegisterScreen extends StatelessWidget {
   final emailController = TextEditingController();
   final passwordController = TextEditingController();
   final phoneController = TextEditingController();
+  final confirmPasswordController = TextEditingController();
 
   RegisterScreen({super.key});
 
@@ -60,7 +61,7 @@ class RegisterScreen extends StatelessWidget {
                 : AppBar(
                     elevation: 0,
                     backgroundColor: Colors.transparent,
-                    leading: backButton(context)
+                    leading: backButton(context),
                   ),
             body: ResponsiveLayout(
               mobile: _buildMobileLayout(context, state),
@@ -86,6 +87,7 @@ class RegisterScreen extends StatelessWidget {
         emailController: emailController,
         passwordController: passwordController,
         phoneController: phoneController,
+        confirmPasswordController: confirmPasswordController,
         state: state,
       ),
     );
@@ -104,6 +106,7 @@ class RegisterScreen extends StatelessWidget {
         emailController: emailController,
         passwordController: passwordController,
         phoneController: phoneController,
+        confirmPasswordController: confirmPasswordController,
         state: state,
       ),
     );
@@ -116,13 +119,7 @@ class RegisterScreen extends StatelessWidget {
     return Row(
       children: [
         // Left — branding panel
-        const Expanded(
-          child: AuthBrandingPanel(
-            headline: 'Join Pulsera',
-            subtitle:
-                'Create your account and start\nmanaging your team efficiently.',
-          ),
-        ),
+        const Expanded(child: AuthBrandingPanel()),
 
         // Right — register form
         Expanded(
@@ -137,6 +134,7 @@ class RegisterScreen extends StatelessWidget {
                 emailController: emailController,
                 passwordController: passwordController,
                 phoneController: phoneController,
+                confirmPasswordController: confirmPasswordController,
                 state: state,
               ),
             ),
@@ -157,6 +155,7 @@ class _RegisterFormBody extends StatelessWidget {
   final TextEditingController emailController;
   final TextEditingController passwordController;
   final TextEditingController phoneController;
+  final TextEditingController confirmPasswordController;
   final RegisterStates state;
 
   const _RegisterFormBody({
@@ -166,6 +165,7 @@ class _RegisterFormBody extends StatelessWidget {
     required this.emailController,
     required this.passwordController,
     required this.phoneController,
+    required this.confirmPasswordController,
     required this.state,
   });
 
@@ -181,20 +181,20 @@ class _RegisterFormBody extends StatelessWidget {
         children: [
           // ── Header ──
           Text(
-            "Let's Get Started!",
+            S.of(context).letsGetStarted,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                  fontFamily: 'Jannah',
-                  fontSize: 30,
-                  color: AppColors.primary,
-                ),
+              fontFamily: 'Jannah',
+              fontSize: 30,
+              color: AppColors.primary,
+            ),
           ),
           Text(
-            'Register now to continue',
+            S.of(context).registerNowToContinue,
             style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  fontFamily: 'Jannah',
-                  fontSize: 17,
-                  color: AppColors.textSecondary,
-                ),
+              fontFamily: 'Jannah',
+              fontSize: 17,
+              color: AppColors.textSecondary,
+            ),
           ),
 
           const SizedBox(height: 30),
@@ -205,17 +205,17 @@ class _RegisterFormBody extends StatelessWidget {
             type: TextInputType.name,
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your first name';
+                return S.of(context).pleaseEnterFirstName;
               }
               return null;
             },
             label: Text(
-              'First Name',
+              S.of(context).firstName,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Profile,
           ),
@@ -228,17 +228,17 @@ class _RegisterFormBody extends StatelessWidget {
             type: TextInputType.name,
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your last name';
+                return S.of(context).pleaseEnterLastName;
               }
               return null;
             },
             label: Text(
-              'Last Name',
+              S.of(context).lastName,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.User,
           ),
@@ -249,9 +249,13 @@ class _RegisterFormBody extends StatelessWidget {
           DropdownButtonFormField<String>(
             initialValue: cubit.selectedUserType,
             decoration: InputDecoration(
+              contentPadding: const EdgeInsets.symmetric(
+                vertical: 20.0,
+                horizontal: 10.0,
+              ),
               fillColor: AppColors.grey100,
               filled: true,
-              labelText: 'User Type',
+              labelText: S.of(context).userType,
               prefixIcon: const Icon(
                 IconBroken.Bag_2,
                 color: AppColors.blue500,
@@ -261,16 +265,13 @@ class _RegisterFormBody extends StatelessWidget {
                 borderSide: BorderSide.none,
               ),
               labelStyle: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontSize: 16,
+              ),
             ),
             items: ['Company Owner', 'Employee']
                 .map(
-                  (label) => DropdownMenuItem(
-                    value: label,
-                    child: Text(label),
-                  ),
+                  (label) => DropdownMenuItem(value: label, child: Text(label)),
                 )
                 .toList(),
             onChanged: (value) {
@@ -278,7 +279,7 @@ class _RegisterFormBody extends StatelessWidget {
             },
             validator: (value) {
               if (value == null || value.isEmpty) {
-                return 'Please select your role';
+                return S.of(context).pleaseSelectRole;
               }
               return null;
             },
@@ -292,17 +293,17 @@ class _RegisterFormBody extends StatelessWidget {
             type: TextInputType.emailAddress,
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your email address';
+                return S.of(context).pleaseEnterEmail;
               }
               return null;
             },
             label: Text(
-              'Email Address',
+              S.of(context).emailAddress,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Message,
           ),
@@ -318,17 +319,46 @@ class _RegisterFormBody extends StatelessWidget {
             suffixPressed: () => cubit.changePasswordVisibility(),
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'password is too short';
+                return S.of(context).passwordTooShort;
               }
               return null;
             },
             label: Text(
-              'Password',
+              S.of(context).password,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
+            ),
+            prefix: IconBroken.Lock,
+          ),
+
+          const SizedBox(height: 15),
+
+          // ── Confirm Password ──
+          DefaultFormField(
+            controller: confirmPasswordController,
+            type: TextInputType.visiblePassword,
+            suffix: cubit.confirmSuffix,
+            isPassword: cubit.isConfirmPassword,
+            suffixPressed: () => cubit.changeConfirmPasswordVisibility(),
+            validator: (String? value) {
+              if (value == null || value.isEmpty) {
+                return S.of(context).pleaseConfirmPassword;
+              }
+              if (value != passwordController.text) {
+                return S.of(context).passwordsDoNotMatch;
+              }
+              return null;
+            },
+            label: Text(
+              S.of(context).confirmPassword,
+              style: Theme.of(context).textTheme.labelLarge!.copyWith(
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Lock,
           ),
@@ -341,17 +371,17 @@ class _RegisterFormBody extends StatelessWidget {
             type: TextInputType.phone,
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your phone number';
+                return S.of(context).pleaseEnterPhone;
               }
               return null;
             },
             label: Text(
-              'Phone Number',
+              S.of(context).phoneNumber,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Call,
           ),
@@ -360,7 +390,7 @@ class _RegisterFormBody extends StatelessWidget {
 
           // ── Register button ──
           PrimaryButton(
-            label: 'Register',
+            label: S.of(context).register,
             isLoading: state is RegisterLoadingState,
             onPressed: () {
               if (formKey.currentState!.validate()) {
@@ -387,8 +417,8 @@ class _RegisterFormBody extends StatelessWidget {
 
           // ── Login link ──
           AuthFooterLink(
-            message: 'Already have an account?',
-            actionLabel: 'Login',
+            message: S.of(context).alreadyHaveAccount,
+            actionLabel: S.of(context).login,
             onPressed: () {
               Navigator.push(
                 context,

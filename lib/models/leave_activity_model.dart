@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/team_members_model.dart';
+import '../l10n/app_localizations.dart';
 import '../shared/styles/colors.dart';
-
 
 class LeaveActivityModel {
   String? id;
@@ -101,12 +101,17 @@ enum LeaveActivityState {
   cancelled;
 
   static List<String> get list {
-    return [
-      "Pending",
-      "Approved",
-      "Rejected",
-      "Cancelled",
-    ];
+    return ["Pending", "Approved", "Rejected", "Cancelled"];
+  }
+
+  // New method to handle translations dynamically based on context
+  String getLocalizedName(BuildContext context) {
+    return switch (this) {
+      LeaveActivityState.pending => S.of(context).pending,
+      LeaveActivityState.approved => S.of(context).approved,
+      LeaveActivityState.rejected => S.of(context).rejected,
+      LeaveActivityState.cancelled => S.of(context).cancelled,
+    };
   }
 
   static LeaveActivityState? fromStrings(String val) {

@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:intl/intl.dart';
 import 'package:pulsera/models/payroll_config_model.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_config_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_cubit.dart';
@@ -39,7 +41,7 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
       initialDate: _selectedMonth,
       firstDate: DateTime(2020),
       lastDate: DateTime.now(),
-      helpText: 'Select Payroll Month',
+      helpText: S.of(context).selectPayrollMonth,
     );
     if (picked != null) {
       setState(() {
@@ -55,11 +57,12 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
     final configCubit = PayrollConfigCubit.get(context);
 
     if (company == null || user?.companyId == null) {
-      Fluttertoast.showToast(msg: 'Company data not available');
+      Fluttertoast.showToast(msg: S.of(context).companyDataNotAvailable);
       return;
     }
 
-    final config = configCubit.config ??
+    final config =
+        configCubit.config ??
         PayrollConfigModel.defaults(companyId: user!.companyId!);
 
     final monthStr = DateFormat('yyyy-MM').format(_selectedMonth);
@@ -78,11 +81,12 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final locale = Localizations.localeOf(context).toString();
     return Scaffold(
       appBar: AppBar(
         title: Text(
-          'Generate Payroll',
-          style:Theme.of(context).textTheme.titleLarge,
+          S.of(context).generatePayroll,
+          style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
         elevation: 0,
@@ -91,7 +95,7 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
       body: BlocConsumer<PayrollCubit, PayrollStates>(
         listener: (context, state) {
           if (state is PayrollGeneratedSuccessState) {
-            Fluttertoast.showToast(msg: 'Payroll generated successfully!');
+            Fluttertoast.showToast(msg: S.of(context).payrollGenerated);
             Navigator.pop(context);
           }
           if (state is PayrollErrorState) {
@@ -111,21 +115,20 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
                   decoration: BoxDecoration(
                     color: AppColors.primary.withAlpha(20),
                     borderRadius: BorderRadius.circular(12),
-                    border:
-                        Border.all(color: AppColors.primary.withAlpha(60)),
+                    border: Border.all(color: AppColors.primary.withAlpha(60)),
                   ),
                   child: Row(
                     children: [
-                      Icon(IconBroken.Info_Circle,
-                          color: AppColors.primary, size: 20),
+                      Icon(
+                        IconBroken.Info_Circle,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
                       const SizedBox(width: 10),
                       Expanded(
                         child: Text(
-                          'Payroll will be calculated using each employee\'s individual salary from their team profile. '
-                          'Deduction rules are loaded from your payroll configuration.',
-                          style: Theme.of(context)
-                              .textTheme
-                              .bodySmall
+                          S.of(context).payrollInfoBanner,
+                          style: Theme.of(context).textTheme.bodySmall
                               ?.copyWith(color: AppColors.primary),
                         ),
                       ),
@@ -136,52 +139,62 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
 
                 // --- Month Picker ---
                 Text(
-                  'Payroll Month',
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                        fontWeight: FontWeight.bold,
-                      ),
+                  S.of(context).payrollMonth,
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 const SizedBox(height: 8),
                 AppButton.appOulineButtonRow(
                   onPressed: _pickMonth,
-                  label: DateFormat('MMMM yyyy').format(_selectedMonth),
+                  label: DateFormat(
+                    'MMMM yyyy',
+                    locale,
+                  ).format(_selectedMonth).localizeDigits(context),
                   context: context,
-                  prefixIcon: Icon(IconBroken.Calendar,
-                      color: AppColors.primary, size: 20),
-                  suffixIcon: Icon(IconBroken.Arrow___Down_2,
-                      color: AppColors.grey500, size: 18),
+                  prefixIcon: Icon(
+                    IconBroken.Calendar,
+                    color: AppColors.primary,
+                    size: 20,
+                  ),
+                  suffixIcon: Icon(
+                    IconBroken.Arrow___Down_2,
+                    color: AppColors.grey500,
+                    size: 18,
+                  ),
                 ),
                 const SizedBox(height: 20),
 
                 // --- Override Toggle ---
                 Container(
-                  padding:
-                      const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
                   decoration: BoxDecoration(
                     color: AppColors.grey100,
                     borderRadius: BorderRadius.circular(12),
                   ),
                   child: Row(
                     children: [
-                      Icon(IconBroken.Danger,
-                          color: AppColors.orange500, size: 20),
+                      Icon(
+                        IconBroken.Danger,
+                        color: AppColors.orange500,
+                        size: 20,
+                      ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Override Existing Payroll',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .titleSmall
+                              S.of(context).overrideExistingPayroll,
+                              style: Theme.of(context).textTheme.titleSmall
                                   ?.copyWith(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              'Re-generate payroll even if it already exists for this month',
-                              style: Theme.of(context)
-                                  .textTheme
-                                  .bodySmall
+                              S.of(context).overrideDescription,
+                              style: Theme.of(context).textTheme.bodySmall
                                   ?.copyWith(color: AppColors.grey500),
                             ),
                           ],
@@ -219,40 +232,89 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Active Rules',
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleSmall
+                            S.of(context).activeRules,
+                            style: Theme.of(context).textTheme.titleSmall
                                 ?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 8),
                           _ruleRow(
-                              'Absence Multiplier',
-                              '${config.absenceMultiplier}× daily salary'),
+                            S.of(context).absenceMultiplier,
+                            // Uses: "{value}× daily salary"
+                            S
+                                .of(context)
+                                .timesDailySalary(
+                                  config.absenceMultiplier.toString(),
+                                ),
+                          ),
                           _ruleRow(
-                              'Late Grace',
-                              '${config.lateGracePeriodMinutes} min'),
+                            S.of(context).lateGrace,
+                            // Uses: "{value} min"
+                            S
+                                .of(context)
+                                .minutesSuffix(
+                                  config.lateGracePeriodMinutes.toString(),
+                                ),
+                          ),
                           _ruleRow(
-                              'Late Deduction',
-                              config.lateDeductionMode == 'percentage'
-                                  ? '${config.lateDeductionValue}% of daily salary'
-                                  : '\$${config.lateDeductionValue}/min'),
+                            S.of(context).lateDeductionRule,
+                            config.lateDeductionMode == 'percentage'
+                                // Uses: "{value}% of daily salary"
+                                ? S
+                                      .of(context)
+                                      .percentOfDailySalary(
+                                        config.lateDeductionValue.toString(),
+                                      )
+                                // Uses: "{value}/min" AND applies formatMoney to add LE/جم
+                                : S
+                                      .of(context)
+                                      .perMinuteRate(
+                                        config.lateDeductionValue.formatMoney(
+                                          context,
+                                        ),
+                                      ),
+                          ),
                           _ruleRow(
-                              'Overtime Min',
-                              '${config.overtimeMinMinutes} min'),
+                            S.of(context).overtimeMin,
+                            // Uses: "{value} min"
+                            S
+                                .of(context)
+                                .minutesSuffix(
+                                  config.overtimeMinMinutes.toString(),
+                                ),
+                          ),
                           _ruleRow(
-                              'Overtime Bonus',
-                              '${config.overtimeBonusPercentage}% of daily salary'),
+                            S.of(context).overtimeBonusRule,
+                            // Uses: "{value}% of daily salary"
+                            S
+                                .of(context)
+                                .percentOfDailySalary(
+                                  config.overtimeBonusPercentage.toString(),
+                                ),
+                          ),
                           _ruleRow(
-                              'Early Leave',
-                              config.earlyLeaveDeductionMode == 'percentage'
-                                  ? '${config.earlyLeaveDeductionValue}% of daily salary'
-                                  : '\$${config.earlyLeaveDeductionValue}/min'),
+                            S.of(context).earlyLeaveRule,
+                            config.earlyLeaveDeductionMode == 'percentage'
+                                // Uses: "{value}% of daily salary"
+                                ? S
+                                      .of(context)
+                                      .percentOfDailySalary(
+                                        config.earlyLeaveDeductionValue
+                                            .toString(),
+                                      )
+                                // Uses: "{value}/min" AND applies formatMoney to add LE/جم
+                                : S
+                                      .of(context)
+                                      .perMinuteRate(
+                                        config.earlyLeaveDeductionValue
+                                            .formatMoney(context),
+                                      ),
+                          ),
                           _ruleRow(
-                              'Missing Checkout',
-                              config.missingCheckoutPolicy == 'half_day'
-                                  ? 'Count as Half Day'
-                                  : 'Count as Absent'),
+                            S.of(context).missingCheckoutRule,
+                            config.missingCheckoutPolicy == 'half_day'
+                                ? S.of(context).countAsHalfDay
+                                : S.of(context).countAsAbsent,
+                          ),
                         ],
                       ),
                     );
@@ -278,9 +340,9 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
                               color: AppColors.white,
                             ),
                           )
-                        : const Text(
-                            'Generate for All Employees',
-                            style: TextStyle(
+                        : Text(
+                            S.of(context).generateForAll,
+                            style: const TextStyle(
                               fontSize: 16,
                               fontWeight: FontWeight.bold,
                               color: AppColors.white,
@@ -303,15 +365,18 @@ class _GeneratePayrollScreenState extends State<GeneratePayrollScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(label,
-              style: Theme.of(context)
-                  .textTheme
-                  .bodySmall
-                  ?.copyWith(color: AppColors.grey500)),
-          Text(value,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    fontWeight: FontWeight.w600,
-                  )),
+          Text(
+            label,
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
+          ),
+          Text(
+            value.localizeDigits(context),
+            style: Theme.of(
+              context,
+            ).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.w600),
+          ),
         ],
       ),
     );

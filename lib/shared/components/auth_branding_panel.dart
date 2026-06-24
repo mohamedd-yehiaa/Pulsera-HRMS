@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '../styles/colors.dart';
 
 /// The left-side branding panel shown on desktop split-screen auth layouts.
@@ -6,17 +8,20 @@ import '../styles/colors.dart';
 /// Displays the app logo, a headline, and a subtitle on top of a
 /// gradient background with decorative floating shapes.
 class AuthBrandingPanel extends StatelessWidget {
-  final String headline;
-  final String subtitle;
+  final String? headline;
+  final String? subtitle;
 
   const AuthBrandingPanel({
     super.key,
-    this.headline = 'Welcome to Pulsera',
-    this.subtitle = 'Manage your workforce with ease\nand efficiency.',
+    this.headline,
+    this.subtitle,
   });
 
   @override
   Widget build(BuildContext context) {
+    final displayHeadline = headline ?? S.of(context).welcomeToPulsera;
+    final displaySubtitle = subtitle ?? S.of(context).managePulseraSubtitle;
+
     return Container(
       decoration: const BoxDecoration(
         gradient: LinearGradient(
@@ -69,12 +74,12 @@ class AuthBrandingPanel extends StatelessWidget {
                   Container(
                     padding: const EdgeInsets.all(20),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.15),
+                      color: Colors.white.withValues(alpha: 0.06),
                       borderRadius: BorderRadius.circular(24),
                     ),
-                    child: const Image(
-                      image: AssetImage('assets/images/logo.png'),
-                      height: 90,
+                    child: SvgPicture.asset(
+                      'assets/images/logo.svg',
+                      height: 150,
                       fit: BoxFit.contain,
                     ),
                   ),
@@ -82,7 +87,7 @@ class AuthBrandingPanel extends StatelessWidget {
 
                   // Headline
                   Text(
-                    headline,
+                    displayHeadline,
                     textAlign: TextAlign.center,
                     style: const TextStyle(
                       fontFamily: 'Jannah',
@@ -96,7 +101,7 @@ class AuthBrandingPanel extends StatelessWidget {
 
                   // Subtitle
                   Text(
-                    subtitle,
+                    displaySubtitle,
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontFamily: 'Jannah',

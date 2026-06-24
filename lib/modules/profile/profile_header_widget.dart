@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
@@ -32,7 +33,7 @@ class ProfileHeaderWidget extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  color: AppColors.primary,
+                  color: AppColors.blue500.withValues(alpha: 0.9),
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.white, width: 2),
                 ),
@@ -68,9 +69,9 @@ class ProfileHeaderWidget extends StatelessWidget {
                 borderRadius: BorderRadius.circular(12),
               ),
             ),
-            child: const Text(
-              "Edit Profile",
-              style: TextStyle(
+            child: Text(
+              S.of(context).editProfile,
+              style: const TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
                 color: Colors.white,

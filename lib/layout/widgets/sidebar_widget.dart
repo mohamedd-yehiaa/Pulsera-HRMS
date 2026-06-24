@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:pulsera/models/user_model.dart';
+import 'package:pulsera/modules/profile/profile_details_screen.dart';
+import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 
@@ -25,12 +28,32 @@ class SidebarWidget extends StatelessWidget {
   // to the same AppCubit indices used by the mobile bottom nav.
   // Index 2 on mobile is the FAB placeholder (SizedBox); on the sidebar
   // we show Team there instead.
-  static const List<_SidebarItem> _items = [
-    _SidebarItem(icon: IconBroken.Home, label: 'Home', layoutIndex: 0),
-    _SidebarItem(icon: IconBroken.Calendar, label: 'Leave', layoutIndex: 1),
-    _SidebarItem(icon: IconBroken.User, label: 'Team', layoutIndex: 2),
-    _SidebarItem(icon: IconBroken.Wallet, label: 'Payroll', layoutIndex: 3),
-    _SidebarItem(icon: IconBroken.Setting, label: 'Settings', layoutIndex: 4),
+  static List<_SidebarItem> _getItems(BuildContext context) => [
+    _SidebarItem(
+      icon: IconBroken.Home,
+      label: S.of(context).navHome,
+      layoutIndex: 0,
+    ),
+    _SidebarItem(
+      icon: IconBroken.Calendar,
+      label: S.of(context).navLeave,
+      layoutIndex: 1,
+    ),
+    _SidebarItem(
+      icon: IconBroken.User,
+      label: S.of(context).navTeam,
+      layoutIndex: 2,
+    ),
+    _SidebarItem(
+      icon: IconBroken.Wallet,
+      label: S.of(context).navPayroll,
+      layoutIndex: 3,
+    ),
+    _SidebarItem(
+      icon: IconBroken.Profile,
+      label: S.of(context).navProfile,
+      layoutIndex: 4,
+    ),
   ];
 
   @override
@@ -40,7 +63,7 @@ class SidebarWidget extends StatelessWidget {
     return AnimatedContainer(
       duration: const Duration(milliseconds: 200),
       width: width,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.sideDrawerBg,
         border: Border(
           right: BorderSide(color: AppColors.borderColor, width: 1),
@@ -59,9 +82,9 @@ class SidebarWidget extends StatelessWidget {
           Expanded(
             child: ListView.builder(
               padding: const EdgeInsets.symmetric(horizontal: 12),
-              itemCount: _items.length,
+              itemCount: _getItems(context).length,
               itemBuilder: (context, index) {
-                final item = _items[index];
+                final item = _getItems(context)[index];
                 final isSelected = currentIndex == item.layoutIndex;
                 return _buildNavTile(context, item, isSelected);
               },
@@ -81,8 +104,8 @@ class SidebarWidget extends StatelessWidget {
 
   Widget _buildHeader(BuildContext context) {
     if (collapsed) {
-      return Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
+      return const Padding(
+        padding: EdgeInsets.symmetric(horizontal: 16),
         child: Icon(IconBroken.Activity, color: AppColors.primary, size: 28),
       );
     }
@@ -107,9 +130,9 @@ class SidebarWidget extends StatelessWidget {
           Text(
             'Pulsera',
             style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: AppColors.primary,
-                  fontWeight: FontWeight.bold,
-                ),
+              color: AppColors.primary,
+              fontWeight: FontWeight.bold,
+            ),
           ),
         ],
       ),
@@ -137,8 +160,9 @@ class SidebarWidget extends StatelessWidget {
               horizontal: collapsed ? 0 : 16,
             ),
             child: Row(
-              mainAxisAlignment:
-                  collapsed ? MainAxisAlignment.center : MainAxisAlignment.start,
+              mainAxisAlignment: collapsed
+                  ? MainAxisAlignment.center
+                  : MainAxisAlignment.start,
               children: [
                 Icon(
                   item.icon,
@@ -151,10 +175,10 @@ class SidebarWidget extends StatelessWidget {
                     item.label,
                     style: TextStyle(
                       fontSize: 15,
-                      fontWeight:
-                          isSelected ? FontWeight.bold : FontWeight.w500,
-                      color:
-                          isSelected ? AppColors.primary : AppColors.grey700,
+                      fontWeight: isSelected
+                          ? FontWeight.bold
+                          : FontWeight.w500,
+                      color: isSelected ? AppColors.primary : AppColors.grey700,
                     ),
                   ),
                 ],
@@ -169,65 +193,80 @@ class SidebarWidget extends StatelessWidget {
   // ── Footer ──────────────────────────────────────────────────────────────────
 
   Widget _buildFooter(BuildContext context) {
-    final name =
-        '${userModel?.firstName ?? ''} ${userModel?.lastName ?? ''}'.trim();
+    final name = '${userModel?.firstName ?? ''} ${userModel?.lastName ?? ''}'
+        .trim();
     final role = userModel?.userType ?? '';
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 12),
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
+      child: Material(
+        // We moved the color and border radius to the Material widget
         color: AppColors.sideDrawerSelected,
         borderRadius: BorderRadius.circular(12),
-      ),
-      child: Row(
-        children: [
-          CircleAvatar(
-            radius: 18,
-            backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-            backgroundImage: (userModel?.image != null &&
-                    userModel!.image!.isNotEmpty)
-                ? NetworkImage(userModel!.image!)
-                : null,
-            child: (userModel?.image == null || userModel!.image!.isEmpty)
-                ? Text(
-                    (userModel?.firstName ?? 'U')[0].toUpperCase(),
-                    style: const TextStyle(
-                      color: AppColors.primary,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  )
-                : null,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+        child: InkWell(
+          borderRadius: BorderRadius.circular(12),
+          // Notice the () added below!
+          onTap: () => navigateTo(context, const ProfileDetailsScreen()),
+          child: Padding(
+            // We moved the padding inside the InkWell so the ripple covers the whole box
+            padding: const EdgeInsets.all(12),
+            child: Row(
               children: [
-                Text(
-                  name.isNotEmpty ? name : 'User',
-                  style: const TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.bold,
-                    color: AppColors.textPrimary,
+                _buildAvatar(),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        name.isNotEmpty ? name : S.of(context).user,
+                        style: const TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textPrimary,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      if (role.isNotEmpty)
+                        Text(
+                          role,
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                    ],
                   ),
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
                 ),
-                if (role.isNotEmpty)
-                  Text(
-                    role,
-                    style: const TextStyle(
-                      fontSize: 11,
-                      color: AppColors.textSecondary,
-                    ),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
               ],
             ),
           ),
-        ],
+        ),
+      ),
+    );
+  }
+
+  // ── User avatar ─────────────────────────────────────────────────────────────
+  Widget _buildAvatar() {
+    if (userModel?.image != null && userModel!.image!.isNotEmpty) {
+      return CircleAvatar(
+        radius: 18,
+        backgroundImage: NetworkImage(userModel!.image!),
+      );
+    }
+    return CircleAvatar(
+      radius: 18,
+      backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+      child: Text(
+        (userModel?.firstName ?? 'U')[0].toUpperCase(),
+        style: const TextStyle(
+          color: AppColors.primary,
+          fontWeight: FontWeight.bold,
+          fontSize: 14,
+        ),
       ),
     );
   }

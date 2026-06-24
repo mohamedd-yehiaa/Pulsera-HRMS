@@ -2,12 +2,14 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/layout/home_layout.dart';
 import 'package:pulsera/modules/kiosk/kiosk_qr_screen.dart';
+import 'package:pulsera/modules/login/reset_password.dart';
 import 'package:pulsera/modules/register/register_screen.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
-
+import 'package:flutter_svg/flutter_svg.dart';
 import '../../shared/components/auth_branding_panel.dart';
 import '../../shared/components/auth_footer_link.dart';
 import '../../shared/components/auth_form_container.dart';
@@ -53,11 +55,32 @@ class LoginScreen extends StatelessWidget {
       ],
       child: BlocConsumer<AuthCubit, AuthStates>(
         listener: (context, state) {
+          // --- Existing Login States ---
           if (state is AuthErrorState) {
             Fluttertoast.showToast(msg: state.error);
           }
           if (state is AuthSuccessState) {
             _handleAuthSuccess(context, state.uId);
+          }
+
+          // Password Reset States
+          if (state is ResetPasswordSuccessState) {
+            Fluttertoast.showToast(
+              msg:
+                  S.of(context).resetLinkSent,
+              toastLength: Toast.LENGTH_LONG,
+              backgroundColor: Colors.green,
+            );
+            // Close the bottom sheet automatically
+            Navigator.pop(context);
+          }
+
+          if (state is ResetPasswordErrorState) {
+            Fluttertoast.showToast(
+              msg: state
+                  .error, // This grabs the awesome error messages you wrote in the switch statement!
+              backgroundColor: Colors.red,
+            );
           }
         },
         builder: (context, state) {
@@ -116,13 +139,7 @@ class LoginScreen extends StatelessWidget {
     return Row(
       children: [
         // Left — branding panel
-        const Expanded(
-          child: AuthBrandingPanel(
-            headline: 'Welcome Back!',
-            subtitle:
-                'Streamline your HR operations.\nAttendance, payroll, and team management\nin one place.',
-          ),
-        ),
+        const Expanded(child: AuthBrandingPanel()),
 
         // Right — login form
         Expanded(
@@ -213,32 +230,31 @@ class _LoginFormBody extends StatelessWidget {
           // ── Logo (mobile & tablet only) ──
           if (showLogo) ...[
             Center(
-              child: Image(
-                fit: BoxFit.contain,
+              child: SvgPicture.asset(
+                'assets/images/logo.svg',
                 height: 200,
-                image: const AssetImage('assets/images/logo.png'),
+                fit: BoxFit.contain,
               ),
             ),
-            const SizedBox(height: 8),
           ],
 
           // ── Header text ──
           Text(
-            'Welcome back!',
+            S.of(context).welcomeBackExclamation,
             style: Theme.of(context).textTheme.headlineMedium!.copyWith(
-                  fontFamily: 'Jannah',
-                  fontSize: 30,
-                  color: AppColors.primary,
-                ),
+              fontFamily: 'Jannah',
+              fontSize: 30,
+              color: AppColors.primary,
+            ),
           ),
           const SizedBox(height: 4),
           Text(
-            'Login to your account',
+            S.of(context).loginToAccount,
             style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                  fontFamily: 'Jannah',
-                  fontSize: 17,
-                  color: AppColors.textSecondary,
-                ),
+              fontFamily: 'Jannah',
+              fontSize: 17,
+              color: AppColors.textSecondary,
+            ),
           ),
 
           const SizedBox(height: 25),
@@ -248,18 +264,18 @@ class _LoginFormBody extends StatelessWidget {
             controller: emailController,
             type: TextInputType.emailAddress,
             label: Text(
-              'Email Address',
+              S.of(context).emailAddress,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Message,
             onFieldSubmitted: (value) {},
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your email address';
+                return S.of(context).pleaseEnterEmail;
               }
               return null;
             },
@@ -272,12 +288,12 @@ class _LoginFormBody extends StatelessWidget {
             controller: passwordController,
             type: TextInputType.visiblePassword,
             label: Text(
-              'Password',
+              S.of(context).password,
               style: Theme.of(context).textTheme.labelLarge!.copyWith(
-                    color: AppColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                    fontSize: 16,
-                  ),
+                color: AppColors.textSecondary,
+                fontWeight: FontWeight.w500,
+                fontSize: 16,
+              ),
             ),
             prefix: IconBroken.Lock,
             suffix: cubit.suffix,
@@ -286,7 +302,7 @@ class _LoginFormBody extends StatelessWidget {
             onFieldSubmitted: (value) {},
             validator: (String? value) {
               if (value == null || value.isEmpty) {
-                return 'please enter your password';
+                return S.of(context).pleaseEnterPassword;
               }
               return null;
             },
@@ -300,11 +316,11 @@ class _LoginFormBody extends StatelessWidget {
                 showForgotPasswordSheet(context);
               },
               child: Text(
-                'Forget Password?',
+                S.of(context).forgetPassword,
                 style: Theme.of(context).textTheme.titleMedium!.copyWith(
-                      color: AppColors.blue500,
-                      fontWeight: FontWeight.w500,
-                    ),
+                  color: AppColors.blue500,
+                  fontWeight: FontWeight.w500,
+                ),
               ),
             ),
           ),
@@ -313,7 +329,7 @@ class _LoginFormBody extends StatelessWidget {
 
           // ── Login button ──
           PrimaryButton(
-            label: 'LOG IN',
+            label: S.of(context).logIn,
             isLoading: state is AuthLoadingState,
             onPressed: () {
               if (formKey.currentState!.validate()) {
@@ -336,8 +352,8 @@ class _LoginFormBody extends StatelessWidget {
 
           // ── Sign up link ──
           AuthFooterLink(
-            message: "Don't have an account?",
-            actionLabel: 'Sign Up',
+            message: S.of(context).dontHaveAccount,
+            actionLabel: S.of(context).signUp,
             onPressed: () {
               Navigator.push(
                 context,

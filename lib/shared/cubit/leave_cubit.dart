@@ -260,11 +260,22 @@ class LeaveCubit extends Cubit<LeaveStates> {
           : '$adminName rejected your leave request.${rejectReason != null ? ' Reason: $rejectReason' : ''}';
 
       if (leave.userID != null) {
+        final bool isApproved = status == LeaveActivityState.approved;
         await _notificationRepo.addNotification(
           toUserId: leave.userID!,
           fromUserName: adminName,
           message: notificationMessage,
-          type: status == LeaveActivityState.approved
+          messageKey: isApproved
+              ? 'notifLeaveApproved'
+              : (rejectReason != null && rejectReason.isNotEmpty
+                  ? 'notifLeaveRejectedWithReason'
+                  : 'notifLeaveRejected'),
+          messageParams: isApproved
+              ? {'name': adminName}
+              : (rejectReason != null && rejectReason.isNotEmpty
+                  ? {'name': adminName, 'reason': rejectReason}
+                  : {'name': adminName}),
+          type: isApproved
               ? 'leave_approved'
               : 'leave_rejected',
           leaveId: leaveId,
@@ -332,6 +343,8 @@ class LeaveCubit extends Cubit<LeaveStates> {
           toUserId: leave.approvalTo!.uId!,
           fromUserName: employeeName,
           message: '$employeeName cancelled their $statusLabel leave request.',
+          messageKey: 'notifLeaveCancelled',
+          messageParams: {'name': employeeName, 'status': statusLabel},
           type: 'leave_cancelled',
           leaveId: leaveId,
         );

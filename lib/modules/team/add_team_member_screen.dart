@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
@@ -35,7 +37,7 @@ class AddTeamMemberScreen extends StatelessWidget {
           appBar: AppBar(
             leading: backButton(context),
             title: Text(
-              "Add Team Member",
+              S.of(context).addTeamMember,
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ),
@@ -48,7 +50,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                   DefaultFormField(
                     controller: cubit.userIdController,
                     type: TextInputType.text,
-                    label: const Text('Employee UserID'),
+                    label: Text(S.of(context).employeeUserId),
                     prefix: IconBroken.User,
                   ),
                   const SizedBox(height: 10),
@@ -59,7 +61,11 @@ class AddTeamMemberScreen extends StatelessWidget {
                         userId: cubit.userIdController.text,
                         currentManagerId: appCubit.userModel!.uId!,
                       ),
-                      child: Text(isLoading ? "Validating..." : "Validate"),
+                      child: Text(
+                        isLoading
+                            ? S.of(context).validating
+                            : S.of(context).validateButton,
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),
@@ -120,14 +126,14 @@ class AddTeamMemberScreen extends StatelessWidget {
 
                     // Contract Details Section
                     Text(
-                      "Contract Details",
+                      S.of(context).contractDetails,
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      "Define the employee's salary and vacation allowance.",
+                      S.of(context).contractDetailsDescription,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: AppColors.grey500,
                       ),
@@ -138,7 +144,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                     DropdownButtonFormField<String>(
                       initialValue: cubit.selectedRole,
                       decoration: InputDecoration(
-                        labelText: "Role Type",
+                        labelText: S.of(context).roleType,
                         prefixIcon: Icon(
                           IconBroken.Shield_Done,
                           color: AppColors.blue500,
@@ -155,14 +161,14 @@ class AddTeamMemberScreen extends StatelessWidget {
                               fontSize: 16,
                             ),
                       ),
-                      items: const [
+                      items: [
                         DropdownMenuItem(
                           value: 'Employee',
-                          child: Text("Employee"),
+                          child: Text(S.of(context).employeeRoleLabel),
                         ),
                         DropdownMenuItem(
                           value: 'Hr admin',
-                          child: Text("HR Admin"),
+                          child: Text(S.of(context).hrAdminRoleLabel),
                         ),
                       ],
                       onChanged: (val) => cubit.selectedRole = val!,
@@ -171,20 +177,20 @@ class AddTeamMemberScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: cubit.salaryController,
                       type: TextInputType.numberWithOptions(decimal: true),
-                      label: const Text('Monthly Salary'),
+                      label: Text(S.of(context).monthlySalary),
                       prefix: IconBroken.Wallet,
                       inputFormatters: [
                         FilteringTextInputFormatter.allow(
-                          RegExp(r'^\d+\.?\d{0,2}'),
+                          RegExp(r'^[0-9٠-٩]+\.?[0-9٠-٩]{0,2}'),
                         ),
                       ],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter the monthly salary';
+                          return S.of(context).pleaseEnterMonthlySalary;
                         }
-                        final salary = double.tryParse(value);
+                        final salary = double.tryParse(value.toEnglishDigits());
                         if (salary == null || salary <= 0) {
-                          return 'Please enter a valid salary amount';
+                          return S.of(context).pleaseEnterValidSalary;
                         }
                         return null;
                       },
@@ -193,16 +199,18 @@ class AddTeamMemberScreen extends StatelessWidget {
                     DefaultFormField(
                       controller: cubit.vacationDaysController,
                       type: TextInputType.number,
-                      label: const Text('Monthly Vacation Days'),
+                      label: Text(S.of(context).monthlyVacationDays),
                       prefix: IconBroken.Calendar,
-                      inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
+                      ],
                       validator: (value) {
                         if (value == null || value.trim().isEmpty) {
-                          return 'Please enter vacation days';
+                          return S.of(context).pleaseEnterVacationDays;
                         }
-                        final days = int.tryParse(value);
+                        final days = int.tryParse(value.toEnglishDigits());
                         if (days == null || days < 0) {
-                          return 'Please enter a valid number of days';
+                          return S.of(context).pleaseEnterValidDays;
                         }
                         return null;
                       },
@@ -213,6 +221,15 @@ class AddTeamMemberScreen extends StatelessWidget {
                       child: ElevatedButton(
                         onPressed: () {
                           if (_formKey.currentState!.validate()) {
+                            //  Clean the text fields directly before submission so the Cubit's backend request model parses correctly
+                            cubit.salaryController.text = cubit
+                                .salaryController
+                                .text
+                                .toEnglishDigits();
+                            cubit.vacationDaysController.text = cubit
+                                .vacationDaysController
+                                .text
+                                .toEnglishDigits();
                             cubit.addEmployeeToTeam(
                               managerId: appCubit.userModel!.uId!,
                               companyId: appCubit.userModel!.companyId!,
@@ -220,7 +237,7 @@ class AddTeamMemberScreen extends StatelessWidget {
                             );
                           }
                         },
-                        child: const Text("Add to Team"),
+                        child: Text(S.of(context).addToTeam),
                       ),
                     ),
                   ],

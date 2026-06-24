@@ -16,7 +16,6 @@ class MemberModel {
     }
   }
 
-
   MemberModel.fromJson(Map<String, dynamic> json) {
     teamId = json['teamId'];
     manager = json['manager'] != null
@@ -39,23 +38,25 @@ class MemberModel {
 }
 
 class MembersData {
-  String? uId;         // To link to UserModel
-  String? fullName;    // Redundant but helpful for quick UI display
-  String? roleType;// Their specific role in THIS team
-  String? email;       // Redundant but helpful for quick UI display
-  String? managerId;   // Who they report to
+  String? uId; // To link to UserModel
+  String? fullName; // Redundant but helpful for quick UI display
+  String? roleType; // Their specific role in THIS team
+  String? email; // Redundant but helpful for quick UI display
+  String? image;
+  String? managerId; // Who they report to
   double? monthlySalary;
   int? monthlyVacationDays;
   int? remainingVacationDays;
-  String? joinedAt;    // Better than 'createdAt'—when they joined this team
-  String? status;      // 'Active' or 'Terminated'
-  String? endDate;     // ISO 8601 — last working day (set on termination)
+  String? joinedAt; // Better than 'createdAt'—when they joined this team
+  String? status; // 'Active' or 'Terminated'
+  String? endDate; // ISO 8601 — last working day (set on termination)
 
   MembersData({
     this.uId,
     this.fullName,
     this.roleType,
     this.email,
+    this.image,
     this.managerId,
     this.monthlySalary,
     this.monthlyVacationDays,
@@ -70,29 +71,30 @@ class MembersData {
     fullName = json['fullName'];
     roleType = json['roleType'];
     email = json['email'];
+    image = json['image'];
     managerId = json['managerId'];
     monthlySalary = (json['monthlySalary'] as num?)?.toDouble();
-    monthlyVacationDays = json['monthlyVacationDays'] ?? json['annualVacationDays'];
+    monthlyVacationDays =
+        json['monthlyVacationDays'] ?? json['annualVacationDays'];
     remainingVacationDays = json['remainingVacationDays'];
     joinedAt = json['joinedAt'];
     status = json['status'] ?? 'Active';
     endDate = json['endDate'];
   }
-  Map<String, dynamic> toJson()
-  {
+  Map<String, dynamic> toJson() {
     return {
-      'uId':uId,
-      'fullName':fullName,
-      'roleType':roleType,
-      'email':email,
-      'managerId':managerId,
-      'monthlySalary':monthlySalary,
-      'monthlyVacationDays':monthlyVacationDays,
-      'remainingVacationDays':remainingVacationDays,
-      'joinedAt':joinedAt,
-      'status':status ?? 'Active',
-      'endDate':endDate,
+      'uId': uId,
+      'fullName': fullName,
+      'roleType': roleType,
+      'email': email,
+      'image': image,
+      'managerId': managerId,
+      'monthlySalary': monthlySalary,
+      'monthlyVacationDays': monthlyVacationDays,
+      'remainingVacationDays': remainingVacationDays,
+      'joinedAt': joinedAt,
+      'status': status ?? 'Active',
+      'endDate': endDate,
     };
   }
-
 }

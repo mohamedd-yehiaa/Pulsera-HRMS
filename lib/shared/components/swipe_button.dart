@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:pulsera/shared/styles/colors.dart';
+
+// Assuming you have your custom AppColors class, ensure you import it correctly.
+// import 'package:pulsera/shared/styles/colors.dart';
 
 enum _SwipeButtonType { swipe, expand }
 
@@ -53,9 +55,9 @@ class SwipeButton extends StatefulWidget {
     this.onSwipe,
     this.onSwipeEnd,
     this.duration = const Duration(milliseconds: 250),
-  }) : assert(elevationThumb >= 0.0),
-       assert(elevationTrack >= 0.0),
-       _swipeButtonType = _SwipeButtonType.swipe;
+  })  : assert(elevationThumb >= 0.0),
+        assert(elevationTrack >= 0.0),
+        _swipeButtonType = _SwipeButtonType.swipe;
 
   const SwipeButton.expand({
     super.key,
@@ -77,9 +79,9 @@ class SwipeButton extends StatefulWidget {
     this.onSwipe,
     this.onSwipeEnd,
     this.duration = const Duration(milliseconds: 250),
-  }) : assert(elevationThumb >= 0.0),
-       assert(elevationTrack >= 0.0),
-       _swipeButtonType = _SwipeButtonType.expand;
+  })  : assert(elevationThumb >= 0.0),
+        assert(elevationTrack >= 0.0),
+        _swipeButtonType = _SwipeButtonType.expand;
 
   @override
   State<SwipeButton> createState() => _SwipeState();
@@ -93,8 +95,8 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
 
   @override
   void initState() {
-    _initAnimationControllers();
     super.initState();
+    _initAnimationControllers();
   }
 
   void _initAnimationControllers() {
@@ -117,7 +119,8 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
   @override
   void didUpdateWidget(covariant SwipeButton oldWidget) {
     if (oldWidget.duration != widget.duration) {
-      _initAnimationControllers();
+      swipeAnimationController.duration = widget.duration;
+      expandAnimationController.duration = widget.duration;
     }
     super.didUpdateWidget(oldWidget);
   }
@@ -151,8 +154,9 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
   Widget _buildTrack(BuildContext context, BoxConstraints constraints) {
     final ThemeData theme = Theme.of(context);
 
+    // Ensure you replace Colors.blue with AppColors.primary if you are using your custom theme file
     final trackColor = widget.enabled
-        ? widget.activeTrackColor ?? AppColors.primary
+        ? widget.activeTrackColor ?? Colors.blue
         : widget.inactiveTrackColor ?? theme.disabledColor;
 
     final borderRadius = widget.borderRadius ?? BorderRadius.circular(14);
@@ -179,56 +183,62 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
 
   Widget _buildThumb(BuildContext context, BoxConstraints constraints) {
     final ThemeData theme = Theme.of(context);
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
 
     final thumbColor = widget.enabled
         ? widget.activeThumbColor ?? theme.colorScheme.secondary
         : widget.inactiveThumbColor ?? theme.disabledColor;
 
     final borderRadius = widget.borderRadius ?? BorderRadius.circular(14);
-
     final elevationThumb = widget.enabled ? widget.elevationThumb : 0.0;
+
+
+    // Multiplier to flip the translation logic dynamically for LTR vs RTL
+    final double directionMultiplier = isRtl ? -1.0 : 1.0;
 
     return AnimatedBuilder(
       animation: swipeAnimationController,
       builder: (context, child) {
-        return Transform(
-          transform: Matrix4.identity()
-            ..translate(
-              swipeAnimationController.value *
-                  (constraints.maxWidth - widget.height),
-            ),
-          child: Container(
-            padding: widget.thumbPadding,
-            child: GestureDetector(
-              onHorizontalDragStart: _onHorizontalDragStart,
-              onHorizontalDragUpdate: (details) =>
-                  _onHorizontalDragUpdate(details, constraints.maxWidth),
-              onHorizontalDragEnd: _onHorizontalDragEnd,
-              child: Material(
-                elevation: elevationThumb,
-                borderRadius: borderRadius,
-                color: thumbColor,
-                clipBehavior: Clip.antiAlias,
-                child: AnimatedBuilder(
-                  animation: expandAnimationController,
-                  builder: (context, child) {
-                    return SizedBox(
-                      width:
-                          widget.height +
-                          (expandAnimationController.value *
-                              (constraints.maxWidth - widget.height)) -
-                          widget.thumbPadding.horizontal,
-                      height: widget.height - widget.thumbPadding.vertical,
-                      child:
-                          widget.thumb ??
-                          Icon(
-                            Icons.arrow_forward,
-                            color:
-                                widget.activeTrackColor ??
-                                widget.inactiveTrackColor,
-                          ),
-                    );
-                  },
+        // AlignmentDirectional natively respects LTR vs RTL rendering order
+        return Align(
+          alignment: AlignmentDirectional.centerStart,
+          child: Transform(
+            transform: Matrix4.identity()
+              ..translate(
+                swipeAnimationController.value *
+                    (constraints.maxWidth - widget.height) *
+                    directionMultiplier,
+              ),
+            child: Container(
+              padding: widget.thumbPadding,
+              child: GestureDetector(
+                onHorizontalDragStart: _onHorizontalDragStart,
+                onHorizontalDragUpdate: (details) =>
+                    _onHorizontalDragUpdate(details, constraints.maxWidth),
+                onHorizontalDragEnd: _onHorizontalDragEnd,
+                child: Material(
+                  elevation: elevationThumb,
+                  borderRadius: borderRadius,
+                  color: thumbColor,
+                  clipBehavior: Clip.antiAlias,
+                  child: AnimatedBuilder(
+                    animation: expandAnimationController,
+                    builder: (context, child) {
+                      return SizedBox(
+                        width: widget.height +
+                            (expandAnimationController.value *
+                                (constraints.maxWidth - widget.height)) -
+                            widget.thumbPadding.horizontal,
+                        height: widget.height - widget.thumbPadding.vertical,
+                        child: widget.thumb ??
+                            Icon(
+                              isRtl ? Icons.arrow_back : Icons.arrow_forward,
+                              color: widget.activeTrackColor ??
+                                  widget.inactiveTrackColor,
+                            ),
+                      );
+                    },
+                  ),
                 ),
               ),
             ),
@@ -246,11 +256,14 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
   }
 
   void _onHorizontalDragUpdate(DragUpdateDetails details, double width) {
+    // Determine the direction of the drag. If RTL, dragging left is positive progress.
+    final bool isRtl = Directionality.of(context) == TextDirection.rtl;
+    final double delta = isRtl ? -details.primaryDelta! : details.primaryDelta!;
+
     switch (widget._swipeButtonType) {
       case _SwipeButtonType.swipe:
         if (!swiped && widget.enabled) {
-          swipeAnimationController.value +=
-              details.primaryDelta! / (width - widget.height);
+          swipeAnimationController.value += delta / (width - widget.height);
           if (swipeAnimationController.value == 1) {
             setState(() {
               swiped = true;
@@ -261,8 +274,7 @@ class _SwipeState extends State<SwipeButton> with TickerProviderStateMixin {
         break;
       case _SwipeButtonType.expand:
         if (!swiped && widget.enabled) {
-          expandAnimationController.value +=
-              details.primaryDelta! / (width - widget.height);
+          expandAnimationController.value += delta / (width - widget.height);
           if (expandAnimationController.value == 1) {
             setState(() {
               swiped = true;

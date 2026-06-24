@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/modules/leave/apply_leave_screen.dart';
 import 'package:pulsera/modules/notification/notifications_screen.dart';
 import 'package:pulsera/modules/payroll/payroll_config_screen.dart';
-import 'package:pulsera/modules/settings/profile_details_screen.dart';
+import 'package:pulsera/modules/profile/profile_details_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/components/constants.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
@@ -54,11 +55,55 @@ class HomeAppBars {
           onTap: () {
             navigateTo(context, const ProfileDetailsScreen());
           },
-          child: (cubit.userModel?.image != null &&
+          child:
+              (cubit.userModel?.image != null &&
                   cubit.userModel!.image!.isNotEmpty)
-              ? CircleAvatar(
-                  radius: 25,
-                  backgroundImage: NetworkImage(cubit.userModel!.image!),
+              ? ClipOval(
+                  child: Image.network(
+                    cubit.userModel!.image!,
+                    width: 50,
+                    height: 50,
+                    fit: BoxFit.cover,
+                    loadingBuilder:
+                        (
+                          BuildContext context,
+                          Widget child,
+                          ImageChunkEvent? loadingProgress,
+                        ) {
+                          if (loadingProgress == null)
+                            return child; // Image is fully loaded
+                          return Container(
+                            width: 50,
+                            height: 50,
+                            color: AppColors.primary.withValues(alpha: 0.1),
+                            child: Padding(
+                              padding: const EdgeInsets.all(12.0),
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2.5,
+                                color: AppColors.primary,
+                                // Shows exact progress if the image size is known
+                                value:
+                                    loadingProgress.expectedTotalBytes != null
+                                    ? loadingProgress.cumulativeBytesLoaded /
+                                          loadingProgress.expectedTotalBytes!
+                                    : null,
+                              ),
+                            ),
+                          );
+                        },
+                    errorBuilder: (context, error, stackTrace) {
+                      // Fallback icon if the image URL fails to load
+                      return Container(
+                        width: 50,
+                        height: 50,
+                        color: AppColors.grey50,
+                        child: const Icon(
+                          Icons.error_outline,
+                          color: Colors.grey,
+                        ),
+                      );
+                    },
+                  ),
                 )
               : Container(
                   decoration: BoxDecoration(
@@ -87,7 +132,7 @@ class HomeAppBars {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
-            "Welcome back $hiEmoji",
+            "${S.of(context).welcomeBack} $hiEmoji",
             style: const TextStyle(
               color: Colors.black,
               fontSize: 18,
@@ -149,7 +194,7 @@ class HomeAppBars {
   static PreferredSizeWidget leave(BuildContext context) {
     return AppBar(
       title: Text(
-        "All Leaves",
+        S.of(context).allLeaves,
         style: Theme.of(context).textTheme.titleLarge,
       ),
       backgroundColor: Colors.white,
@@ -166,7 +211,7 @@ class HomeAppBars {
               color: AppColors.primary,
               size: 28,
             ),
-            tooltip: "Apply Leave",
+            tooltip: S.of(context).applyLeave,
           ),
         ),
       ],
@@ -184,7 +229,7 @@ class HomeAppBars {
   static PreferredSizeWidget payroll(BuildContext context, AppCubit cubit) {
     return AppBar(
       title: Text(
-        "Payroll History",
+        S.of(context).payrollHistory,
         style: Theme.of(context).textTheme.titleLarge,
       ),
       backgroundColor: Colors.white,
@@ -202,7 +247,7 @@ class HomeAppBars {
                 color: AppColors.primary,
                 size: 25,
               ),
-              tooltip: "Payroll Settings",
+              tooltip: S.of(context).payrollSettings,
             ),
           ),
       ],
@@ -243,8 +288,8 @@ class HomeAppBars {
                     onPressed: () {
                       profileCubit.uploadProfileImage(uId: user!.uId!);
                     },
-                    child: const Text(
-                      "Upload Photo",
+                    child: Text(
+                      S.of(context).uploadPhoto,
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: AppColors.primary,
@@ -257,8 +302,8 @@ class HomeAppBars {
                     onPressed: () {
                       profileCubit.removeProfileImage(uId: user.uId!);
                     },
-                    child: const Text(
-                      "Remove Photo",
+                    child: Text(
+                      S.of(context).removePhoto,
                       style: TextStyle(
                         color: Colors.red,
                         fontWeight: FontWeight.bold,

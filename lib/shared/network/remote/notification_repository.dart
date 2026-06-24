@@ -10,6 +10,8 @@ class NotificationRepository {
     required String toUserId,
     required String fromUserName,
     required String message,
+    String? messageKey,
+    Map<String, dynamic>? messageParams,
     required String type,
     String? leaveId,
   }) async {
@@ -17,6 +19,8 @@ class NotificationRepository {
       'toUserId': toUserId,
       'fromUserName': fromUserName,
       'message': message,
+      'messageKey': messageKey,
+      'messageParams': messageParams,
       'type': type,
       'leaveId': leaveId,
       'createdAt': DateFormat('yyyy-MM-ddTHH:mm:ss').format(DateTime.now()),
@@ -46,5 +50,38 @@ class NotificationRepository {
         .collection('notifications')
         .doc(notificationId)
         .update({'isRead': true});
+  }
+
+  /// Marks all unread notifications for a user as read.
+  Future<void> markAllAsRead(String userId) async {
+    final snapshot = await _firestore
+        .collection('notifications')
+        .where('toUserId', isEqualTo: userId)
+        .where('isRead', isEqualTo: false)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (var doc in snapshot.docs) {
+      batch.update(doc.reference, {'isRead': true});
+    }
+    await batch.commit();
+  }
+
+  /// Deletes all notifications for a user.
+  Future<void> clearAllNotifications(String userId) async {
+    final snapshot = await _firestore
+        .collection('notifications')
+        .where('toUserId', isEqualTo: userId)
+        .get();
+
+    if (snapshot.docs.isEmpty) return;
+
+    final batch = _firestore.batch();
+    for (var doc in snapshot.docs) {
+      batch.delete(doc.reference);
+    }
+    await batch.commit();
   }
 }

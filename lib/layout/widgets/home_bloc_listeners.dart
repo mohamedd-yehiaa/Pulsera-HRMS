@@ -75,7 +75,7 @@ class HomeBlocListeners extends StatelessWidget {
                 // Start the leave requests stream.
                 final isAdmin =
                     user.userType == 'Company Owner' ||
-                        user.roleType == 'Hr admin';
+                    user.roleType == 'Hr admin';
                 LeaveCubit.get(
                   context,
                 ).init(user.uId!, user.companyId!, isAdmin: isAdmin);
@@ -87,7 +87,9 @@ class HomeBlocListeners extends StatelessWidget {
                 // Load monthly summary for total days counter
                 final company = AppCubit.get(context).companyModel;
                 if (company != null) {
-                  final yearMonth = DateFormat('yyyy-MM').format(DateTime.now());
+                  final yearMonth = DateFormat(
+                    'yyyy-MM',
+                  ).format(DateTime.now());
                   AttendanceCubit.get(context).loadMonthlySummary(
                     userId: user.uId!,
                     yearMonth: yearMonth,

@@ -1,8 +1,10 @@
 import 'package:conditional_builder_null_safety/conditional_builder_null_safety.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/models/leave_activity_model.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/leave_activity_card.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/leave_cubit.dart';
@@ -20,10 +22,10 @@ class LeaveScreen extends StatelessWidget {
     return BlocConsumer<LeaveCubit, LeaveStates>(
       listener: (context, state) {
         if (state is UpdateLeaveSuccessState) {
-          Fluttertoast.showToast(msg: "Leave Status Updated");
+          Fluttertoast.showToast(msg: S.of(context).leaveStatusUpdated);
         }
         if (state is CancelLeaveSuccessState) {
-          Fluttertoast.showToast(msg: "Leave Cancelled — Days Restored");
+          Fluttertoast.showToast(msg: S.of(context).leaveCancelledDaysRestored);
         }
         if (state is GetLeavesErrorState) {
           Fluttertoast.showToast(msg: state.error);
@@ -52,7 +54,7 @@ class LeaveScreen extends StatelessWidget {
                     Row(
                       children: [
                         Text(
-                          cubit.myData ? "My" : "Other",
+                          cubit.myData ? S.of(context).my : S.of(context).other,
                           style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
@@ -81,15 +83,15 @@ class LeaveScreen extends StatelessWidget {
                   Row(
                     children: [
                       _buildStatCard(
-                        label: "Leave\nBalance",
-                        value: "${cubit.remainingVacationDays ?? '-'}",
+                        label: S.of(context).leaveBalance,
+                        value: "${cubit.remainingVacationDays ?? '-'}".localizeDigits(context),
                         color: AppColors.blue500,
                         bgColor: AppColors.blue500.withAlpha(20),
                       ),
                       const SizedBox(width: 12),
                       _buildStatCard(
-                        label: "Leave\nApproved",
-                        value: "${cubit.approvedCount}",
+                        label: S.of(context).leaveApproved,
+                        value: "${cubit.approvedCount}".localizeDigits(context),
                         color: AppColors.green500,
                         bgColor: AppColors.green500.withAlpha(20),
                       ),
@@ -100,15 +102,15 @@ class LeaveScreen extends StatelessWidget {
                   Row(
                     children: [
                       _buildStatCard(
-                        label: "Leave\nPending",
-                        value: "${cubit.pendingCount}",
+                        label: S.of(context).leavePending,
+                        value: "${cubit.pendingCount}".localizeDigits(context),
                         color: AppColors.green400,
                         bgColor: AppColors.green400.withAlpha(20),
                       ),
                       const SizedBox(width: 12),
                       _buildStatCard(
-                        label: "Leave\nRejected",
-                        value: "${cubit.rejectedCount}",
+                        label: S.of(context).leaveRejected,
+                        value: "${cubit.rejectedCount}".localizeDigits(context),
                         color: AppColors.red500,
                         bgColor: AppColors.red500.withAlpha(20),
                       ),
@@ -117,8 +119,8 @@ class LeaveScreen extends StatelessWidget {
                 ],
               ),
             ),
-            // -----------------------------------------------------------------
 
+            // -----------------------------------------------------------------
             const SizedBox(height: 24),
 
             // Tab Selection
@@ -138,52 +140,54 @@ class LeaveScreen extends StatelessWidget {
                           physics: const AlwaysScrollableScrollPhysics(
                             parent: BouncingScrollPhysics(),
                           ),
-                          children: const [
-                            SizedBox(height: 100),
-                            Center(child: Text("No Data found.")),
+                          children: [
+                            const SizedBox(height: 100),
+                            Center(child: Text(S.of(context).noDataFound)),
                           ],
                         )
                       : ListView.builder(
-                    physics: const AlwaysScrollableScrollPhysics(
-                      parent: BouncingScrollPhysics(),
-                    ),
-                    itemCount: cubit.filteredLeaves.length,
-                    itemBuilder: (context, index) {
-                      return LeaveActivityCard(
-                        item: cubit.filteredLeaves[index],
-                        approveRejectTap: (status) {
-                          if (status == LeaveActivityState.rejected) {
-                            _showRejectDialog(
-                              context,
-                              cubit,
-                              cubit.filteredLeaves[index].id!,
-                              user!.uId!,
-                              user.companyId!,
-                              '${user.firstName} ${user.lastName}',
+                          physics: const AlwaysScrollableScrollPhysics(
+                            parent: BouncingScrollPhysics(),
+                          ),
+                          itemCount: cubit.filteredLeaves.length,
+                          itemBuilder: (context, index) {
+                            return LeaveActivityCard(
+                              item: cubit.filteredLeaves[index],
+                              approveRejectTap: (status) {
+                                if (status == LeaveActivityState.rejected) {
+                                  _showRejectDialog(
+                                    context,
+                                    cubit,
+                                    cubit.filteredLeaves[index].id!,
+                                    user!.uId!,
+                                    user.companyId!,
+                                    '${user.firstName} ${user.lastName}',
+                                  );
+                                } else {
+                                  cubit.updateLeaveStatus(
+                                    leaveId: cubit.filteredLeaves[index].id!,
+                                    status: status,
+                                    uId: user!.uId!,
+                                    companyId: user.companyId!,
+                                    adminName:
+                                        '${user.firstName} ${user.lastName}',
+                                  );
+                                }
+                              },
+                              onCancel: () {
+                                cubit.cancelLeave(
+                                  leaveId: cubit.filteredLeaves[index].id!,
+                                  uId: user!.uId!,
+                                  companyId: user.companyId!,
+                                  employeeName:
+                                      '${user.firstName} ${user.lastName}',
+                                );
+                              },
                             );
-                          } else {
-                            cubit.updateLeaveStatus(
-                              leaveId: cubit.filteredLeaves[index].id!,
-                              status: status,
-                              uId: user!.uId!,
-                              companyId: user.companyId!,
-                              adminName: '${user.firstName} ${user.lastName}',
-                            );
-                          }
-                        },
-                        onCancel: () {
-                          cubit.cancelLeave(
-                            leaveId: cubit.filteredLeaves[index].id!,
-                            uId: user!.uId!,
-                            companyId: user.companyId!,
-                            employeeName: '${user.firstName} ${user.lastName}',
-                          );
-                        },
-                      );
-                    },
-                  ),
+                          },
+                        ),
                   fallback: (context) =>
-                  const Center(child: CircularProgressIndicator()),
+                      const Center(child: CircularProgressIndicator()),
                 ),
               ),
             ),
@@ -194,29 +198,29 @@ class LeaveScreen extends StatelessWidget {
   }
 
   void _showRejectDialog(
-      BuildContext context,
-      LeaveCubit cubit,
-      String leaveId,
-      String uId,
-      String companyId,
-      String adminName,
-      ) {
+    BuildContext context,
+    LeaveCubit cubit,
+    String leaveId,
+    String uId,
+    String companyId,
+    String adminName,
+  ) {
     final reasonController = TextEditingController();
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Reject Leave"),
+        title: Text(S.of(context).rejectLeave),
         content: TextField(
           controller: reasonController,
-          decoration: const InputDecoration(
-            hintText: "Enter reason for rejection (optional)",
+          decoration: InputDecoration(
+            hintText: S.of(context).enterRejectionReason,
           ),
           maxLines: 3,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(S.of(context).cancel),
           ),
           ElevatedButton(
             onPressed: () {
@@ -232,10 +236,11 @@ class LeaveScreen extends StatelessWidget {
                 adminName: adminName,
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppColors.error,
+            style: ElevatedButton.styleFrom(backgroundColor: AppColors.error),
+            child: Text(
+              S.of(context).reject,
+              style: const TextStyle(color: Colors.white),
             ),
-            child: const Text("Reject", style: TextStyle(color: Colors.white)),
           ),
         ],
       ),
@@ -243,7 +248,7 @@ class LeaveScreen extends StatelessWidget {
   }
 
   // -----------------------------------------------------------------
-  // UPDATED STAT CARD WIDGET
+  //  STAT CARD WIDGET
   // -----------------------------------------------------------------
   Widget _buildStatCard({
     required String label,
@@ -260,7 +265,8 @@ class LeaveScreen extends StatelessWidget {
           border: Border.all(color: color, width: 1.2),
         ),
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start, // Aligns text to the left
+          crossAxisAlignment:
+              CrossAxisAlignment.start, // Aligns text to the left
           children: [
             Text(
               label,
@@ -291,11 +297,16 @@ class LeaveScreen extends StatelessWidget {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       child: Row(
-        children: LeaveActivityState.list.map((e) {
-          bool isSelected = cubit.selectedTab.toLowerCase() == e.toLowerCase();
+        // Iterate directly over the enum values
+        children: LeaveActivityState.values.map((state) {
+          // 1. Logic comparison uses the English enum name (e.g., "pending")
+          bool isSelected =
+              cubit.selectedTab.toLowerCase() == state.name.toLowerCase();
+
           return Expanded(
             child: InkWell(
-              onTap: () => cubit.emitTabChange(e.toLowerCase(), uId!),
+              // 2. Pass the English enum name to the Cubit
+              onTap: () => cubit.emitTabChange(state.name.toLowerCase(), uId!),
               child: Container(
                 height: 50,
                 margin: const EdgeInsets.symmetric(horizontal: 3),
@@ -305,7 +316,8 @@ class LeaveScreen extends StatelessWidget {
                 ),
                 child: Center(
                   child: Text(
-                    e,
+                    // 3. Display the translated Arabic/English text to the user
+                    state.getLocalizedName(context),
                     style: TextStyle(
                       color: isSelected ? Colors.white : Colors.black,
                       fontWeight: FontWeight.bold,

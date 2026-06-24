@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/team_members_model.dart';
 import 'package:pulsera/models/user_model.dart';
 import 'package:pulsera/modules/team/add_team_member_screen.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
@@ -10,6 +12,7 @@ import 'package:pulsera/shared/cubit/team_cubit.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 import 'package:pulsera/modules/team/employee_attendance_screen.dart';
+import 'package:pulsera/shared/utils/responsive_breakpoints.dart';
 
 class TeamMembersScreen extends StatefulWidget {
   const TeamMembersScreen({super.key});
@@ -45,6 +48,8 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
   @override
   Widget build(BuildContext context) {
+    Directionality.of(context);
+    Localizations.localeOf(context);
     final appCubit = AppCubit.get(context);
     final currentUser = appCubit.userModel;
     final isManager = currentUser?.userType == "Company Owner";
@@ -65,19 +70,22 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         bool isLoading = state is TeamLoadingState;
 
         return Scaffold(
-          appBar: AppBar(
-            leading:backButton(context),
-            title: Text(
-              isManager ? "My Team" : "Team Info",
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-            actions: [
-              IconButton(
-                onPressed: () => _loadData(),
-                icon: const Icon(Icons.refresh),
-              ),
-            ],
-          ),
+          // ── CONDITIONALLY RENDER APPBAR FOR MOBILE ONLY ──
+          appBar: Breakpoints.isMobile(context)
+              ? AppBar(
+                  leading: backButton(context),
+                  title: Text(
+                    isManager ? S.of(context).myTeam : S.of(context).teamInfo,
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
+                  actions: [
+                    IconButton(
+                      onPressed: () => _loadData(),
+                      icon: const Icon(Icons.refresh),
+                    ),
+                  ],
+                )
+              : null, // On Tablet/Desktop, this hides so the global TopBarWidget takes over completely
           body: isLoading
               ? const Center(child: CircularProgressIndicator())
               : isManager
@@ -107,7 +115,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
       child: Column(
         children: [
           SearchBar(
-            hintText: "Search team members",
+            hintText: S.of(context).searchTeamMembers,
             leading: const Icon(IconBroken.Search, color: Colors.grey),
             elevation: WidgetStateProperty.all(0.5),
             onChanged: (value) => setState(() => _searchQuery = value),
@@ -116,7 +124,10 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           Row(
             children: [
               Text(
-                "${filtered.length} Member${filtered.length != 1 ? 's' : ''}",
+                S
+                    .of(context)
+                    .nMembersCount(filtered.length)
+                    .localizeDigits(context),
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: AppColors.grey500),
@@ -151,12 +162,13 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 if (result == true) _loadData();
               },
               icon: const Icon(IconBroken.Add_User, color: Colors.white),
-              label: const Text(
-                "Add Member",
-                style: TextStyle(color: Colors.white),
+              label: Text(
+                S.of(context).addMemberButton,
+                style: const TextStyle(color: Colors.white),
               ),
             ),
           ),
+          SizedBox(height: 16),
         ],
       ),
     );
@@ -165,17 +177,29 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   Widget _buildMemberTile(BuildContext context, MembersData member) {
     return ListTile(
       contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        radius: 25,
-        backgroundColor: AppColors.primary.withValues(alpha: 0.15),
-        child: Text(
-          (member.fullName ?? 'E')[0].toUpperCase(),
-          style: const TextStyle(
-            color: AppColors.primary,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+      leading: (member.image != null && member.image!.isNotEmpty)
+          ? CircleAvatar(
+              radius: 25,
+              backgroundImage: NetworkImage(member.image!),
+            )
+          : Container(
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(color: AppColors.textSecondary, width: 1),
+              ),
+              child: CircleAvatar(
+                radius: 25,
+                backgroundColor: AppColors.primary.withValues(alpha: 0.15),
+                child: Text(
+                  (member.fullName ?? 'E')[0].toUpperCase(),
+                  style: const TextStyle(
+                    color: AppColors.primary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 18,
+                  ),
+                ),
+              ),
+            ),
       title: Text(
         member.fullName ?? 'Unknown',
         style: const TextStyle(fontWeight: FontWeight.bold),
@@ -185,14 +209,17 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         children: [
           Row(
             children: [
-              Text(
-                member.email ?? '',
-                style: const TextStyle(color: Colors.grey, fontSize: 12),
+              Expanded(
+                child: Text(
+                  member.email ?? '',
+                  style: const TextStyle(color: Colors.grey, fontSize: 12),
+                  overflow: TextOverflow.ellipsis,
+                ),
               ),
-              Spacer(),
+              const SizedBox(width: 4), // Replaced Spacer to keep elements tidy
               Text(
-                member.roleType ?? 'Employee',
-                style: TextStyle(
+                member.roleType ?? S.of(context).employeeRoleLabel,
+                style: const TextStyle(
                   color: AppColors.primary,
                   fontSize: 11,
                   fontWeight: FontWeight.bold,
@@ -200,31 +227,34 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               ),
             ],
           ),
-          const SizedBox(height: 4),
-          Row(
+          const SizedBox(height: 6),
+          // Changed Row to Wrap so badges drop to a new line if they run out of room
+          Wrap(
+            spacing: 2,
+            runSpacing: 6,
+            crossAxisAlignment: WrapCrossAlignment.start,
             children: [
               _buildBadge(
-                "\$${member.monthlySalary?.toStringAsFixed(0) ?? '0'}/mo",
+                "${member.monthlySalary.formatMoney(context)} / ${S.of(context).month}",
                 AppColors.blue700,
               ),
-              const SizedBox(width: 8),
               _buildBadge(
-                "${member.remainingVacationDays ?? 0}/${member.monthlyVacationDays ?? 0} days",
+                "${member.remainingVacationDays ?? 0}/${member.monthlyVacationDays ?? 0} ${S.of(context).daysLabel}"
+                    .localizeDigits(context),
                 AppColors.green400,
               ),
-              const Spacer(),
               member.status != null && member.status != 'Terminated'
                   ? Text(
                       member.status!,
-                      style: TextStyle(
+                      style: const TextStyle(
                         color: AppColors.green400,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
                     )
                   : Text(
-                      member.status!,
-                      style: TextStyle(
+                      member.status ?? '',
+                      style: const TextStyle(
                         color: AppColors.error,
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
@@ -250,23 +280,23 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           }
         },
         itemBuilder: (context) => [
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'attendance',
             child: Row(
               children: [
-                Icon(Icons.access_time, color: AppColors.primary),
-                SizedBox(width: 8),
-                Text('View Attendance'),
+                const Icon(Icons.access_time, color: AppColors.primary),
+                const SizedBox(width: 8),
+                Text(S.of(context).viewAttendance),
               ],
             ),
           ),
-          const PopupMenuItem(
+          PopupMenuItem(
             value: 'remove',
             child: Row(
               children: [
-                Icon(Icons.remove_circle_outline, color: AppColors.error),
-                SizedBox(width: 8),
-                Text('Remove'),
+                const Icon(Icons.remove_circle_outline, color: AppColors.error),
+                const SizedBox(width: 8),
+                Text(S.of(context).remove),
               ],
             ),
           ),
@@ -301,14 +331,14 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           Icon(IconBroken.User, size: 64, color: AppColors.grey300),
           const SizedBox(height: 16),
           Text(
-            "No team members yet",
+            S.of(context).noTeamMembers,
             style: Theme.of(
               context,
             ).textTheme.titleMedium?.copyWith(color: AppColors.grey500),
           ),
           const SizedBox(height: 8),
           Text(
-            "Tap \"Add Member\" to assign employees to your team.",
+            S.of(context).tapAddMemberHint,
             style: Theme.of(
               context,
             ).textTheme.bodySmall?.copyWith(color: AppColors.grey300),
@@ -324,14 +354,14 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text("Remove Member"),
+        title: Text(S.of(context).removeMember),
         content: Text(
-          "Are you sure you want to remove ${member.fullName} from your team?",
+          S.of(context).removeMemberConfirmationName(member.fullName ?? ''),
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(ctx),
-            child: const Text("Cancel"),
+            child: Text(S.of(context).cancel),
           ),
           TextButton(
             onPressed: () {
@@ -341,9 +371,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 managerId: appCubit.userModel?.uId ?? '',
               );
             },
-            child: const Text(
-              "Remove",
-              style: TextStyle(color: AppColors.error),
+            child: Text(
+              S.of(context).remove,
+              style: const TextStyle(color: AppColors.error),
             ),
           ),
         ],
@@ -361,15 +391,15 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
   ) {
     final myData = cubit.teamData?.getMemberByUid(currentUser?.uId);
     if (myData == null) {
-      return const Center(
+      return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(IconBroken.User1, size: 64, color: Colors.grey),
-            SizedBox(height: 16),
+            const Icon(IconBroken.User1, size: 64, color: Colors.grey),
+            const SizedBox(height: 16),
             Text(
-              "Not assigned to any team yet",
-              style: TextStyle(fontSize: 16, color: Colors.grey),
+              S.of(context).notAssignedToTeamYet,
+              style: const TextStyle(fontSize: 16, color: Colors.grey),
             ),
           ],
         ),
@@ -381,7 +411,10 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // My Manager Section
-          Text("My Manager", style: Theme.of(context).textTheme.titleLarge),
+          Text(
+            S.of(context).myManager,
+            style: Theme.of(context).textTheme.titleLarge,
+          ),
           const SizedBox(height: 12),
           if (cubit.myManager != null)
             Container(
@@ -443,7 +476,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Text(
-                "You are not assigned to any manager yet.",
+                S.of(context).notAssignedToManager,
                 style: Theme.of(
                   context,
                 ).textTheme.bodyMedium?.copyWith(color: AppColors.grey500),
@@ -455,7 +488,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
           // Vacation Balance Section
           Text(
-            "Vacation Balance",
+            S.of(context).vacationBalance,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -466,9 +499,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  title: "Total",
+                  title: S.of(context).total,
                   value: "${myData.monthlyVacationDays ?? 0}",
-                  subtitle: "days/Month",
+                  subtitle: S.of(context).daysPerMonthShort,
                   color: AppColors.primary,
                   icon: IconBroken.Calendar,
                 ),
@@ -477,9 +510,9 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  title: "Remaining",
+                  title: S.of(context).remaining,
                   value: "${myData.remainingVacationDays ?? 0}",
-                  subtitle: "days left",
+                  subtitle: S.of(context).daysLeft,
                   color: AppColors.green400,
                   icon: IconBroken.Time_Circle,
                 ),
@@ -488,10 +521,10 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               Expanded(
                 child: _buildStatCard(
                   context,
-                  title: "Used",
+                  title: S.of(context).usedLabel,
                   value:
                       "${(myData.monthlyVacationDays ?? 0) - (myData.remainingVacationDays ?? 0)}",
-                  subtitle: "days",
+                  subtitle: S.of(context).daysLabel,
                   color: AppColors.orange500,
                   icon: IconBroken.Ticket,
                 ),
@@ -503,7 +536,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
           // Salary Info Section
           Text(
-            "Salary Info",
+            S.of(context).salaryInfo,
             style: Theme.of(
               context,
             ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
@@ -543,14 +576,14 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      "Monthly Salary",
+                      S.of(context).monthlySalary,
                       style: Theme.of(
                         context,
                       ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      "\$${myData.monthlySalary?.toStringAsFixed(2) ?? '0.00'}",
+                      myData.monthlySalary.formatMoney(context),
                       style: Theme.of(context).textTheme.headlineSmall
                           ?.copyWith(
                             fontWeight: FontWeight.bold,
@@ -594,7 +627,7 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
           Icon(icon, color: color, size: 24),
           const SizedBox(height: 8),
           Text(
-            value,
+            value.localizeDigits(context),
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
               fontWeight: FontWeight.bold,
               color: color,

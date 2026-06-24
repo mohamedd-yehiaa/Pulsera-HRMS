@@ -273,6 +273,8 @@ abstract class NotificationStates {}
 class NotificationInitialState extends NotificationStates {}
 class NotificationsLoadedState extends NotificationStates {}
 class NotificationMarkedReadState extends NotificationStates {}
+class NotificationAllMarkedReadState extends NotificationStates {}
+class NotificationsClearedState extends NotificationStates {}
 class NotificationStreamErrorState extends NotificationStates {
   final String error;
   NotificationStreamErrorState(this.error);
@@ -301,4 +303,15 @@ class KioskChangePasswordSuccessState extends KioskStates {}
 class KioskChangePasswordErrorState extends KioskStates {
   final String error;
   KioskChangePasswordErrorState(this.error);
+}
+
+// -----------------------------------------------------------------------------
+// Localization States
+abstract class LocalizationStates {}
+
+class LocalizationInitialState extends LocalizationStates {}
+
+class ChangeLanguageState extends LocalizationStates {
+  final String locale;
+  ChangeLanguageState(this.locale);
 }

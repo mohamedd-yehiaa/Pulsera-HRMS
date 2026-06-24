@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/modules/login/login_screen.dart';
@@ -9,6 +10,7 @@ import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/services/totp_service.dart';
 import 'package:pulsera/shared/styles/colors.dart';
+import 'package:pulsera/shared/cubit/notification_cubit.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -107,7 +109,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
 
   void _updateClock() {
     final now = DateTime.now();
-    final hour = now.hour > 12 ? now.hour - 12 : (now.hour == 0 ? 12 : now.hour);
+    final hour = now.hour > 12
+        ? now.hour - 12
+        : (now.hour == 0 ? 12 : now.hour);
     final minute = now.minute.toString().padLeft(2, '0');
     final period = now.hour >= 12 ? 'PM' : 'AM';
     setState(() {
@@ -144,10 +148,10 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Expanded(
+              Expanded(
                 child: Text(
-                  'Exit Kiosk Mode',
-                  style: TextStyle(
+                  S.of(context).exitKioskMode,
+                  style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
                   ),
@@ -161,9 +165,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
-                  'Enter your password to exit kiosk mode.',
-                  style: TextStyle(
+                Text(
+                  S.of(context).enterPasswordToExit,
+                  style: const TextStyle(
                     color: AppColors.textSecondary,
                     fontSize: 14,
                   ),
@@ -174,8 +178,11 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                   obscureText: true,
                   autofocus: true,
                   decoration: InputDecoration(
-                    labelText: 'Password',
-                    prefixIcon: const Icon(Icons.lock, color: AppColors.blue500),
+                    labelText: S.of(context).password,
+                    prefixIcon: const Icon(
+                      Icons.lock,
+                      color: AppColors.blue500,
+                    ),
                     filled: true,
                     fillColor: AppColors.grey100,
                     border: OutlineInputBorder(
@@ -185,7 +192,7 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                   ),
                   validator: (value) {
                     if (value == null || value.isEmpty) {
-                      return 'Please enter your password';
+                      return S.of(context).pleaseEnterYourPassword;
                     }
                     return null;
                   },
@@ -196,9 +203,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
           actions: [
             TextButton(
               onPressed: isLoading ? null : () => Navigator.pop(dialogContext),
-              child: const Text(
-                'Cancel',
-                style: TextStyle(color: AppColors.textSecondary),
+              child: Text(
+                S.of(context).cancel,
+                style: const TextStyle(color: AppColors.textSecondary),
               ),
             ),
             ElevatedButton(
@@ -218,6 +225,7 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                         await user.reauthenticateWithCredential(credential);
 
                         // Re-auth success → perform logout
+                        NotificationCubit.get(context).clearStream();
                         await FirebaseAuth.instance.signOut();
                         await Future.wait([
                           CacheHelper.removeData(key: 'uId'),
@@ -228,7 +236,8 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                         // Disable wakelock before leaving
                         WakelockPlus.disable();
                         SystemChrome.setEnabledSystemUIMode(
-                            SystemUiMode.edgeToEdge);
+                          SystemUiMode.edgeToEdge,
+                        );
 
                         if (dialogContext.mounted) {
                           Navigator.pop(dialogContext); // Close dialog
@@ -240,7 +249,7 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                         setDialogState(() => isLoading = false);
 
                         Fluttertoast.showToast(
-                          msg: 'Incorrect password. Please try again.',
+                          msg: S.of(context).incorrectPassword,
                           backgroundColor: AppColors.error,
                           textColor: Colors.white,
                         );
@@ -261,9 +270,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                         color: Colors.white,
                       ),
                     )
-                  : const Text(
-                      'Exit',
-                      style: TextStyle(
+                  : Text(
+                      S.of(context).exitButton,
+                      style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.bold,
                       ),
@@ -310,22 +319,20 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                             decoration: BoxDecoration(
                               color: AppColors.grey100,
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(
-                                color: AppColors.borderColor,
-                              ),
+                              border: Border.all(color: AppColors.borderColor),
                             ),
-                            child: const Row(
+                            child: Row(
                               mainAxisSize: MainAxisSize.min,
                               children: [
-                                Icon(
+                                const Icon(
                                   Icons.lock_outline,
                                   size: 18,
                                   color: AppColors.textSecondary,
                                 ),
-                                SizedBox(width: 6),
+                                const SizedBox(width: 6),
                                 Text(
-                                  'Exit',
-                                  style: TextStyle(
+                                  S.of(context).exitButton,
+                                  style: const TextStyle(
                                     fontSize: 13,
                                     fontWeight: FontWeight.w600,
                                     color: AppColors.textSecondary,
@@ -364,9 +371,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
             ),
           ),
           const SizedBox(height: 32),
-          const Text(
-            'QR Verification Not Configured',
-            style: TextStyle(
+          Text(
+            S.of(context).qrNotConfigured,
+            style: const TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
               color: AppColors.textPrimary,
@@ -374,10 +381,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 12),
-          const Text(
-            'Please ask an admin to generate a shared secret '
-            'from the QR Code Generator in Settings.',
-            style: TextStyle(
+          Text(
+            S.of(context).qrNotConfiguredDescription,
+            style: const TextStyle(
               fontSize: 14,
               color: AppColors.textSecondary,
               height: 1.5,
@@ -463,9 +469,9 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Text(
-                          'Active',
-                          style: TextStyle(
+                        Text(
+                          S.of(context).active,
+                          style: const TextStyle(
                             color: AppColors.green400,
                             fontWeight: FontWeight.bold,
                             fontSize: 13,
@@ -509,29 +515,29 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                 borderRadius: BorderRadius.circular(16),
                 border: Border.all(color: AppColors.primary.withAlpha(30)),
               ),
-              child: const Column(
+              child: Column(
                 children: [
                   Row(
                     children: [
-                      Icon(Icons.info_outline,
-                          color: AppColors.primary, size: 20),
-                      SizedBox(width: 8),
+                      const Icon(
+                        Icons.info_outline,
+                        color: AppColors.primary,
+                        size: 20,
+                      ),
+                      const SizedBox(width: 8),
                       Text(
-                        'Kiosk Mode Active',
-                        style: TextStyle(
+                        S.of(context).kioskModeActive,
+                        style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: AppColors.primary,
                         ),
                       ),
                     ],
                   ),
-                  SizedBox(height: 8),
+                  const SizedBox(height: 8),
                   Text(
-                    'Display this screen at your office entrance. '
-                    'Employees must scan this QR code before checking in, '
-                    'taking breaks, or checking out. The code refreshes '
-                    'every 5 seconds for security.',
-                    style: TextStyle(
+                    S.of(context).kioskModeDescription,
+                    style: const TextStyle(
                       fontSize: 13,
                       color: AppColors.textSecondary,
                       height: 1.5,
@@ -562,7 +568,7 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
             ),
             const SizedBox(width: 6),
             Text(
-              'Refreshes in ${_secondsUntilRefresh}s',
+              S.of(context).refreshesIn(_secondsUntilRefresh),
               style: TextStyle(
                 fontSize: 13,
                 color: progress < 0.4

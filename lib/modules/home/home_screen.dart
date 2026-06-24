@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:pulsera/models/work_schedule_config.dart';
 import 'package:pulsera/modules/home/qr_scanner_screen.dart';
 import 'package:pulsera/modules/register/register_company_screen.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/styles/theme.dart';
 import '../../models/user_model.dart';
@@ -22,8 +24,6 @@ class HomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    // Wrap with BlocBuilder<AppCubit> so the screen rebuilds when
-    // userModel changes (e.g. companyId becomes non-null after registration).
     return BlocBuilder<AppCubit, AppStates>(
       builder: (context, appState) {
         final UserModel? user = AppCubit.get(context).userModel;
@@ -45,7 +45,7 @@ class HomeScreen extends StatelessWidget {
             // QR validation succeeded
             if (state is LocationVerifiedState) {
               Fluttertoast.showToast(
-                msg: 'Location Verified',
+                msg: S.of(context).locationVerified,
                 toastLength: Toast.LENGTH_SHORT,
                 backgroundColor: AppColors.green400,
                 textColor: Colors.white,
@@ -93,7 +93,7 @@ class HomeScreen extends StatelessWidget {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Text(
-                        "Plaese Register your Company Details!",
+                        S.of(context).registerCompanyPrompt,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       SizedBox(height: 50),
@@ -102,11 +102,10 @@ class HomeScreen extends StatelessWidget {
                             navigateTo(context, RegisterCompanyScreen()),
                         style: Theme.of(context).elevatedButtonTheme.style,
                         child: Text(
-                          "Create Company",
-                          style: Theme.of(context).textTheme.titleLarge!
-                              .copyWith(
-                                color: Colors.white,
-                              ),
+                          S.of(context).createCompany,
+                          style: Theme.of(
+                            context,
+                          ).textTheme.titleLarge!.copyWith(color: Colors.white),
                         ),
                       ),
                     ],
@@ -119,15 +118,15 @@ class HomeScreen extends StatelessWidget {
                 child: Padding(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   child: Center(
-                    child: Column( // Note: Removed the Expanded() you had here, it causes layout errors inside Center
+                    child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          "Please join a company to continue!",
+                          S.of(context).joinCompanyPrompt,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         Text(
-                          "Give your Id to the company",
+                          S.of(context).giveIdToCompany,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         const SizedBox(height: 50),
@@ -140,11 +139,12 @@ class HomeScreen extends StatelessWidget {
                             children: [
                               SelectableText(
                                 "${user.uId}",
-                                style: Theme.of(context).textTheme.titleLarge!
+                                style: Theme.of(context).textTheme.titleMedium!
                                     .copyWith(color: AppColors.primary),
                                 textAlign: TextAlign.center,
                                 maxLines: 1,
                               ),
+                              const SizedBox(width: 0.5),
                               IconButton(
                                 onPressed: () {
                                   Clipboard.setData(
@@ -152,7 +152,11 @@ class HomeScreen extends StatelessWidget {
                                   ).then((_) {
                                     if (!context.mounted) return;
                                     ScaffoldMessenger.of(context).showSnackBar(
-                                      const SnackBar(content: Text('Copied to your clipboard !')),
+                                      SnackBar(
+                                        content: Text(
+                                          S.of(context).copiedToClipboard,
+                                        ),
+                                      ),
                                     );
                                   });
                                 },
@@ -178,12 +182,18 @@ class HomeScreen extends StatelessWidget {
                             AppCubit.get(context).getUserData();
                           },
                           icon: const Icon(Icons.refresh),
-                          label: const Text(
-                            "Refresh Status",
-                            style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                          label: Text(
+                            S.of(context).refreshStatus,
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                           style: OutlinedButton.styleFrom(
-                            padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 24,
+                              vertical: 12,
+                            ),
                             foregroundColor: AppColors.primary,
                             side: const BorderSide(color: AppColors.primary),
                           ),
@@ -201,24 +211,32 @@ class HomeScreen extends StatelessWidget {
                   _buildDatePicker(cubit, user.uId),
                   const SizedBox(height: 28),
 
-                  _buildSectionHeader("Today Attendance", state, context),
+                  _buildSectionHeader(
+                    S.of(context).todayAttendance,
+                    state,
+                    context,
+                  ),
                   const SizedBox(height: 16),
 
                   // Status badge row
-                  _buildAttendanceStatusRow(cubit),
+                  _buildAttendanceStatusRow(cubit, context),
 
-                  _buildCheckInOutGrid(cubit),
+                  _buildCheckInOutGrid(cubit, context),
                   const SizedBox(height: 12),
-                  _buildStatsGrid(cubit),
+                  _buildStatsGrid(cubit, context),
 
                   if (cubit.workingTime != "00:00:00")
-                    _buildWorkingTimeCard(cubit),
+                    _buildWorkingTimeCard(cubit, context),
 
                   // Time-rule details (late minutes, early leave, overtime)
-                  _buildTimeRuleDetails(cubit),
+                  _buildTimeRuleDetails(cubit, context),
 
                   const SizedBox(height: 28),
-                  _buildSectionHeader("Your Activity", null, context),
+                  _buildSectionHeader(
+                    S.of(context).yourActivity,
+                    null,
+                    context,
+                  ),
                   const SizedBox(height: 16),
 
                   _buildSwipeButton(cubit, user.uId, context),
@@ -244,7 +262,7 @@ Widget _buildDatePicker(AttendanceCubit cubit, String? uid) {
     scrollDirection: Axis.horizontal,
     child: HorizontalDate(
       fromDate: DateTime.now(),
-      toDate: DateTime.now().subtract(const Duration(days: 10)),
+      toDate: DateTime.now().subtract(const Duration(days: 13)),
       selectedDate: cubit.selectedDate,
       onTap: (newDate) {
         if (uid != null) cubit.changeDate(newDate, uid);
@@ -254,7 +272,7 @@ Widget _buildDatePicker(AttendanceCubit cubit, String? uid) {
 }
 
 // --- Attendance Status Row ---
-Widget _buildAttendanceStatusRow(AttendanceCubit cubit) {
+Widget _buildAttendanceStatusRow(AttendanceCubit cubit, BuildContext context) {
   final activity = cubit.activity;
   if (activity == null) return const SizedBox();
 
@@ -270,11 +288,14 @@ Widget _buildAttendanceStatusRow(AttendanceCubit cubit) {
       runSpacing: 8,
       children: [
         if (checkInStatus != null)
-          _buildStatusChip(checkInStatus, _checkInStatusLabel(checkInStatus)),
+          _buildStatusChip(
+            checkInStatus,
+            _checkInStatusLabel(checkInStatus, context),
+          ),
         if (checkOutStatus != null)
           _buildStatusChip(
             checkOutStatus,
-            _checkOutStatusLabel(checkOutStatus),
+            _checkOutStatusLabel(checkOutStatus, context),
           ),
       ],
     ),
@@ -310,22 +331,22 @@ Widget _buildStatusChip(String status, String label) {
   );
 }
 
-String _checkInStatusLabel(String status) {
+String _checkInStatusLabel(String status, BuildContext context) {
   return switch (status) {
-    'early' => 'Early',
-    'on_time' => 'On Time',
-    'late' => 'Late',
-    'very_late' => 'Very Late',
+    'early' => S.of(context).statusEarly,
+    'on_time' => S.of(context).statusOnTime,
+    'late' => S.of(context).statusLate,
+    'very_late' => S.of(context).statusVeryLate,
     _ => status.toUpperCase(),
   };
 }
 
-String _checkOutStatusLabel(String status) {
+String _checkOutStatusLabel(String status, BuildContext context) {
   return switch (status) {
-    'early_leave' => 'Early Leave',
-    'completed' => 'Completed',
-    'overtime' => 'Overtime',
-    'insufficient_hours' => 'Insufficient Hours',
+    'early_leave' => S.of(context).statusEarlyLeave,
+    'completed' => S.of(context).statusCompleted,
+    'overtime' => S.of(context).statusOvertime,
+    'insufficient_hours' => S.of(context).statusInsufficientHours,
     _ => status.toUpperCase(),
   };
 }
@@ -354,7 +375,7 @@ IconData _statusIcon(String status) {
 }
 
 // --- Time Rule Details ---
-Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
+Widget _buildTimeRuleDetails(AttendanceCubit cubit, BuildContext context) {
   final activity = cubit.activity;
   if (activity == null) return const SizedBox();
 
@@ -373,9 +394,9 @@ Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            "Time Details",
-            style: TextStyle(
+          Text(
+            S.of(context).timeDetails,
+            style: const TextStyle(
               fontSize: 13,
               fontWeight: FontWeight.bold,
               color: AppColors.grey700,
@@ -386,20 +407,23 @@ Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
             _buildDetailRow(
               Icons.warning_amber_rounded,
               AppColors.orange500,
-              "Late by ${activity.lateMinutes} min",
+              S.of(context).lateByMinutes(activity.lateMinutes!),
+              context,
             ),
           if (activity.earlyLeaveMinutes != null &&
               activity.earlyLeaveMinutes! > 0)
             _buildDetailRow(
               Icons.exit_to_app,
               AppColors.orange500,
-              "Left ${activity.earlyLeaveMinutes} min early",
+              S.of(context).leftEarlyMinutes(activity.earlyLeaveMinutes!),
+              context,
             ),
           if (activity.overtimeMinutes != null && activity.overtimeMinutes! > 0)
             _buildDetailRow(
               Icons.trending_up,
               AppColors.primary,
-              "Overtime: ${activity.overtimeMinutes} min",
+              S.of(context).overtimeMinutes(activity.overtimeMinutes!),
+              context,
             ),
         ],
       ),
@@ -407,7 +431,7 @@ Widget _buildTimeRuleDetails(AttendanceCubit cubit) {
   );
 }
 
-Widget _buildDetailRow(IconData icon, Color color, String text) {
+Widget _buildDetailRow(IconData icon, Color color, String text, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.only(bottom: 4),
     child: Row(
@@ -415,7 +439,7 @@ Widget _buildDetailRow(IconData icon, Color color, String text) {
         Icon(icon, color: color, size: 16),
         const SizedBox(width: 6),
         Text(
-          text,
+          text.localizeDigits(context),
           style: TextStyle(
             fontSize: 13,
             color: color,
@@ -428,24 +452,26 @@ Widget _buildDetailRow(IconData icon, Color color, String text) {
 }
 
 // --- Grids & Cards ---
-Widget _buildCheckInOutGrid(AttendanceCubit cubit) {
+Widget _buildCheckInOutGrid(AttendanceCubit cubit, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Row(
       children: [
         Expanded(
           child: _buildInfoCard(
-            "Check In",
+            S.of(context).checkIn,
             cubit.activity?.checkIn?.inTime ?? "--:--",
             IconBroken.Login,
+            context,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildInfoCard(
-            "Check Out",
+            S.of(context).checkOut,
             cubit.activity?.outTime?.outTime ?? "--:--",
             IconBroken.Logout,
+            context,
           ),
         ),
       ],
@@ -453,24 +479,26 @@ Widget _buildCheckInOutGrid(AttendanceCubit cubit) {
   );
 }
 
-Widget _buildStatsGrid(AttendanceCubit cubit) {
+Widget _buildStatsGrid(AttendanceCubit cubit, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Row(
       children: [
         Expanded(
           child: _buildInfoCard(
-            "Break Time",
+            S.of(context).breakTime,
             cubit.breakTime,
             Icons.coffee_outlined,
+            context,
           ),
         ),
         const SizedBox(width: 12),
         Expanded(
           child: _buildInfoCard(
-            "Total Days",
+            S.of(context).totalDaysLabel,
             "${cubit.monthWorkedDays}",
             IconBroken.Calendar,
+            context,
           ),
         ),
       ],
@@ -478,13 +506,14 @@ Widget _buildStatsGrid(AttendanceCubit cubit) {
   );
 }
 
-Widget _buildWorkingTimeCard(AttendanceCubit cubit) {
+Widget _buildWorkingTimeCard(AttendanceCubit cubit, BuildContext context) {
   return Padding(
     padding: const EdgeInsets.fromLTRB(16, 12, 16, 0),
     child: _buildInfoCard(
-      "Working Hours",
+      S.of(context).workingHours,
       cubit.workingTime,
       Icons.timer_outlined,
+      context,
     ),
   );
 }
@@ -496,10 +525,11 @@ Widget _buildSwipeButton(
   BuildContext context,
 ) {
   final isToday = DateUtils.isSameDay(cubit.selectedDate, DateTime.now());
+  final bool isRtl = Directionality.of(context) == TextDirection.rtl;
 
-  if (!isToday || cubit.activity?.outTime != null) return const SizedBox();
+  if (!isToday || cubit.activity?.outTime != null || uid == null)
+    return const SizedBox();
 
-  // Disable swipe while action is in progress
   if (cubit.isPerformingAction) {
     return const Padding(
       padding: EdgeInsets.symmetric(horizontal: 16),
@@ -512,8 +542,10 @@ Widget _buildSwipeButton(
   final teamId = appCubit.userModel?.managerId;
   final companyStartTime = appCubit.companyModel?.startTime;
   final sharedSecret = appCubit.companyModel?.sharedSecret;
+  final user = appCubit.userModel;
+  final rawName = '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
+  final String? parsedUserName = rawName.isNotEmpty ? rawName : null;
 
-  // Build schedule config from company model
   WorkScheduleConfig? scheduleConfig;
   if (appCubit.companyModel != null) {
     scheduleConfig = WorkScheduleConfig.fromCompanyModel(
@@ -525,10 +557,9 @@ Widget _buildSwipeButton(
     padding: const EdgeInsets.symmetric(horizontal: 16),
     child: Column(
       children: [
-        // Primary swipe slider (Check-in / Check-out / End Break)
         SwipeButton.expand(
-          thumb: const Icon(
-            IconBroken.Arrow___Right_2,
+          thumb: Icon(
+            isRtl ? IconBroken.Arrow___Left_2 : IconBroken.Arrow___Right_2,
             size: 35,
             color: AppColors.white,
           ),
@@ -536,30 +567,25 @@ Widget _buildSwipeButton(
           activeTrackColor: AppColors.primary.withAlpha(430),
           inactiveThumbColor: AppColors.grey300,
           onSwipe: () {
-            if (uid == null) return;
-            // Open QR scanner → confirmation → execute
             _openScannerAndValidate(
               context: context,
               cubit: cubit,
               sharedSecret: sharedSecret,
               scheduleConfig: scheduleConfig,
               onSuccess: () {
-                final user = appCubit.userModel;
-                final fullName =
-                    '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
                 cubit.performSwipeAction(
                   uid,
                   companyId,
                   teamId: teamId,
                   companyStartTime: companyStartTime,
-                  userName: fullName.isNotEmpty ? fullName : null,
+                  userName: parsedUserName,
                   scheduleConfig: scheduleConfig,
                 );
               },
             );
           },
           child: Text(
-            cubit.activity?.nextAction.label ?? "Check In",
+            cubit.activity?.nextAction.label ?? S.of(context).checkIn,
             style: const TextStyle(
               color: AppColors.white,
               fontWeight: FontWeight.bold,
@@ -568,36 +594,33 @@ Widget _buildSwipeButton(
           ),
         ),
 
-        // "Take a Break" button — shown only when checked in, not on break
         if (cubit.activity?.canTakeBreak == true) ...[
           const SizedBox(height: 12),
           SizedBox(
             width: double.infinity,
             child: OutlinedButton.icon(
               onPressed: () {
-                if (uid == null) return;
-                // Open QR scanner → pass scanned hash to cubit
                 _openScannerAndValidate(
                   context: context,
                   cubit: cubit,
                   sharedSecret: sharedSecret,
                   onSuccess: () {
-                    final user = appCubit.userModel;
-                    final fullName =
-                        '${user?.firstName ?? ''} ${user?.lastName ?? ''}'.trim();
                     cubit.performBreakAction(
                       uid,
                       companyId,
                       teamId: teamId,
-                      userName: fullName.isNotEmpty ? fullName : null,
+                      userName: parsedUserName,
                     );
                   },
                 );
               },
               icon: const Icon(Icons.coffee_outlined),
-              label: const Text(
-                "Take a Break",
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              label: Text(
+                S.of(context).takeABreak,
+                style: const TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
               ),
               style: OutlinedButton.styleFrom(
                 foregroundColor: AppColors.primary,
@@ -654,21 +677,18 @@ void _openScannerAndValidate({
                     : AppColors.blue600,
               ),
               const SizedBox(width: 8),
-              const Text("Confirm Action"),
+              Text(S.of(context).confirmAction),
             ],
           ),
-          content: Text(
-            preview.message,
-            style: const TextStyle(fontSize: 15),
-          ),
+          content: Text(preview.message, style: const TextStyle(fontSize: 15)),
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(dialogContext, false),
-              child: const Text("Cancel"),
+              child: Text(S.of(context).cancel),
             ),
             ElevatedButton(
               onPressed: () => Navigator.pop(dialogContext, true),
-              child: const Text("Confirm"),
+              child: Text(S.of(context).confirm),
             ),
           ],
         ),
@@ -689,14 +709,23 @@ void _openScannerAndValidate({
 /// Returns true if the status represents an early or late condition
 /// that warrants a confirmation dialog.
 bool _isEarlyOrLateStatus(String status) {
-  return const {'early', 'late', 'very_late', 'early_leave', 'insufficient_hours'}
-      .contains(status);
+  return const {
+    'early',
+    'late',
+    'very_late',
+    'early_leave',
+    'insufficient_hours',
+  }.contains(status);
 }
 
 /// Returns true if the status represents a late/warning condition.
 bool _isLateStatus(String status) {
-  return const {'late', 'very_late', 'early_leave', 'insufficient_hours'}
-      .contains(status);
+  return const {
+    'late',
+    'very_late',
+    'early_leave',
+    'insufficient_hours',
+  }.contains(status);
 }
 
 // --- Helper Methods ---
@@ -728,7 +757,8 @@ Widget _buildSectionHeader(
   );
 }
 
-Widget _buildInfoCard(String title, String value, IconData icon) {
+// Updated with Context to access .localizeDigits()
+Widget _buildInfoCard(String title, String value, IconData icon, BuildContext context) {
   return Container(
     padding: const EdgeInsets.all(16),
     decoration: boxDecoration,
@@ -737,10 +767,10 @@ Widget _buildInfoCard(String title, String value, IconData icon) {
       children: [
         Icon(icon, color: AppColors.primary, size: 20),
         const SizedBox(height: 8),
-        Text(title, style: TextStyle(color: AppColors.grey700, fontSize: 12)),
+        Text(title, style: const TextStyle(color: AppColors.grey700, fontSize: 12)),
         const SizedBox(height: 4),
         Text(
-          value,
+          value.localizeDigits(context), // Magic applied here!
           style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ],

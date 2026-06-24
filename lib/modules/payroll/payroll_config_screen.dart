@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:fluttertoast/fluttertoast.dart';
+import 'package:pulsera/shared/app_extension.dart';
 import 'package:pulsera/shared/cubit/app_cubit.dart';
 import 'package:pulsera/shared/cubit/payroll_config_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
@@ -54,13 +56,27 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   void _populateFields() {
     final config = PayrollConfigCubit.get(context).config;
     if (config == null) return;
-    _absenceMultiplierController.text = config.absenceMultiplier.toString();
-    _lateGraceController.text = config.lateGracePeriodMinutes.toString();
-    _lateDeductionValueController.text = config.lateDeductionValue.toString();
-    _overtimeMinController.text = config.overtimeMinMinutes.toString();
-    _overtimeBonusController.text = config.overtimeBonusPercentage.toString();
-    _earlyLeaveDeductionValueController.text =
-        config.earlyLeaveDeductionValue.toString();
+
+    // Add .localizeDigits(context) to everything going into a controller
+    _absenceMultiplierController.text = config.absenceMultiplier
+        .toString()
+        .localizeDigits(context);
+    _lateGraceController.text = config.lateGracePeriodMinutes
+        .toString()
+        .localizeDigits(context);
+    _lateDeductionValueController.text = config.lateDeductionValue
+        .toString()
+        .localizeDigits(context);
+    _overtimeMinController.text = config.overtimeMinMinutes
+        .toString()
+        .localizeDigits(context);
+    _overtimeBonusController.text = config.overtimeBonusPercentage
+        .toString()
+        .localizeDigits(context);
+    _earlyLeaveDeductionValueController.text = config.earlyLeaveDeductionValue
+        .toString()
+        .localizeDigits(context);
+
     setState(() {
       _lateDeductionMode = config.lateDeductionMode;
       _earlyLeaveDeductionMode = config.earlyLeaveDeductionMode;
@@ -76,20 +92,32 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
 
     PayrollConfigCubit.get(context).saveConfig(
       companyId: companyId,
+
+      // Add .toEnglishDigits() BEFORE you tryParse!
       absenceMultiplier:
-          double.tryParse(_absenceMultiplierController.text) ?? 1.0,
+          double.tryParse(
+            _absenceMultiplierController.text.toEnglishDigits(),
+          ) ??
+          1.0,
       lateGracePeriodMinutes:
-          int.tryParse(_lateGraceController.text) ?? 15,
+          int.tryParse(_lateGraceController.text.toEnglishDigits()) ?? 15,
       lateDeductionMode: _lateDeductionMode,
       lateDeductionValue:
-          double.tryParse(_lateDeductionValueController.text) ?? 0.0,
+          double.tryParse(
+            _lateDeductionValueController.text.toEnglishDigits(),
+          ) ??
+          0.0,
       overtimeMinMinutes:
-          int.tryParse(_overtimeMinController.text) ?? 30,
+          int.tryParse(_overtimeMinController.text.toEnglishDigits()) ?? 30,
       overtimeBonusPercentage:
-          double.tryParse(_overtimeBonusController.text) ?? 0.0,
+          double.tryParse(_overtimeBonusController.text.toEnglishDigits()) ??
+          0.0,
       earlyLeaveDeductionMode: _earlyLeaveDeductionMode,
       earlyLeaveDeductionValue:
-          double.tryParse(_earlyLeaveDeductionValueController.text) ?? 0.0,
+          double.tryParse(
+            _earlyLeaveDeductionValueController.text.toEnglishDigits(),
+          ) ??
+          0.0,
       missingCheckoutPolicy: _missingCheckoutPolicy,
     );
   }
@@ -100,7 +128,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
       appBar: AppBar(
         leading: backButton(context),
         title: Text(
-          'Payroll Configuration',
+          S.of(context).payrollConfig,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         backgroundColor: AppColors.white,
@@ -112,7 +140,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
             _populateFields();
           }
           if (state is PayrollConfigSavedState) {
-            Fluttertoast.showToast(msg: 'Configuration saved successfully!');
+            Fluttertoast.showToast(msg: S.of(context).configSavedSuccessfully);
             Navigator.pop(context);
           }
           if (state is PayrollConfigErrorState) {
@@ -138,20 +166,22 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                     decoration: BoxDecoration(
                       color: AppColors.primary.withAlpha(20),
                       borderRadius: BorderRadius.circular(12),
-                      border:
-                          Border.all(color: AppColors.primary.withAlpha(60)),
+                      border: Border.all(
+                        color: AppColors.primary.withAlpha(60),
+                      ),
                     ),
                     child: Row(
                       children: [
-                        Icon(IconBroken.Info_Circle,
-                            color: AppColors.primary, size: 20),
+                        Icon(
+                          IconBroken.Info_Circle,
+                          color: AppColors.primary,
+                          size: 20,
+                        ),
                         const SizedBox(width: 10),
                         Expanded(
                           child: Text(
-                            'Configure payroll deduction and bonus rules for your company. These rules apply to all employees.',
-                            style: Theme.of(context)
-                                .textTheme
-                                .bodySmall
+                            S.of(context).payrollConfigInfo,
+                            style: Theme.of(context).textTheme.bodySmall
                                 ?.copyWith(color: AppColors.primary),
                           ),
                         ),
@@ -163,75 +193,80 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                   // ===========================================================
                   // ABSENCE DEDUCTION
                   // ===========================================================
-                  _sectionTitle(context, 'Absence Deduction'),
+                  _sectionTitle(context, S.of(context).absenceDeductionSection),
                   const SizedBox(height: 8),
                   Text(
-                    'Multiplier applied to daily salary for each unapproved absence day.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.grey500),
+                    S.of(context).absenceMultiplierDescription,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 18),
                   DefaultFormField(
                     controller: _absenceMultiplierController,
-                    type:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    label: const Text('Absence Multiplier (e.g. 1.0, 1.5, 2.0)'),
+                    type: const TextInputType.numberWithOptions(decimal: true),
+                    label: Text(S.of(context).absenceMultiplierLabel),
                     prefix: IconBroken.Close_Square,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
                     ],
                     validator: (value) {
                       if (value == null || value.isEmpty) {
-                        return 'Required';
+                        return S.of(context).required;
                       }
                       final val = double.tryParse(value);
-                      if (val == null || val < 0) return 'Enter a valid number';
+                      if (val == null || val < 0)
+                        return S.of(context).enterValidNumber;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // ===========================================================
                   // LATE ARRIVAL
                   // ===========================================================
-                  _sectionTitle(context, 'Late Arrival Deduction'),
-                  const SizedBox(height: 12),
+                  _sectionTitle(context, S.of(context).lateArrivalDeduction),
+                  const SizedBox(height: 8),
                   DefaultFormField(
                     controller: _lateGraceController,
                     type: TextInputType.number,
-                    label: const Text('Grace Period (minutes)'),
+                    label: Text(S.of(context).gracePeriodMinutes),
                     prefix: IconBroken.Time_Circle,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
+                      if (value == null || value.isEmpty)
+                        return S.of(context).required;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   DropdownButtonFormField<String>(
                     initialValue: _lateDeductionMode,
-                    decoration: const InputDecoration(
-                      labelText: 'Deduction Mode',
-                      prefixIcon: Icon(IconBroken.Setting),
+                    decoration: InputDecoration(
+                      labelText: S.of(context).deductionMode,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 20.0,
+                        horizontal: 10.0,
+                      ),
+                      prefixIcon: const Icon(
+                        IconBroken.Setting,
+                        color: AppColors.blue500,
+                      ),
                       filled: true,
                       fillColor: AppColors.grey100,
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.all(Radius.circular(16)),
+                      border: const OutlineInputBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(16.0)),
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'percentage',
-                        child: Text('Percentage of Daily Salary'),
+                        child: Text(S.of(context).percentageOfDailySalary),
                       ),
                       DropdownMenuItem(
                         value: 'minutes',
-                        child: Text('Per Minute Deduction'),
+                        child: Text(S.of(context).perMinuteDeduction),
                       ),
                     ],
                     onChanged: (val) {
@@ -240,58 +275,69 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   DefaultFormField(
                     controller: _lateDeductionValueController,
-                    type:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    label: Text(_lateDeductionMode == 'percentage'
-                        ? 'Deduction % per Late Day'
-                        : 'Deduction Amount per Minute'),
+                    type: const TextInputType.numberWithOptions(decimal: true),
+                    label: Text(
+                      _lateDeductionMode == 'percentage'
+                          ? S.of(context).deductionPercentPerLateDay
+                          : S.of(context).deductionAmountPerMinute,
+                    ),
                     prefix: IconBroken.Wallet,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩]')),
                     ],
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
+                      if (value == null || value.isEmpty)
+                        return S.of(context).required;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // ===========================================================
                   // EARLY LEAVE DEDUCTION
                   // ===========================================================
-                  _sectionTitle(context, 'Early Leave Deduction'),
+                  _sectionTitle(
+                    context,
+                    S.of(context).earlyLeaveDeductionSection,
+                  ),
                   const SizedBox(height: 8),
                   Text(
-                    'Deduction applied when employees leave before the scheduled end time.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.grey500),
+                    S.of(context).earlyLeaveDeductionDescription,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     initialValue: _earlyLeaveDeductionMode,
-                    decoration: const InputDecoration(
-                      labelText: 'Early Leave Deduction Mode',
-                      prefixIcon: Icon(IconBroken.Setting),
+                    decoration: InputDecoration(
+                      labelText: S.of(context).earlyLeaveDeductionMode,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 20.0,
+                        horizontal: 10.0,
+                      ),
+                      prefixIcon: const Icon(
+                        IconBroken.Setting,
+                        color: AppColors.blue500,
+                      ),
                       filled: true,
                       fillColor: AppColors.grey100,
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'percentage',
-                        child: Text('Percentage of Daily Salary'),
+                        child: Text(S.of(context).percentageOfDailySalary),
                       ),
                       DropdownMenuItem(
                         value: 'minutes',
-                        child: Text('Per Minute Deduction'),
+                        child: Text(S.of(context).perMinuteDeduction),
                       ),
                     ],
                     onChanged: (val) {
@@ -300,94 +346,100 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   DefaultFormField(
                     controller: _earlyLeaveDeductionValueController,
-                    type:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    label: Text(_earlyLeaveDeductionMode == 'percentage'
-                        ? 'Deduction % per Early Leave Day'
-                        : 'Deduction Amount per Minute'),
+                    type: const TextInputType.numberWithOptions(decimal: true),
+                    label: Text(
+                      _earlyLeaveDeductionMode == 'percentage'
+                          ? S.of(context).deductionPercentPerEarlyLeave
+                          : S.of(context).deductionAmountPerMinute,
+                    ),
                     prefix: IconBroken.Wallet,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩.]')),
                     ],
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
+                      if (value == null || value.isEmpty)
+                        return S.of(context).required;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // ===========================================================
                   // OVERTIME BONUS
                   // ===========================================================
-                  _sectionTitle(context, 'Overtime Bonus'),
-                  const SizedBox(height: 12),
+                  _sectionTitle(context, S.of(context).overtimeBonusSection),
+                  const SizedBox(height: 8),
                   DefaultFormField(
                     controller: _overtimeMinController,
                     type: TextInputType.number,
-                    label: const Text('Minimum Overtime Minutes'),
+                    label: Text(S.of(context).minimumOvertimeMinutes),
                     prefix: IconBroken.Time_Circle,
-                    inputFormatters: [
-                      FilteringTextInputFormatter.digitsOnly,
-                    ],
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
+                      if (value == null || value.isEmpty)
+                        return S.of(context).required;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   DefaultFormField(
                     controller: _overtimeBonusController,
-                    type:
-                        const TextInputType.numberWithOptions(decimal: true),
-                    label:
-                        const Text('Bonus % of Daily Salary (per overtime day)'),
+                    type: const TextInputType.numberWithOptions(decimal: true),
+                    label: Text(S.of(context).bonusPercentPerOvertimeDay),
                     prefix: IconBroken.Star,
                     inputFormatters: [
-                      FilteringTextInputFormatter.allow(RegExp(r'[\d.]')),
+                      FilteringTextInputFormatter.allow(RegExp(r'[0-9٠-٩.]')),
                     ],
                     validator: (value) {
-                      if (value == null || value.isEmpty) return 'Required';
+                      if (value == null || value.isEmpty)
+                        return S.of(context).required;
                       return null;
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
                   // ===========================================================
                   // MISSING CHECKOUT POLICY
                   // ===========================================================
-                  _sectionTitle(context, 'Missing Checkout Policy'),
+                  _sectionTitle(context, S.of(context).missingCheckoutPolicy),
                   const SizedBox(height: 8),
                   Text(
-                    'How to handle days where an employee checked in but never checked out.',
-                    style: Theme.of(context)
-                        .textTheme
-                        .bodySmall
-                        ?.copyWith(color: AppColors.grey500),
+                    S.of(context).missingCheckoutDescription,
+                    style: Theme.of(
+                      context,
+                    ).textTheme.bodySmall?.copyWith(color: AppColors.grey500),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 18),
                   DropdownButtonFormField<String>(
                     initialValue: _missingCheckoutPolicy,
-                    decoration: const InputDecoration(
-                      labelText: 'Policy',
-                      prefixIcon: Icon(IconBroken.Shield_Fail),
+                    decoration: InputDecoration(
+                      labelText: S.of(context).policy,
+                      contentPadding: const EdgeInsets.symmetric(
+                        vertical: 20.0,
+                        horizontal: 10.0,
+                      ),
+                      prefixIcon: const Icon(
+                        IconBroken.Shield_Fail,
+                        color: AppColors.blue500,
+                      ),
                       filled: true,
                       fillColor: AppColors.grey100,
-                      border: OutlineInputBorder(
+                      border: const OutlineInputBorder(
                         borderRadius: BorderRadius.all(Radius.circular(16)),
                         borderSide: BorderSide.none,
                       ),
                     ),
-                    items: const [
+                    items: [
                       DropdownMenuItem(
                         value: 'half_day',
-                        child: Text('Count as Half Day'),
+                        child: Text(S.of(context).countAsHalfDay),
                       ),
                       DropdownMenuItem(
                         value: 'absent',
-                        child: Text('Count as Absent'),
+                        child: Text(S.of(context).countAsAbsent),
                       ),
                     ],
                     onChanged: (val) {
@@ -396,7 +448,7 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                       });
                     },
                   ),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 20),
 
                   // --- Save Button ---
                   SizedBox(
@@ -405,9 +457,9 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
                     child: ElevatedButton(
                       onPressed: _saveConfig,
                       style: Theme.of(context).elevatedButtonTheme.style,
-                      child: const Text(
-                        'Save Configuration',
-                        style: TextStyle(
+                      child: Text(
+                        S.of(context).saveConfiguration,
+                        style: const TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
                           color: AppColors.white,
@@ -428,9 +480,9 @@ class _PayrollConfigScreenState extends State<PayrollConfigScreen> {
   Widget _sectionTitle(BuildContext context, String text) {
     return Text(
       text,
-      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-            fontWeight: FontWeight.bold,
-          ),
+      style: Theme.of(
+        context,
+      ).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
     );
   }
 }

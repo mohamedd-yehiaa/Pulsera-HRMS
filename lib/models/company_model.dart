@@ -80,11 +80,11 @@ class CompanyModel {
       'companyEmail': companyEmail,
       'workingDays': workingDays,
       if (gracePeriodMinutes != null) 'gracePeriodMinutes': gracePeriodMinutes,
-      if (earlyAllowanceMinutes != null) 'earlyAllowanceMinutes': earlyAllowanceMinutes,
+      if (earlyAllowanceMinutes != null)
+        'earlyAllowanceMinutes': earlyAllowanceMinutes,
       if (lateCutoffMinutes != null) 'lateCutoffMinutes': lateCutoffMinutes,
       if (minimumWorkHours != null) 'minimumWorkHours': minimumWorkHours,
       if (sharedSecret != null) 'sharedSecret': sharedSecret,
     };
   }
 }
-

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:pulsera/modules/team/team_members_screen.dart';
 import 'package:pulsera/shared/components/components.dart';
 import 'package:pulsera/shared/styles/colors.dart';
@@ -42,26 +43,23 @@ class BottomNavWidget extends StatelessWidget {
           onTap: (index) {
             if (index != 2) onTap(index);
           },
-          items: const [
+          items: [
             BottomNavigationBarItem(
-              icon: Icon(IconBroken.Home),
-              label: 'Home',
+              icon: const Icon(IconBroken.Home),
+              label: S.of(context).navHome,
             ),
             BottomNavigationBarItem(
-              icon: Icon(IconBroken.Calendar),
-              label: 'Leave',
+              icon: const Icon(IconBroken.Calendar),
+              label: S.of(context).navLeave,
+            ),
+            const BottomNavigationBarItem(icon: SizedBox(width: 5), label: ''),
+            BottomNavigationBarItem(
+              icon: const Icon(IconBroken.Wallet),
+              label: S.of(context).navPayroll,
             ),
             BottomNavigationBarItem(
-              icon: SizedBox(width: 5),
-              label: '',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(IconBroken.Wallet),
-              label: 'Payroll',
-            ),
-            BottomNavigationBarItem(
-              icon: Icon(IconBroken.Setting),
-              label: 'Settings',
+              icon: const Icon(IconBroken.Profile),
+              label: S.of(context).navProfile,
             ),
           ],
         ),

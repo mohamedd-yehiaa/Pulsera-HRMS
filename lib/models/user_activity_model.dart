@@ -81,8 +81,12 @@ class UserActivityModel {
   UserActivityModel.fromJson(Map<String, dynamic> json) {
     activityID = json['activityID'];
     createdAt = json['date'];
-    checkIn = json['checkIn'] != null ? CheckIn.fromJson(json['checkIn']) : null;
-    outTime = json['outTime'] != null ? OutTime.fromJson(json['outTime']) : null;
+    checkIn = json['checkIn'] != null
+        ? CheckIn.fromJson(json['checkIn'])
+        : null;
+    outTime = json['outTime'] != null
+        ? OutTime.fromJson(json['outTime'])
+        : null;
 
     breakInTime = (json['breakInTime'] as List<dynamic>?)?.cast<String>();
     breakOutTime = (json['breakOutTime'] as List<dynamic>?)?.cast<String>();
@@ -147,10 +151,7 @@ class OutTime {
   }
 
   Map<String, dynamic> toJson() {
-    return {
-      'msg': msg,
-      'outTime': outTime,
-    };
+    return {'msg': msg, 'outTime': outTime};
   }
 }
 
