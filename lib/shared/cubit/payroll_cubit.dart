@@ -15,6 +15,15 @@ class PayrollCubit extends Cubit<PayrollStates> {
   static PayrollCubit get(context) => BlocProvider.of(context);
 
   // ---------------------------------------------------------------------------
+  // Handle Unassigned Users (New Employees)
+  // ---------------------------------------------------------------------------
+  void markAsUnassigned() {
+    payrolls = [];
+    selectedPayroll = null;
+    emit(PayrollUnassignedState());
+  }
+
+  // ---------------------------------------------------------------------------
   // State
   // ---------------------------------------------------------------------------
   List<PayrollModel> payrolls = [];
@@ -48,6 +57,10 @@ class PayrollCubit extends Cubit<PayrollStates> {
   // Load payrolls for a single employee (Employee's own view)
   // ---------------------------------------------------------------------------
   Future<void> loadPayrollsForEmployee(String employeeId) async {
+    if (employeeId.trim().isEmpty) {
+      markAsUnassigned();
+      return;
+    }
     emit(PayrollLoadingState());
     try {
       payrolls = await _repository.getPayrollsByEmployee(employeeId);
@@ -63,7 +76,10 @@ class PayrollCubit extends Cubit<PayrollStates> {
   Future<void> loadPayrollsForCompany(String companyId, String month) async {
     emit(PayrollLoadingState());
     try {
-      payrolls = await _repository.getPayrollsByCompanyAndMonth(companyId, month);
+      payrolls = await _repository.getPayrollsByCompanyAndMonth(
+        companyId,
+        month,
+      );
       emit(PayrollLoadedState());
     } catch (e) {
       emit(PayrollErrorState(e.toString()));
@@ -171,7 +187,10 @@ class PayrollCubit extends Cubit<PayrollStates> {
     }
 
     // 4. Count total working days in the FULL month (for daily rate)
-    final totalWorkingDays = AttendanceService.countWorkingDaysInMonth(month, companyWorkingDays);
+    final totalWorkingDays = AttendanceService.countWorkingDaysInMonth(
+      month,
+      companyWorkingDays,
+    );
     if (totalWorkingDays == 0) return;
 
     final dailySalary = basicSalary / totalWorkingDays;
@@ -232,7 +251,8 @@ class PayrollCubit extends Cubit<PayrollStates> {
     }
 
     // 9. Unapproved absences
-    final unapprovedAbsences = expectedWorkingDays - workedDays - paidVacationDays;
+    final unapprovedAbsences =
+        expectedWorkingDays - workedDays - paidVacationDays;
     final clampedAbsences = unapprovedAbsences > 0 ? unapprovedAbsences : 0;
 
     // Total payable days
@@ -243,14 +263,16 @@ class PayrollCubit extends Cubit<PayrollStates> {
     if (config.missingCheckoutPolicy == 'half_day' && missingCheckoutDays > 0) {
       // Full days + half days for missing checkouts
       final fullDays = workedDays - missingCheckoutDays;
-      workedDaysSalary = (fullDays * dailySalary) + (missingCheckoutDays * dailySalary * 0.5);
+      workedDaysSalary =
+          (fullDays * dailySalary) + (missingCheckoutDays * dailySalary * 0.5);
     } else {
       workedDaysSalary = workedDays * dailySalary;
     }
     final paidVacationSalary = paidVacationDays * dailySalary;
 
     // 11. Absence deduction (configurable multiplier)
-    final absenceDeduction = clampedAbsences * config.absenceMultiplier * dailySalary;
+    final absenceDeduction =
+        clampedAbsences * config.absenceMultiplier * dailySalary;
 
     // 12. Late deduction (configurable)
     double lateDeduction = 0.0;
@@ -258,7 +280,8 @@ class PayrollCubit extends Cubit<PayrollStates> {
       if (config.lateDeductionMode == 'percentage') {
         // Percentage of daily salary per late day
         final lateDays = analysis['lateDays'] as int;
-        lateDeduction = lateDays * (config.lateDeductionValue / 100) * dailySalary;
+        lateDeduction =
+            lateDays * (config.lateDeductionValue / 100) * dailySalary;
       } else {
         // Per-minute deduction
         lateDeduction = totalLateMinutes * config.lateDeductionValue;
@@ -270,9 +293,13 @@ class PayrollCubit extends Cubit<PayrollStates> {
     if (totalEarlyLeaveMinutes > 0) {
       if (config.earlyLeaveDeductionMode == 'percentage') {
         final earlyLeaveDays = analysis['earlyLeaveDays'] as int;
-        earlyLeaveDeduction = earlyLeaveDays * (config.earlyLeaveDeductionValue / 100) * dailySalary;
+        earlyLeaveDeduction =
+            earlyLeaveDays *
+            (config.earlyLeaveDeductionValue / 100) *
+            dailySalary;
       } else {
-        earlyLeaveDeduction = totalEarlyLeaveMinutes * config.earlyLeaveDeductionValue;
+        earlyLeaveDeduction =
+            totalEarlyLeaveMinutes * config.earlyLeaveDeductionValue;
       }
     }
 
@@ -282,12 +309,18 @@ class PayrollCubit extends Cubit<PayrollStates> {
         config.overtimeBonusPercentage > 0) {
       // Count how many full overtime events (each day's overtime qualifies separately)
       final overtimeDays = analysis['overtimeDays'] as int;
-      overtimeBonus = overtimeDays * (config.overtimeBonusPercentage / 100) * dailySalary;
+      overtimeBonus =
+          overtimeDays * (config.overtimeBonusPercentage / 100) * dailySalary;
     }
 
     // 15. Final salary
-    final rawFinal = workedDaysSalary + paidVacationSalary -
-        lateDeduction - absenceDeduction - earlyLeaveDeduction + overtimeBonus;
+    final rawFinal =
+        workedDaysSalary +
+        paidVacationSalary -
+        lateDeduction -
+        absenceDeduction -
+        earlyLeaveDeduction +
+        overtimeBonus;
     final finalSalary = rawFinal < 0 ? 0.0 : rawFinal;
 
     // 16. Determine employee status label
@@ -332,14 +365,17 @@ class PayrollCubit extends Cubit<PayrollStates> {
   // ===========================================================================
 
   // Delegates to AttendanceService for static methods
-  static int countWorkingDaysInMonth(String yearMonth, List<String> companyWorkingDays) =>
-      AttendanceService.countWorkingDaysInMonth(yearMonth, companyWorkingDays);
+  static int countWorkingDaysInMonth(
+    String yearMonth,
+    List<String> companyWorkingDays,
+  ) => AttendanceService.countWorkingDaysInMonth(yearMonth, companyWorkingDays);
 
   static int countWorkingDaysInRange(
     DateTime start,
     DateTime end,
     List<String> companyWorkingDays,
-  ) => AttendanceService.countWorkingDaysInRange(start, end, companyWorkingDays);
+  ) =>
+      AttendanceService.countWorkingDaysInRange(start, end, companyWorkingDays);
 
   /// Builds a Set of 'yyyy-MM-dd' strings for all approved leave days
   /// that fall on working days within the effective range.
@@ -349,7 +385,9 @@ class PayrollCubit extends Cubit<PayrollStates> {
     DateTime effectiveEnd,
     List<String> companyWorkingDays,
   ) {
-    final workingWeekdays = AttendanceService.workingWeekdays(companyWorkingDays);
+    final workingWeekdays = AttendanceService.workingWeekdays(
+      companyWorkingDays,
+    );
     final Set<String> leaveDates = {};
 
     for (final leave in approvedLeaves) {

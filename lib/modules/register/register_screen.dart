@@ -269,11 +269,16 @@ class _RegisterFormBody extends StatelessWidget {
                 fontSize: 16,
               ),
             ),
-            items: ['Company Owner', 'Employee']
-                .map(
-                  (label) => DropdownMenuItem(value: label, child: Text(label)),
-                )
-                .toList(),
+            items: [
+              DropdownMenuItem(
+                value: 'Company Owner',
+                child: Text(S.of(context).companyOwner),
+              ),
+              DropdownMenuItem(
+                value: 'Employee',
+                child: Text(S.of(context).employee),
+              ),
+            ],
             onChanged: (value) {
               cubit.changeUserType(value!);
             },

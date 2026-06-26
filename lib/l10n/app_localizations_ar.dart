@@ -817,6 +817,20 @@ class SAr extends S {
   String get noResults => 'لا توجد نتائج';
 
   @override
+  String get permanentlyDelete => 'حذف نهائي';
+
+  @override
+  String get permanentlyDeleteTitle => 'حذف نهائي؟';
+
+  @override
+  String permanentlyDeleteContent(String name) {
+    return 'هل أنت متأكد من أنك تريد إزالة $name بالكامل من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.';
+  }
+
+  @override
+  String get deleteForever => 'حذف للأبد';
+
+  @override
   String timeAgoMinutes(int minutes) {
     return 'منذ $minutes دقيقة';
   }
@@ -1478,4 +1492,11 @@ class SAr extends S {
 
   @override
   String get sunday => 'الأحد';
+
+  @override
+  String get unassignedEmployee => 'مرحباً! لم يتم تعيينك في فريق بعد.';
+
+  @override
+  String get noPayrollForUnassigned =>
+      'لا توجد بيانات رواتب متاحة بعد. يرجى تعيين هذا الموظف في فريق أولاً.';
 }

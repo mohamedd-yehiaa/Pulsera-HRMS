@@ -25,8 +25,11 @@ platform :android do
             firebase_cli_token: ENV["FIREBASE_CLI_TOKEN"],
             android_artifact_type: "APK",
             android_artifact_path: "../build/app/outputs/flutter-apk/app-production-release.apk",
-            testers: "mohamedyehia3451@gmail.com",
-            release_notes: "First Fastlane Firebase Distribution Pulsera-HRMS!"
+            groups: "Testers",
+            release_notes: "New Features:
+                            - Real-Time Notifications: Stay updated with critical alerts via FCM.
+                            - Bilingual Support: Full localization for Arabic and English.
+                            - Performance improvements and bug fixes."
         )
-        end
     end
+end

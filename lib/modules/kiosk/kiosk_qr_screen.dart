@@ -11,6 +11,7 @@ import 'package:pulsera/shared/network/local/cache_helper.dart';
 import 'package:pulsera/shared/services/totp_service.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/cubit/notification_cubit.dart';
+import 'package:pulsera/shared/services/push_notification_service.dart';
 import 'package:qr_flutter/qr_flutter.dart';
 import 'package:wakelock_plus/wakelock_plus.dart';
 
@@ -225,6 +226,7 @@ class _KioskQrScreenState extends State<KioskQrScreen> {
                         await user.reauthenticateWithCredential(credential);
 
                         // Re-auth success → perform logout
+                        await PushNotificationService.instance.cleanup();
                         NotificationCubit.get(context).clearStream();
                         await FirebaseAuth.instance.signOut();
                         await Future.wait([

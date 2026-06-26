@@ -553,6 +553,11 @@
   "@viewAttendance": {"description": "View attendance button on team member card"},
   "noResults": "No results found",
   "@noResults": {"description": "Empty search results"},
+  "permanentlyDelete": "Permanently Delete",
+  "permanentlyDeleteTitle": "Permanently Delete?",
+  "permanentlyDeleteContent": "Are you sure you want to completely remove {name} from the database? This action cannot be undone.",
+  "@permanentlyDeleteContent": {"placeholders": {"name": {"type": "String"}} },
+  "deleteForever": "Delete Forever",
 
   "timeAgoMinutes": "{minutes}m ago",
   "@timeAgoMinutes": {"description": "Time ago in minutes", "placeholders": {"minutes": {"type": "int"}}},
@@ -948,5 +953,10 @@
   "saturday": "Saturday",
   "@saturday": {"description": "Day of the week"},
   "sunday": "Sunday",
-  "@sunday": {"description": "Day of the week"}
+  "@sunday": {"description": "Day of the week"},
+
+  "unassignedEmployee": "Welcome! You have not been assigned to a team yet.",
+  "@unassignedEmployee": {"description": "Label for an employee not yet assigned to a team"},
+  "noPayrollForUnassigned": "No payroll data available yet. Please assign this employee to a team first.",
+  "@noPayrollForUnassigned": {"description": "Message shown in payroll tab for new/unassigned users"}
 }

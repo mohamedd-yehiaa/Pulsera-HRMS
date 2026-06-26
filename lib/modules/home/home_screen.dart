@@ -116,21 +116,23 @@ class HomeScreen extends StatelessWidget {
             if (user.companyId == null && user.userType == "Employee") {
               return SafeArea(
                 child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 24),
                   child: Center(
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
                           S.of(context).joinCompanyPrompt,
+                          textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
+                        const SizedBox(height: 8),
                         Text(
                           S.of(context).giveIdToCompany,
+                          textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
-                        const SizedBox(height: 50),
-
+                        const SizedBox(height: 32),
                         // Your existing Copy ID Row
                         SingleChildScrollView(
                           scrollDirection: Axis.horizontal,

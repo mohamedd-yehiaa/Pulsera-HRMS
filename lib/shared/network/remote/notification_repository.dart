@@ -84,4 +84,24 @@ class NotificationRepository {
     }
     await batch.commit();
   }
+
+  // ---------------------------------------------------------------------------
+  // FCM Token Management
+  // ---------------------------------------------------------------------------
+
+  /// Saves an FCM token to the user's Firestore document.
+  /// Uses arrayUnion to support multiple devices per user.
+  Future<void> saveFcmToken(String userId, String token) async {
+    await _firestore.collection('users').doc(userId).update({
+      'fcmTokens': FieldValue.arrayUnion([token]),
+    });
+  }
+
+  /// Removes an FCM token from the user's Firestore document.
+  /// Called on logout so the device stops receiving notifications.
+  Future<void> removeFcmToken(String userId, String token) async {
+    await _firestore.collection('users').doc(userId).update({
+      'fcmTokens': FieldValue.arrayRemove([token]),
+    });
+  }
 }

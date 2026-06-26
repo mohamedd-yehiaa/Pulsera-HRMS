@@ -819,6 +819,20 @@ class SEn extends S {
   String get noResults => 'No results found';
 
   @override
+  String get permanentlyDelete => 'Permanently Delete';
+
+  @override
+  String get permanentlyDeleteTitle => 'Permanently Delete?';
+
+  @override
+  String permanentlyDeleteContent(String name) {
+    return 'Are you sure you want to completely remove $name from the database? This action cannot be undone.';
+  }
+
+  @override
+  String get deleteForever => 'Delete Forever';
+
+  @override
   String timeAgoMinutes(int minutes) {
     return '${minutes}m ago';
   }
@@ -1480,4 +1494,12 @@ class SEn extends S {
 
   @override
   String get sunday => 'Sunday';
+
+  @override
+  String get unassignedEmployee =>
+      'Welcome! You have not been assigned to a team yet.';
+
+  @override
+  String get noPayrollForUnassigned =>
+      'No payroll data available yet. Please assign this employee to a team first.';
 }

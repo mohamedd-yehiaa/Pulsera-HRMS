@@ -28,6 +28,8 @@ import 'package:pulsera/shared/network/remote/team_repository.dart';
 import 'package:pulsera/shared/styles/theme.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:pulsera/shared/services/push_notification_service.dart';
 import 'firebase_options.dart';
 
 void main() async {
@@ -36,6 +38,8 @@ void main() async {
   FlutterNativeSplash.preserve(widgetsBinding: widgetsBinding);
   Bloc.observer = MyBlocObserver();
   await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+  FirebaseMessaging.onBackgroundMessage(firebaseMessagingBackgroundHandler);
+  await PushNotificationService.initializeLocalNotifications();
   await CacheHelper.init();
 
   final uId = CacheHelper.getData(key: 'uId');
