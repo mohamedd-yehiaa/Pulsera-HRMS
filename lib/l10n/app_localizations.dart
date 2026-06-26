@@ -1651,6 +1651,30 @@ abstract class S {
   /// **'No results found'**
   String get noResults;
 
+  /// No description provided for @permanentlyDelete.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently Delete'**
+  String get permanentlyDelete;
+
+  /// No description provided for @permanentlyDeleteTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Permanently Delete?'**
+  String get permanentlyDeleteTitle;
+
+  /// No description provided for @permanentlyDeleteContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to completely remove {name} from the database? This action cannot be undone.'**
+  String permanentlyDeleteContent(String name);
+
+  /// No description provided for @deleteForever.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Forever'**
+  String get deleteForever;
+
   /// Time ago in minutes
   ///
   /// In en, this message translates to:
@@ -2814,6 +2838,18 @@ abstract class S {
   /// In en, this message translates to:
   /// **'Sunday'**
   String get sunday;
+
+  /// Label for an employee not yet assigned to a team
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome! You have not been assigned to a team yet.'**
+  String get unassignedEmployee;
+
+  /// Message shown in payroll tab for new/unassigned users
+  ///
+  /// In en, this message translates to:
+  /// **'No payroll data available yet. Please assign this employee to a team first.'**
+  String get noPayrollForUnassigned;
 }
 
 class _SDelegate extends LocalizationsDelegate<S> {

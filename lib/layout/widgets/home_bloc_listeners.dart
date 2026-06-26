@@ -13,6 +13,8 @@ import 'package:pulsera/shared/cubit/profile_cubit.dart';
 import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
+import 'package:pulsera/shared/services/push_notification_service.dart';
+import 'package:pulsera/modules/notification/notifications_screen.dart';
 
 /// Wraps its [child] in the MultiBlocListener that orchestrates all
 /// business-logic reactions needed at the layout level.
@@ -72,6 +74,20 @@ class HomeBlocListeners extends StatelessWidget {
                 AttendanceCubit.get(context).init(user.uId!);
                 // Start the notification stream.
                 NotificationCubit.get(context).init(user.uId!);
+                // Start the push notification service (FCM).
+                PushNotificationService.instance.initialize(
+                  user.uId!,
+                  onNotificationTap: () {
+                    if (context.mounted) {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => const NotificationsScreen(),
+                        ),
+                      );
+                    }
+                  },
+                );
                 // Start the leave requests stream.
                 final isAdmin =
                     user.userType == 'Company Owner' ||

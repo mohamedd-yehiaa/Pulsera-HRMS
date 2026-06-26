@@ -70,8 +70,9 @@ class HomeAppBars {
                           Widget child,
                           ImageChunkEvent? loadingProgress,
                         ) {
-                          if (loadingProgress == null)
+                          if (loadingProgress == null) {
                             return child; // Image is fully loaded
+                          }
                           return Container(
                             width: 50,
                             height: 50,

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:pulsera/l10n/app_localizations.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:pulsera/models/team_members_model.dart';
@@ -56,6 +57,15 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
 
     return BlocConsumer<TeamCubit, TeamStates>(
       listener: (context, state) {
+        if (state is TeamUnassignedState) {
+          Fluttertoast.showToast(
+            msg: S.of(context).unassignedEmployee,
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black87,
+            textColor: Colors.white,
+          );
+        }
         if (state is TeamErrorState) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
@@ -178,9 +188,38 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
     return ListTile(
       contentPadding: EdgeInsets.zero,
       leading: (member.image != null && member.image!.isNotEmpty)
-          ? CircleAvatar(
-              radius: 25,
-              backgroundImage: NetworkImage(member.image!),
+          ? ClipOval(
+              child: Image.network(
+                member.image!,
+                width: 50,
+                height: 50,
+                fit: BoxFit.cover,
+                loadingBuilder: (context, child, loadingProgress) {
+                  if (loadingProgress == null) return child;
+                  return Container(
+                    width: 50,
+                    height: 50,
+                    color: AppColors.primary.withValues(alpha: 0.1),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12.0),
+                      child: CircularProgressIndicator(
+                        strokeWidth: 2.5,
+                        color: AppColors.primary,
+                        value: loadingProgress.expectedTotalBytes != null
+                            ? loadingProgress.cumulativeBytesLoaded /
+                                  loadingProgress.expectedTotalBytes!
+                            : null,
+                      ),
+                    ),
+                  );
+                },
+                errorBuilder: (context, error, stackTrace) => Container(
+                  width: 50,
+                  height: 50,
+                  color: Colors.grey[200],
+                  child: const Icon(Icons.error_outline, color: Colors.grey),
+                ),
+              ),
             )
           : Container(
               decoration: BoxDecoration(
@@ -243,30 +282,27 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
                     .localizeDigits(context),
                 AppColors.green400,
               ),
-              member.status != null && member.status != 'Terminated'
-                  ? Text(
-                      member.status!,
-                      style: const TextStyle(
-                        color: AppColors.green400,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    )
-                  : Text(
-                      member.status ?? '',
-                      style: const TextStyle(
-                        color: AppColors.error,
-                        fontSize: 11,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
             ],
           ),
+          if (member.status == 'Terminated')
+            Padding(
+              padding: const EdgeInsetsDirectional.only(start: 6.0, top: 2.0),
+              child: Text(
+                S.of(context).formerEmployee,
+                style: const TextStyle(
+                  color: AppColors.error,
+                  fontSize: 11,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
         ],
       ),
       trailing: PopupMenuButton<String>(
         onSelected: (value) {
           if (value == 'remove') _showRemoveDialog(context, member);
+          if (value == 'hard_remove')
+            _showHardRemoveDialog(context, member);
           if (value == 'attendance') {
             Navigator.push(
               context,
@@ -290,16 +326,33 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               ],
             ),
           ),
-          PopupMenuItem(
-            value: 'remove',
-            child: Row(
-              children: [
-                const Icon(Icons.remove_circle_outline, color: AppColors.error),
-                const SizedBox(width: 8),
-                Text(S.of(context).remove),
-              ],
+          // Only show standard "Terminate/Remove" if they are currently active
+          if (member.status != 'Terminated')
+            PopupMenuItem(
+              value: 'remove',
+              child: Row(
+                children: [
+                  const Icon(
+                    Icons.remove_circle_outline,
+                    color: AppColors.error,
+                  ),
+                  const SizedBox(width: 8),
+                  Text(S.of(context).remove), // Or "Terminate"
+                ],
+              ),
             ),
-          ),
+          // Only show "Permanently Delete" if they are already terminated
+          if (member.status == 'Terminated')
+            PopupMenuItem(
+              value: 'hard_remove',
+              child: Row(
+                children: [
+                  const Icon(Icons.delete_forever, color: AppColors.error),
+                  const SizedBox(width: 8),
+                  Text(S.of(context).permanentlyDelete),
+                ],
+              ),
+            ),
         ],
       ),
     );
@@ -373,7 +426,45 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
             },
             child: Text(
               S.of(context).remove,
-              style: const TextStyle(color: AppColors.error),
+              style: const TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showHardRemoveDialog(BuildContext context, MembersData member) {
+    final appCubit = AppCubit.get(context);
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        title: Text(S.of(context).permanentlyDeleteTitle),
+        content: Text(
+          S.of(context).permanentlyDeleteContent(member.fullName ?? ''),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(S.of(context).cancel),
+          ),
+          TextButton(
+            onPressed: () {
+              Navigator.pop(ctx);
+              TeamCubit.get(context).permanentlyRemoveEmployee(
+                managerId: appCubit.userModel?.uId ?? '',
+                employeeUid: member.uId ?? '',
+              );
+            },
+            child: Text(
+              S.of(context).deleteForever,
+              style: const TextStyle(
+                color: AppColors.error,
+                fontWeight: FontWeight.bold,
+              ),
             ),
           ),
         ],
@@ -434,18 +525,62 @@ class _TeamMembersScreenState extends State<TeamMembersScreen> {
               ),
               child: Row(
                 children: [
-                  CircleAvatar(
-                    radius: 24,
-                    backgroundColor: AppColors.primary,
-                    child: Text(
-                      (cubit.myManager?.firstName ?? 'M')[0].toUpperCase(),
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
+                  (cubit.myManager?.image != null &&
+                          cubit.myManager!.image!.isNotEmpty)
+                      ? ClipOval(
+                          child: Image.network(
+                            cubit.myManager!.image!,
+                            width: 48,
+                            height: 48,
+                            fit: BoxFit.cover,
+                            loadingBuilder: (context, child, loadingProgress) {
+                              if (loadingProgress == null) return child;
+                              return Container(
+                                width: 48,
+                                height: 48,
+                                color: AppColors.primary.withValues(alpha: 0.1),
+                                child: Padding(
+                                  padding: const EdgeInsets.all(10.0),
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2.5,
+                                    color: AppColors.primary,
+                                    value:
+                                        loadingProgress.expectedTotalBytes !=
+                                            null
+                                        ? loadingProgress
+                                                  .cumulativeBytesLoaded /
+                                              loadingProgress
+                                                  .expectedTotalBytes!
+                                        : null,
+                                  ),
+                                ),
+                              );
+                            },
+                            errorBuilder: (context, error, stackTrace) =>
+                                Container(
+                                  width: 48,
+                                  height: 48,
+                                  color: Colors.grey[200],
+                                  child: const Icon(
+                                    Icons.error_outline,
+                                    color: Colors.grey,
+                                  ),
+                                ),
+                          ),
+                        )
+                      : CircleAvatar(
+                          radius: 24,
+                          backgroundColor: AppColors.primary,
+                          child: Text(
+                            (cubit.myManager?.firstName ?? 'M')[0]
+                                .toUpperCase(),
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 18,
+                            ),
+                          ),
+                        ),
                   const SizedBox(width: 12),
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,

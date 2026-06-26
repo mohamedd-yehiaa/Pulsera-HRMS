@@ -224,6 +224,7 @@ class ApplyLeaveOverlapErrorState extends ApplyLeaveStates {
 abstract class PayrollStates {}
 
 class PayrollInitialState extends PayrollStates {}
+class PayrollUnassignedState extends PayrollStates {}
 class PayrollLoadingState extends PayrollStates {}
 class PayrollGeneratingState extends PayrollStates {}
 class PayrollGeneratedSuccessState extends PayrollStates {}
@@ -253,6 +254,7 @@ class PayrollConfigErrorState extends PayrollConfigStates {
 abstract class TeamStates {}
 
 class TeamInitialState extends TeamStates {}
+class TeamUnassignedState extends TeamStates {}
 class TeamLoadingState extends TeamStates {}
 class TeamMembersLoadedState extends TeamStates {}
 class TeamMemberAddedState extends TeamStates {}

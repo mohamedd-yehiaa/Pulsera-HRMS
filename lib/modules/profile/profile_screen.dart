@@ -17,6 +17,7 @@ import 'package:pulsera/shared/cubit/register_cubit.dart';
 import 'package:pulsera/shared/cubit/states.dart';
 import 'package:pulsera/shared/cubit/localization_cubit.dart';
 import 'package:pulsera/shared/network/local/cache_helper.dart';
+import 'package:pulsera/shared/services/push_notification_service.dart';
 import 'package:pulsera/shared/styles/colors.dart';
 import 'package:pulsera/shared/styles/icon_broken.dart';
 
@@ -213,33 +214,39 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  void _showLogoutDialog(BuildContext context) {
+  void _showLogoutDialog(BuildContext pageContext) {
+    final profileCubit = ProfileCubit.get(pageContext);
+    final registerCubit = RegisterCubit.get(pageContext);
+
     showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: Text(S.of(context).logout),
-        content: Text(S.of(context).logoutConfirmation),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text(S.of(context).cancel),
-          ),
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context); // Close dialog
-              performLogout(
-                context,
-                profileCubit: ProfileCubit.get(context),
-                registerCubit: RegisterCubit.get(context),
-              );
-            },
-            child: Text(
-              S.of(context).logout,
-              style: const TextStyle(color: Colors.red),
+      context: pageContext,
+      builder: (dialogContext) {
+        return AlertDialog(
+          title: Text(S.of(dialogContext).logout),
+          content: Text(S.of(dialogContext).logoutConfirmation),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogContext).pop(),
+              child: Text(S.of(dialogContext).cancel),
             ),
-          ),
-        ],
-      ),
+            TextButton(
+              onPressed: () async {
+                Navigator.of(dialogContext).pop();
+
+                await performLogout(
+                  pageContext,
+                  profileCubit: profileCubit,
+                  registerCubit: registerCubit,
+                );
+              },
+              child: Text(
+                S.of(dialogContext).logout,
+                style: const TextStyle(color: Colors.red),
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 }
@@ -251,6 +258,9 @@ Future<void> performLogout(
   required RegisterCubit registerCubit,
 }) async {
   try {
+    // 0. Remove FCM token before signing out
+    await PushNotificationService.instance.cleanup();
+
     // 1. Clear local cache
     await Future.wait([
       CacheHelper.removeData(key: 'uId'),

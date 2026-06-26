@@ -62,6 +62,15 @@ class _PayrollScreenState extends State<PayrollScreen> {
 
     return BlocConsumer<PayrollCubit, PayrollStates>(
       listener: (context, state) {
+        if (state is PayrollUnassignedState) {
+          Fluttertoast.showToast(
+            msg: S.of(context).noPayrollForUnassigned, // Your localized string
+            toastLength: Toast.LENGTH_LONG,
+            gravity: ToastGravity.BOTTOM,
+            backgroundColor: Colors.black87,
+            textColor: Colors.white,
+          );
+        }
         if (state is PayrollErrorState) {
           Fluttertoast.showToast(msg: state.error);
         }
@@ -159,7 +168,10 @@ class _PayrollScreenState extends State<PayrollScreen> {
           Expanded(
             child: Center(
               child: Text(
-                DateFormat('MMMM yyyy', locale).format(cubit.selectedMonth).localizeDigits(context),
+                DateFormat(
+                  'MMMM yyyy',
+                  locale,
+                ).format(cubit.selectedMonth).localizeDigits(context),
                 style: Theme.of(context).textTheme.titleLarge,
               ),
             ),
@@ -311,7 +323,9 @@ class _PayrollScreenState extends State<PayrollScreen> {
                 ),
                 const SizedBox(height: 4),
                 Icon(
-                  isRtl?IconBroken.Arrow___Left_2 : IconBroken.Arrow___Right_2,
+                  isRtl
+                      ? IconBroken.Arrow___Left_2
+                      : IconBroken.Arrow___Right_2,
                   size: 16,
                   color: AppColors.grey300,
                 ),

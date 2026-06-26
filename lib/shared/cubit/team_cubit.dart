@@ -15,8 +15,7 @@ String? validateTeamAssignment({
   if (user == null) {
     return 'User not found. Please check the UserID and try again.';
   }
-  if (user.userType == null ||
-      user.userType != 'Employee') {
+  if (user.userType == null || user.userType != 'Employee') {
     return 'This user is not an Employee. Only employees can be added to a team.';
   }
   if (user.managerId != null && user.managerId!.isNotEmpty) {
@@ -39,7 +38,6 @@ class TeamCubit extends Cubit<TeamStates> {
   UserModel? validatedUser;
   UserModel? myManager;
 
-
   String selectedRole = 'Employee';
 
   final userIdController = TextEditingController();
@@ -60,18 +58,21 @@ class TeamCubit extends Cubit<TeamStates> {
 
     emit(TeamLoadingState());
 
-    _repository.getUserByUid(userId.trim()).then((user) {
-      // Use your existing validation logic here
-      if (user == null) {
-        emit(TeamUserValidationErrorState('User not found.'));
-        return;
-      }
+    _repository
+        .getUserByUid(userId.trim())
+        .then((user) {
+          // Use your existing validation logic here
+          if (user == null) {
+            emit(TeamUserValidationErrorState('User not found.'));
+            return;
+          }
 
-      validatedUser = user;
-      emit(TeamUserValidatedState());
-    }).catchError((e) {
-      emit(TeamErrorState(e.toString()));
-    });
+          validatedUser = user;
+          emit(TeamUserValidatedState());
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
   }
 
   // -------------------------------------------------------------------------
@@ -89,49 +90,67 @@ class TeamCubit extends Cubit<TeamStates> {
 
     emit(TeamLoadingState());
 
-    _repository.assignEmployeeToManager(
-      employee: validatedUser!,
-      companyId: companyId,
-      managerId: managerId,
-      email: validatedUser!.email!,
-      roleType: roleType,
-      monthlySalary: double.parse(salaryController.text),
-      annualVacationDays: int.parse(vacationDaysController.text),
+    _repository
+        .assignEmployeeToManager(
+          employee: validatedUser!,
+          companyId: companyId,
+          managerId: managerId,
+          email: validatedUser!.email!,
+          roleType: roleType,
+          monthlySalary: double.parse(salaryController.text),
+          annualVacationDays: int.parse(vacationDaysController.text),
+        )
+        .then((_) {
+          Fluttertoast.showToast(msg: 'Employee added successfully!');
 
-    ).then((_) {
-      Fluttertoast.showToast(msg: 'Employee added successfully!');
+          // Reset form
+          validatedUser = null;
+          userIdController.clear();
+          salaryController.clear();
+          vacationDaysController.clear();
 
-      // Reset form
-      validatedUser = null;
-      userIdController.clear();
-      salaryController.clear();
-      vacationDaysController.clear();
+          // Reload the team to show the new member
+          loadFullTeam(managerId: managerId);
 
-      // Reload the team to show the new member
-      loadFullTeam(managerId: managerId);
-
-      emit(TeamMemberAddedState());
-    }).catchError((e) {
-      emit(TeamErrorState(e.toString()));
-    });
+          emit(TeamMemberAddedState());
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
   }
 
   // -------------------------------------------------------------------------
-  // 3. Load Full Team (Updated to use MemberModel)
+  // 3. Handle Unassigned Users (New Employees)
+  // -------------------------------------------------------------------------
+  void markAsUnassigned() {
+    teamData = null;
+    myManager = null;
+    emit(TeamUnassignedState());
+  }
+
+  // -------------------------------------------------------------------------
+  // 4. Load Full Team (Updated to use MemberModel)
   // -------------------------------------------------------------------------
   void loadFullTeam({required String managerId}) {
     emit(TeamLoadingState());
+    if (managerId.trim().isEmpty) {
+      markAsUnassigned();
+      return;
+    }
 
-    _repository.getFullTeamData(managerId: managerId).then((model) {
-      teamData = model;
-      emit(TeamMembersLoadedState());
-    }).catchError((e) {
-      emit(TeamErrorState(e.toString()));
-    });
+    _repository
+        .getFullTeamData(managerId: managerId)
+        .then((model) {
+          teamData = model;
+          emit(TeamMembersLoadedState());
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
   }
 
   // -------------------------------------------------------------------------
-  // 4. Load my manager (for Employee view)
+  // 5. Load my manager (for Employee view)
   // -------------------------------------------------------------------------
   void loadMyManager(String? managerId) {
     if (managerId == null || managerId.isEmpty) {
@@ -142,16 +161,19 @@ class TeamCubit extends Cubit<TeamStates> {
 
     emit(TeamLoadingState());
 
-    _repository.getUserByUid(managerId).then((manager) {
-      myManager = manager;
-      emit(TeamMembersLoadedState());
-    }).catchError((e) {
-      emit(TeamErrorState(e.toString()));
-    });
+    _repository
+        .getUserByUid(managerId)
+        .then((manager) {
+          myManager = manager;
+          emit(TeamMembersLoadedState());
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
   }
 
   // -------------------------------------------------------------------------
-  // 4. Remove employee (Updated to use MembersData object)
+  // 6. Remove employee (Soft Delete / Terminate)
   // -------------------------------------------------------------------------
   void removeEmployeeFromTeam({
     required String managerId,
@@ -159,15 +181,38 @@ class TeamCubit extends Cubit<TeamStates> {
   }) {
     emit(TeamLoadingState());
 
-    _repository.removeEmployeeFromTeam(
-      managerId: managerId,
-      memberToRemove: member,
-    ).then((_) {
-      Fluttertoast.showToast(msg: 'Employee removed.');
-      loadFullTeam(managerId: managerId);
-    }).catchError((e) {
-      emit(TeamErrorState(e.toString()));
-    });
+    _repository
+        .removeEmployeeFromTeam(managerId: managerId, memberToRemove: member)
+        .then((_) {
+          Fluttertoast.showToast(msg: 'Employee terminated.');
+          loadFullTeam(managerId: managerId);
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
+  }
+
+  // -------------------------------------------------------------------------
+  // 7. Permanently Delete Employee (Hard Delete after Payroll)
+  // -------------------------------------------------------------------------
+  void permanentlyRemoveEmployee({
+    required String managerId,
+    required String employeeUid,
+  }) {
+    emit(TeamLoadingState());
+
+    _repository
+        .permanentlyRemoveEmployeeFromTeam(
+          managerId: managerId,
+          employeeUid: employeeUid,
+        )
+        .then((_) {
+          Fluttertoast.showToast(msg: 'Employee permanently deleted.');
+          loadFullTeam(managerId: managerId);
+        })
+        .catchError((e) {
+          emit(TeamErrorState(e.toString()));
+        });
   }
 
   @override
@@ -178,4 +223,3 @@ class TeamCubit extends Cubit<TeamStates> {
     return super.close();
   }
 }
-

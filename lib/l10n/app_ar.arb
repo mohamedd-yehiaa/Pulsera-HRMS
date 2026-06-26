@@ -293,6 +293,11 @@
 "searchMembers": "بحث عن الأعضاء...",
 "viewAttendance": "عرض الحضور",
 "noResults": "لا توجد نتائج",
+"permanentlyDelete": "حذف نهائي",
+"permanentlyDeleteTitle": "حذف نهائي؟",
+"permanentlyDeleteContent": "هل أنت متأكد من أنك تريد إزالة {name} بالكامل من قاعدة البيانات؟ لا يمكن التراجع عن هذا الإجراء.",
+"@permanentlyDeleteContent": {"placeholders": {"name": {"type": "String"}}},
+"deleteForever": "حذف للأبد",
 
 "timeAgoMinutes": "منذ {minutes} دقيقة",
 "timeAgoHours": "منذ {hours} ساعة",
@@ -487,6 +492,8 @@
 "notifCheckOut": "سجل {name} الانصراف.",
 "notifBreakIn": "بدأ {name} فترة راحة.",
 "notifBreakOut": "أنهى {name} فترة راحة.",
+"unassignedEmployee": "مرحباً! لم يتم تعيينك في فريق بعد.",
+"noPayrollForUnassigned": "لا توجد بيانات رواتب متاحة بعد. يرجى تعيين هذا الموظف في فريق أولاً.",
 
 "monday": "الإثنين",
 "tuesday": "الثلاثاء",

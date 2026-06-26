@@ -38,6 +38,8 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 
 * **👥 Employee Management:** Seamlessly add, update, and delete employee profiles. Enforce robust access control by assigning system roles such as Admin, Manager, and Employee.
 * **⏱️ Cryptographic Attendance Management:** Eliminates "buddy punching" and location spoofing using a custom Time-Based One-Time Password (TOTP) algorithm. Employees scan a dynamic, offline-capable QR code at a physical kiosk that refreshes every 5 seconds.
+* **🔔 Real-Time Notifications:** Stay instantly updated with critical alerts, pending requests, and system announcements delivered via Firebase Cloud Messaging (FCM).
+* **🌐 Bilingual Support:** Fully localized interface supporting both Arabic and English, ensuring accessibility and ease of use for diverse teams.
 * **🏖️ Leave Management:** A streamlined workflow allows employees to apply for annual, sick, or emergency leave smoothly. Managers can instantly review, approve, or reject requests while the system automatically tracks remaining leave balances.
 * **💰 Automated Payroll Engine:** Dynamically converts base salaries into exact hourly rates based on logged attendance. It automatically calculates overtime bonuses, enforces lateness deductions, and generates clear, itemized payslips.
 * **🔒 Security:** Enterprise-grade security featuring secure user authentication, role-based access control (RBAC), and fully encrypted communication between the application client and the database.
@@ -98,7 +100,7 @@ Small and Medium-sized Enterprises often struggle with traditional HR management
 * **Frontend:** Google Flutter framework (Dart) 
 * **Architecture:** Clean Architecture & Repository Pattern
 * **State Management:** Bloc / Cubit Pattern
-* **Backend & Storage:** Firebase (Firestore, Authentication) & Supabase
+* **Backend & Storage:** Firebase (Firestore, Authentication)
 
 ---
 
@@ -146,7 +148,7 @@ Ensure you have the following installed on your local machine:
 <a id="installation--backend-setup"></a>
 ### Installation & Backend Setup
 
-For security purposes, this repository does not include the backend API keys or native configuration files. You must link the project to your own Firebase and Supabase instances.
+For security purposes, this repository does not include the backend API keys or native configuration files. You must link the project to your own Firebase instance.
 
 1. **Clone the repository:**
    ```bash
@@ -163,12 +165,11 @@ For security purposes, this repository does not include the backend API keys or 
 5. **Configure Environment Variables:** Create a new file named `.env` in the root directory of the project (this file is gitignored) and add your external configurations:
    ```env
    SERVER_CLIENT_ID=YOUR_SERVER_CLIENT_ID
-   SUPABASE_URL=YOUR_SUPABASE_URL
-   SUPABASE_ANON_KEY=YOUR_SUPABASE_ANON_KEY
+   FIREBASE_CLI_TOKEN=YOUR_FIREBASE_CLI_TOKEN
+   FIREBASE_APP_ID=YOUR_FIREBASE_APP_ID
 6. **Run the application:** Launch the app on your connected device or emulator.
    ```bash
    flutter run
-   
 <a id="usage"></a>
 ## 💡 Usage
 Employee Workflow Example:
